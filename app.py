@@ -1966,22 +1966,37 @@ document.getElementById('busq_codigo').addEventListener('input', function() {
 </html>
 """
 
+CORRECCION_URLS = {
+    'Perú':    'https://portilla3.github.io/qalat-top-piloto/correccion_top_peru.html',
+    'Ecuador': 'https://portilla3.github.io/qalat-top-ecuador/correccion_top_ecuador.html',
+}
+CORRECCION_FLAGS = {'Perú': '🇵🇪', 'Ecuador': '🇪🇨'}
+
 with tab_correccion:
-    if rol not in ('Perú', 'UNODC'):
+    if rol not in ('Perú', 'Ecuador', 'UNODC'):
         st.info(f'El formulario de corrección para {flag} {rol} estará disponible próximamente.')
     else:
         if es_unodc:
-            st.selectbox('Corregir registros de:', ['Perú'], key='corr_pais_sel')
+            pais_corr = st.selectbox(
+                'Corregir registros de:',
+                ['Perú', 'Ecuador'],
+                key='corr_pais_sel'
+            )
+        else:
+            pais_corr = rol
+
+        flag_corr = CORRECCION_FLAGS.get(pais_corr, '')
+        url_corr  = CORRECCION_URLS[pais_corr]
 
         st.markdown(
             f'''<div style="background:#FFF8E1;border-left:4px solid #F9A825;
             padding:.7rem 1.2rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem;">
-            <b>⚠ Módulo de corrección — 🇵🇪 Perú.</b>
+            <b>⚠ Módulo de corrección — {flag_corr} {pais_corr}.</b>
             Los cambios se aplican directamente en la base de datos QALAT.
             </div>''', unsafe_allow_html=True
         )
         st.link_button(
             "✏️ Abrir formulario de corrección",
-            "https://portilla3.github.io/qalat-top-piloto/correccion_top_peru.html",
+            url_corr,
             use_container_width=True
         )
