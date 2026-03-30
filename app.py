@@ -150,13 +150,6 @@ RENAME_MAP = {
     'dias_educacion_total':'Educación Total (0-28)',
     'vivienda_estable':    'Vivienda estable',
     'vivienda_basica':     'Vivienda básica',
-    # ── Columnas específicas Ecuador ──────────────────────────────────────────
-    'salud_mental':        'Salud Mental (0-20)',
-    'dias_otras_s4':       'Otras Actividades Última Semana (0-7)',
-    'dias_otras_s3':       'Otras Actividades Semana 3 (0-7)',
-    'dias_otras_s2':       'Otras Actividades Semana 2 (0-7)',
-    'dias_otras_s1':       'Otras Actividades Semana 1 (0-7)',
-    'dias_otras_total':    'Otras Actividades Total (0-28)',
 }
 
 
@@ -1974,8 +1967,8 @@ document.getElementById('busq_codigo').addEventListener('input', function() {
 """
 
 CORRECCION_URLS = {
-    'Perú':    'https://portilla3.github.io/qalat-top-piloto/correccion_top_peru.html',
-    'Ecuador': 'https://portilla3.github.io/qalat-top-ecuador/correccion_top_ecuador.html',
+    'Perú':    'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_peru.html',
+    'Ecuador': 'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_ecuador.html',
 }
 CORRECCION_FLAGS = {'Perú': '🇵🇪', 'Ecuador': '🇪🇨'}
 
