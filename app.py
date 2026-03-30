@@ -207,85 +207,85 @@ def _verificar_login(pais_sel, clave):
 def _mostrar_login():
     st.markdown("""
     <style>
-    .login-split {
-        display:flex;
-        border-radius:12px;
-        overflow:hidden;
-        max-width:680px;
-        margin:3rem auto;
-        box-shadow:0 4px 24px rgba(31,56,100,.18);
-        min-height:320px;
-    }
-    .login-left {
-        background:#1a3a5c;
-        width:44%;
-        padding:40px 32px;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        gap:18px;
+    /* Fondo azul oscuro en toda la página */
+    .stApp { background: #0f2540 !important; }
+    section[data-testid="stMain"] > div { background: transparent !important; }
+    .block-container { background: transparent !important; padding-top: 0 !important; }
+
+    /* Panel izquierdo informativo */
+    .login-panel-left {
+        background: #1a3a5c;
+        border-radius: 12px 0 0 12px;
+        padding: 44px 36px;
+        display: flex; flex-direction: column; gap: 18px;
     }
     .login-top-badge {
-        background:#2563a8;
-        color:#9DC3E6;
-        font-size:2rem;
-        font-weight:900;
-        padding:8px 18px;
-        border-radius:6px;
-        letter-spacing:3px;
-        width:fit-content;
+        background: #2563a8; color: #9DC3E6;
+        font-size: 2rem; font-weight: 900;
+        padding: 8px 18px; border-radius: 6px;
+        letter-spacing: 3px; width: fit-content;
     }
-    .login-title {
-        color:#ffffff;
-        font-size:1rem;
-        font-weight:700;
-        line-height:1.6;
+    .login-panel-title { color: #ffffff; font-size: 1rem; font-weight: 700; line-height: 1.6; }
+    .login-panel-sub   { color: #7fa8cc; font-size: .75rem; line-height: 1.9; }
+    .login-panel-author {
+        color: #7fa8cc; font-size: .75rem;
+        margin-top: 8px; padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,.1);
     }
-    .login-sub {
-        color:#7fa8cc;
-        font-size:.75rem;
-        line-height:1.9;
+
+    /* Panel derecho — formulario */
+    .login-panel-right {
+        background: #2E5F8A;
+        border-radius: 0 12px 12px 0;
+        padding: 44px 36px;
+        display: flex; flex-direction: column; gap: 10px; justify-content: center;
     }
-    .login-author {
-        color:#7fa8cc;
-        font-size:.75rem;
-        margin-top:8px;
-        padding-top:12px;
-        border-top:1px solid rgba(255,255,255,.1);
+    .login-panel-right-title {
+        color: #BDD7EE; font-size: .78rem;
+        font-weight: 700; letter-spacing: 1px;
+        margin-bottom: 6px;
     }
-    .login-right {
-        background:#2E5F8A;
-        flex:1;
-        padding:40px 32px;
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        gap:6px;
+
+    /* Widgets Streamlit dentro del panel derecho — sin blanco */
+    div[data-testid="stSelectbox"] > div > div,
+    div[data-testid="stTextInput"] > div > div > input {
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(255,255,255,0.25) !important;
+        border-radius: 6px !important;
+        color: #ffffff !important;
     }
-    .login-right-title {
-        color:#BDD7EE;
-        font-size:.8rem;
-        font-weight:700;
-        letter-spacing:.5px;
-        margin-bottom:8px;
+    div[data-testid="stSelectbox"] label,
+    div[data-testid="stTextInput"] label {
+        color: #BDD7EE !important;
+        font-size: .8rem !important;
     }
+    div[data-testid="stSelectbox"] svg { fill: #9DC3E6 !important; }
+    div[data-testid="stSelectbox"] > div > div > div {
+        color: #ffffff !important;
+    }
+    /* Dropdown list */
+    div[data-baseweb="popover"] { background: #1a3a5c !important; border: 1px solid #2563a8 !important; }
+    div[data-baseweb="menu"] li { color: #ffffff !important; background: #1a3a5c !important; }
+    div[data-baseweb="menu"] li:hover { background: #2563a8 !important; }
     </style>
-    <div class="login-split">
-      <div class="login-left">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;max-width:680px;margin:3rem auto;
+                border-radius:12px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.35);">
+      <div class="login-panel-left">
         <div class="login-top-badge">TOP</div>
-        <div class="login-title">Sistema de Monitoreo<br>de Resultados<br>de Tratamiento</div>
-        <div class="login-sub">QALAT · UNODC<br>Región América Latina</div>
-        <div class="login-author">© Rodrigo Portilla</div>
+        <div class="login-panel-title">Sistema de Monitoreo<br>de Resultados<br>de Tratamiento</div>
+        <div class="login-panel-sub">QALAT · UNODC<br>Región América Latina</div>
+        <div class="login-panel-author">© Rodrigo Portilla</div>
       </div>
-      <div class="login-right">
-        <div class="login-right-title">ACCESO AL SISTEMA</div>
+      <div class="login-panel-right">
+        <div class="login-panel-right-title">ACCESO AL SISTEMA</div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
-    col_l, col_c, col_r = st.columns([1, 1.15, 1])
+    col_l, col_c, col_r = st.columns([1, 1.05, 1])
     with col_c:
-        st.markdown('<div style="margin-top:-180px;">', unsafe_allow_html=True)
+        st.markdown('<div style="margin-top:-170px;padding:0 36px;">', unsafe_allow_html=True)
         pais_sel = st.selectbox(
             'País / institución',
             [''] + PAISES_ACTIVOS + ['UNODC'],
