@@ -164,7 +164,7 @@ def _sb_headers():
         'Prefer':        'return=representation',
     }
 
-def _sb_url(tabla='top_registros'):
+def _sb_url(tabla='registros_superiores'):
     return f"{st.secrets['SUPABASE_URL']}/rest/v1/{tabla}"
 
 def _cargar_supabase(pais=None):
@@ -1969,7 +1969,7 @@ async function buscarRegistro() {
   btn.textContent = 'Buscando…';
 
   try {
-    const url = `${SUPABASE_URL}/rest/v1/top_registros?codigo_paciente=eq.${encodeURIComponent(codigo)}&fecha_entrevista=eq.${fecha}&pais=eq.Per%C3%BA&select=*`;
+    const url = `${SUPABASE_URL}/rest/v1/registros_superiores?codigo_paciente=eq.${encodeURIComponent(codigo)}&fecha_entrevista=eq.${fecha}&pais=eq.Per%C3%BA&select=*`;
     const resp = await fetch(url, {
       headers: {
         'apikey': SUPABASE_KEY,
@@ -2161,7 +2161,7 @@ async function guardarCambios() {
   };
 
   try {
-    const resp = await fetch(`${SUPABASE_URL}/rest/v1/top_registros?id=eq.${registroId}`, {
+    const resp = await fetch(`${SUPABASE_URL}/rest/v1/registros_superiores?id=eq.${registroId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
