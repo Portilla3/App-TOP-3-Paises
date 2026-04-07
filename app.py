@@ -360,6 +360,16 @@ def _migrar_excel_jotform(df, pais):
         except Exception as e:
             errores.append((i, str(e)))
 
+    # Normalizar: todos los registros deben tener exactamente las mismas claves
+    if registros:
+        todas_claves = set()
+        for r in registros:
+            todas_claves.update(r.keys())
+        for r in registros:
+            for k in todas_claves:
+                if k not in r:
+                    r[k] = None
+
     return registros, errores
 
 
