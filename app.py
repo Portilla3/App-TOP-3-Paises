@@ -192,14 +192,18 @@ def _eliminar_registro(registro_id):
         return r.status
 
 def _insertar_lote_supabase(registros):
-    import urllib.request, json
+    import urllib.request, urllib.error, json
     url  = _sb_url()
     hdrs = _sb_headers()
     hdrs['Prefer'] = 'return=minimal'
     data = json.dumps(registros).encode('utf-8')
     req  = urllib.request.Request(url, data=data, method='POST', headers=hdrs)
-    with urllib.request.urlopen(req) as r:
-        return r.status
+    try:
+        with urllib.request.urlopen(req) as r:
+            return r.status
+    except urllib.error.HTTPError as e:
+        detalle = e.read().decode('utf-8')
+        raise Exception(f'HTTP {e.code}: {detalle}')
 
 def _eliminar_por_pais(pais):
     import urllib.request, urllib.parse
@@ -2273,6 +2277,9 @@ if es_unodc and tab_migracion is not None:
                 st.session_state['migra_registros'] = registros_migra
                 st.session_state['migra_errores']   = errores_migra
                 st.session_state['migra_pais_sel']  = pais_migra
+                if registros_migra:
+                    st.markdown('**Primer registro construido (debug):**')
+                    st.json(registros_migra[0])
 
             if 'migra_registros' in st.session_state:
                 regs  = st.session_state['migra_registros']
@@ -2298,7 +2305,14 @@ if es_unodc and tab_migracion is not None:
                             _insertar_lote_supabase(lote)
                             total_ok += len(lote)
                         except Exception as e:
-                            errores_insert.append(str(e))
+                            err_str = str(e)
+                            # Mostrar detalle del error HTTP si está disponible
+                            if hasattr(e, 'read'):
+                                try: err_str += ' | ' + e.read().decode('utf-8')
+                                except: pass
+                            errores_insert.append(err_str)
+                            st.error(f'Error detallado: {err_str}')
+                            break
                         progress.progress(min((i + LOTE) / len(regs), 1.0))
 
                     if total_ok == len(regs):
