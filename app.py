@@ -1,6 +1,6 @@
 """
 app.py — QALAT · Sistema de Monitoreo de Resultados de Tratamiento
-v5.0 — login por país · Perú / Ecuador / México / UNODC
+v5.1 — login por país · Perú / Ecuador / México / El Salvador / UNODC
        + pestaña Corrección de registros (editar / eliminar en Supabase)
 """
 import streamlit as st
@@ -64,18 +64,20 @@ div.stButton>button:hover{{background:#145222;box-shadow:0 3px 10px rgba(30,126,
 # Para agregar México u otro país: solo añadir entrada aquí y PASSWORD_X en Secrets
 # ══════════════════════════════════════════════════════════════════════════════
 PAISES_CONFIG = {
-    'Perú':    {'flag': '🇵🇪', 'color': MID},
-    'Ecuador': {'flag': '🇪🇨', 'color': '#007A5E'},
-    'México':  {'flag': '🇲🇽', 'color': '#006847'},
-    'UNODC':   {'flag': '🌐', 'color': NAVY},
+    'Perú':         {'flag': '🇵🇪', 'color': MID},
+    'Ecuador':      {'flag': '🇪🇨', 'color': '#007A5E'},
+    'México':       {'flag': '🇲🇽', 'color': '#006847'},
+    'El Salvador':  {'flag': '🇸🇻', 'color': '#0F47AF'},
+    'UNODC':        {'flag': '🌐', 'color': NAVY},
 }
-PAISES_ACTIVOS = ['Perú', 'Ecuador', 'México']   # ← agregar aquí para sumar países
+PAISES_ACTIVOS = ['Perú', 'Ecuador', 'México', 'El Salvador']   # ← agregar aquí para sumar países
 
 SECRET_KEY_MAP = {
-    'Perú':    'PASSWORD_PERU',
-    'Ecuador': 'PASSWORD_ECUADOR',
-    'México':  'PASSWORD_MEXICO',
-    'UNODC':   'PASSWORD_UNODC',
+    'Perú':        'PASSWORD_PERU',
+    'Ecuador':     'PASSWORD_ECUADOR',
+    'México':      'PASSWORD_MEXICO',
+    'El Salvador': 'PASSWORD_ELSALVADOR',
+    'UNODC':       'PASSWORD_UNODC',
 }
 
 LABELS = {
@@ -2230,20 +2232,21 @@ document.getElementById('busq_codigo').addEventListener('input', function() {
 """
 
 CORRECCION_URLS = {
-    'Perú':    'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_peru.html',
-    'Ecuador': 'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_ecuador.html',
-    'México':  'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mexico.html',
+    'Perú':        'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_peru.html',
+    'Ecuador':     'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_ecuador.html',
+    'México':      'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mexico.html',
+    'El Salvador': 'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_elsalvador.html',
 }
-CORRECCION_FLAGS = {'Perú': '🇵🇪', 'Ecuador': '🇪🇨', 'México': '🇲🇽'}
+CORRECCION_FLAGS = {'Perú': '🇵🇪', 'Ecuador': '🇪🇨', 'México': '🇲🇽', 'El Salvador': '🇸🇻'}
 
 with tab_correccion:
-    if rol not in ('Perú', 'Ecuador', 'México', 'UNODC'):
+    if rol not in ('Perú', 'Ecuador', 'México', 'El Salvador', 'UNODC'):
         st.info(f'El formulario de corrección para {flag} {rol} estará disponible próximamente.')
     else:
         if es_unodc:
             pais_corr = st.selectbox(
                 'Corregir registros de:',
-                ['Perú', 'Ecuador', 'México'],
+                ['Perú', 'Ecuador', 'México', 'El Salvador'],
                 key='corr_pais_sel'
             )
         else:
