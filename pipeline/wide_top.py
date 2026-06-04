@@ -45,11 +45,29 @@ def _parse_fecha(serie):
         s = str(val).strip().lower()
         for es, en in _MES_ES.items():
             s = re.sub(rf'\b{es}\b', en, s)
-        return pd.to_datetime(s, errors='coerce')
-    result = pd.to_datetime(serie, errors='coerce')
+        try:
+            ts = pd.to_datetime(s, errors='coerce')
+            # Descartar fechas fuera del rango válido de pandas (1677-2262)
+            if pd.isna(ts): return pd.NaT
+            if ts.year < 1677 or ts.year > 2262: return pd.NaT
+            return ts
+        except Exception:
+            return pd.NaT
+    # Convertir con errors='coerce' para evitar OutOfBoundsDatetime
+    def _safe_parse(val):
+        try:
+            ts = pd.to_datetime(val, errors='coerce')
+            if pd.isna(ts): return pd.NaT
+            if ts.year < 1677 or ts.year > 2262: return pd.NaT
+            return ts
+        except Exception:
+            return pd.NaT
+    result = serie.apply(_safe_parse)
     mask_nat = result.isna() & serie.notna()
     if mask_nat.any():
-        result[mask_nat] = serie[mask_nat].apply(_conv)
+        conv_results = serie[mask_nat].apply(_conv)
+        result = result.copy()
+        result[mask_nat] = conv_results
     return result
 
 def norm_sust_v3(s):
