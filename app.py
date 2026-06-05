@@ -1027,10 +1027,10 @@ with tab_reportes:
             dc1, dc2, dc3 = st.columns(3)
             with dc1:
                 d_ce = st.checkbox('📋 Excel caracterización', value=True,  key='d_ce')
-                d_se = st.checkbox('📋 Excel seguimiento',     value=True,  key='d_se')
+                d_se = st.checkbox('📋 Excel seguimiento',     value=False, key='d_se')
             with dc2:
                 d_pc = st.checkbox('📄 Word caracterización',  value=True,  key='d_pc')
-                d_ps = st.checkbox('📄 Word seguimiento',      value=True,  key='d_ps')
+                d_ps = st.checkbox('📄 Word seguimiento',      value=False, key='d_ps')
             with dc3:
                 d_ppc = st.checkbox('📑 PPT caracterización',  value=False, key='d_ppc')
                 d_pps = st.checkbox('📑 PPT seguimiento',      value=False, key='d_pps')
