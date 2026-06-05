@@ -280,7 +280,6 @@ def _migrar_excel_jotform(df, pais):
         'alcohol':    ['alcohol'],
         'marihuana':  ['marihuana'],
         'pastabase':  ['pasta base'],
-        'crack':      ['crack'],
         'cocaina':    ['coca'],
         'sedantes':   ['sedante', 'tranquilizante'],
         'otra_sust':  ['otra sustancia'],
@@ -564,16 +563,16 @@ with tab_reportes:
 
     fuente = st.radio(
         'Fuente de datos',
-        ['📁 Subir Excel (JotForm)', '📡 Conectar con Supabase (Piloto)'],
+        ['📡 Conectar Base Datos (Supabase)', '📁 Subir Excel (JotForm)'],
         horizontal=True,
-        help='Elige si subes un Excel exportado de JotForm o conectas directo a la base del piloto'
+        help='Elige si conectas directo a la base del piloto o subes un Excel exportado de JotForm'
     )
 
     uploaded      = None
     supabase_data = None
 
     # ── Fuente: Supabase ──────────────────────────────────────────────────────
-    if fuente == '📡 Conectar con Supabase (Piloto)':
+    if fuente == '📡 Conectar Base Datos (Supabase)':
         if es_unodc:
             st.markdown(
                 '<div style="background:#EEF4FB;border-left:4px solid #2E75B6;'
@@ -896,8 +895,8 @@ with tab_reportes:
 
         st.markdown('<div class="sec">📈 Análisis visual</div>', unsafe_allow_html=True)
         gc1,gc2,gc3 = st.columns(3)
-        sv=[s['n_verde'],s['n_naranja'],s['n_rojo'],s['N_top2']]
-        sl=['<60d','60-89d','90+d','Completados']; sc=[GREEN,ORANGE,RED,MID]
+        sv=[s['n_verde'],s['n_naranja'],s['n_rojo']]
+        sl=['Pendientes <60d','Pendientes 60-89d','Urgentes 90+d']; sc=[GREEN,ORANGE,RED]
         sv_f=[v for v in sv if v>0]; sl_f=[l for l,v in zip(sl,sv) if v>0]; sc_f=[c for c,v in zip(sc,sv) if v>0]
         sust=s.get('sust_dist',{})
         sd=pd.DataFrame(list(sust.items()),columns=['S','n']).sort_values('n') if sust else pd.DataFrame()
