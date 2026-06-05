@@ -281,7 +281,10 @@ def procesar_wide(input_path: str,
     # ── Alertas seguimiento ────────────────────────────────────────────────────
     _HOY = pd.Timestamp.now().normalize()
     _col_fecha_top1 = next((c for c in wide.columns
-                            if 'fecha entrevista' in c.lower() and c.endswith('_TOP1')), None)
+                            if any(k in c.lower() for k in [
+                                'fecha entrevista','fecha_entrevista',
+                                'fecha de entrevista top','fechaentrevista'
+                            ]) and c.endswith('_TOP1')), None)
     _n_rojo = _n_naranja = _n_verde = 0
     if _col_fecha_top1:
         _f1   = pd.to_datetime(wide[_col_fecha_top1], errors='coerce')
