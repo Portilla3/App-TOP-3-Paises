@@ -288,16 +288,16 @@ def procesar_wide(input_path: str,
         _dias = (_HOY - _f1).dt.days
         def _alerta(d):
             if pd.isna(d): return ''
-            if d < 60: return '🟢 <60 dias'
-            if d < 90: return '🟠 60-89 dias'
-            return '🔴 90+ dias'
+            if d < 60: return '<60 dias'
+            if d < 90: return '60-89 dias'
+            return '90+ dias'
         wide['Dias_desde_TOP1'] = _dias.where(wide['Tiene_TOP2'] == 'No', other=None)
         wide['Alerta_TOP2']     = _dias.where(wide['Tiene_TOP2'] == 'No').apply(
                                       lambda d: _alerta(d) if not pd.isna(d) else '')
         wide.loc[wide['Tiene_TOP2'] == 'Sí', 'Alerta_TOP2'] = 'Completado'
-        _n_rojo    = int((wide['Alerta_TOP2'] == '🔴 90+ dias').sum())
-        _n_naranja = int((wide['Alerta_TOP2'] == '🟠 60-89 dias').sum())
-        _n_verde   = int((wide['Alerta_TOP2'] == '🟢 <60 dias').sum())
+        _n_rojo    = int((wide['Alerta_TOP2'] == '90+ dias').sum())
+        _n_naranja = int((wide['Alerta_TOP2'] == '60-89 dias').sum())
+        _n_verde   = int((wide['Alerta_TOP2'] == '<60 dias').sum())
     else:
         wide['Dias_desde_TOP1'] = None
         wide['Alerta_TOP2'] = ''
@@ -615,7 +615,7 @@ def _generar_excel(wide, alertas, dupes, COL_CODIGO, COL_CENTRO,
         wc['A3'].value = 'No se detectó columna de centro'
 
     # ── Hoja 6: Pendientes TOP2 ───────────────────────────────────────────────
-    _pendientes = wide[wide['Alerta_TOP2'].isin(['🟠 60-89 dias','🔴 90+ dias'])].copy()
+    _pendientes = wide[wide['Alerta_TOP2'].isin(['60-89 dias','90+ dias'])].copy()
     wp2 = wb.create_sheet('Pendientes TOP2')
     wp2.sheet_view.showGridLines = False
     wp2.merge_cells('A1:E1')
