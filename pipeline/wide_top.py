@@ -294,7 +294,7 @@ def procesar_wide(input_path: str,
         wide['Dias_desde_TOP1'] = _dias.where(wide['Tiene_TOP2'] == 'No', other=None)
         wide['Alerta_TOP2']     = _dias.where(wide['Tiene_TOP2'] == 'No').apply(
                                       lambda d: _alerta(d) if not pd.isna(d) else '')
-        wide.loc[wide['Tiene_TOP2'] == 'Si', 'Alerta_TOP2'] = 'Completado'
+        wide.loc[wide['Tiene_TOP2'] == 'Sí', 'Alerta_TOP2'] = 'Completado'
         _n_rojo    = int((wide['Alerta_TOP2'] == '🔴 90+ dias').sum())
         _n_naranja = int((wide['Alerta_TOP2'] == '🟠 60-89 dias').sum())
         _n_verde   = int((wide['Alerta_TOP2'] == '🟢 <60 dias').sum())
