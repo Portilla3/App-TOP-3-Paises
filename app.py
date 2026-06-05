@@ -610,6 +610,8 @@ with tab_reportes:
                     tmp = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
                     df_sb.to_excel(tmp.name, index=False)
                     tmp.close()
+                    for k in ['wide_path','result','outputs','work_dir']:
+                        st.session_state.pop(k, None)
                     st.session_state['supabase_path'] = tmp.name
                     st.session_state['supabase_df']   = df_sb
                     st.session_state['filename']      = f'Supabase_{pais_label}'
