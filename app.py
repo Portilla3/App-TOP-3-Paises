@@ -280,6 +280,7 @@ def _migrar_excel_jotform(df, pais):
         'alcohol':    ['alcohol'],
         'marihuana':  ['marihuana'],
         'pastabase':  ['pasta base'],
+        'crack':      ['crack'],
         'cocaina':    ['coca'],
         'sedantes':   ['sedante', 'tranquilizante'],
         'otra_sust':  ['otra sustancia'],
@@ -610,8 +611,6 @@ with tab_reportes:
                     tmp = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
                     df_sb.to_excel(tmp.name, index=False)
                     tmp.close()
-                    for k in ['wide_path','result','outputs','work_dir']:
-                        st.session_state.pop(k, None)
                     st.session_state['supabase_path'] = tmp.name
                     st.session_state['supabase_df']   = df_sb
                     st.session_state['filename']      = f'Supabase_{pais_label}'
@@ -1029,10 +1028,10 @@ with tab_reportes:
             dc1, dc2, dc3 = st.columns(3)
             with dc1:
                 d_ce = st.checkbox('📋 Excel caracterización', value=True,  key='d_ce')
-                d_se = st.checkbox('📋 Excel seguimiento',     value=False, key='d_se')
+                d_se = st.checkbox('📋 Excel seguimiento',     value=True,  key='d_se')
             with dc2:
                 d_pc = st.checkbox('📄 Word caracterización',  value=True,  key='d_pc')
-                d_ps = st.checkbox('📄 Word seguimiento',      value=False, key='d_ps')
+                d_ps = st.checkbox('📄 Word seguimiento',      value=True,  key='d_ps')
             with dc3:
                 d_ppc = st.checkbox('📑 PPT caracterización',  value=False, key='d_ppc')
                 d_pps = st.checkbox('📑 PPT seguimiento',      value=False, key='d_pps')
