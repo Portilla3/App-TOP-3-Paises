@@ -634,7 +634,7 @@ codigoInp.addEventListener('blur',()=>{
   else codigoInp.classList.remove('error');
   validarCruceCodigoFecha();
 });
-document.getElementById('fecha_nacimiento').addEventListener('change', validarCruceCodigoFecha);
+document.getElementById('fecha_nacimiento').addEventListener('blur', validarCruceCodigoFecha);
 
 function validarFechas() {
   let errores=[]; const hoy=new Date(); hoy.setHours(0,0,0,0); const MIN=new Date('2020-01-01');
