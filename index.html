@@ -661,10 +661,6 @@
         <input type="checkbox" id="na_trabajo" onchange="toggleNA('trabajo')">
         <label for="na_trabajo">No aplica — Días de trabajo remunerado (jubilado u otra situación)</label>
       </div>
-            <div class="na-toggle">
-        <input type="checkbox" id="na_trabajo" onchange="toggleNA('trabajo')">
-        <label for="na_trabajo">No aplica — Días de trabajo remunerado (jubilado u otra situación)</label>
-      </div>
       <div class="tabla-wrap">
         <table class="act-table">
           <thead>
@@ -678,27 +674,6 @@
               <td><input type="number" id="dias_trabajo_s2" min="0" max="7" class="num-inp" oninput="calcAct('dias_trabajo')"></td>
               <td><input type="number" id="dias_trabajo_s1" min="0" max="7" class="num-inp" oninput="calcAct('dias_trabajo')"></td>
               <td class="total-cell" id="dias_trabajo_total"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="na-toggle" style="margin-top:10px">
-        <input type="checkbox" id="na_educacion" onchange="toggleNA('educacion')">
-        <label for="na_educacion">No aplica — Días asistidos a educación (no estudia o ya concluyó estudios)</label>
-      </div>
-      <div class="tabla-wrap">
-        <table class="act-table">
-          <thead>
-            <tr><th>Actividad</th><th>Última Semana</th><th>Semana 3</th><th>Semana 2</th><th>Semana 1</th><th>Total</th></tr>
-          </thead>
-          <tbody>
-            <tr id="fila-educacion">
-              <td style="font-weight:600">Educación</td>
-              <td><input type="number" id="dias_educacion_s4" min="0" max="7" class="num-inp" oninput="calcAct('dias_educacion')"></td>
-              <td><input type="number" id="dias_educacion_s3" min="0" max="7" class="num-inp" oninput="calcAct('dias_educacion')"></td>
-              <td><input type="number" id="dias_educacion_s2" min="0" max="7" class="num-inp" oninput="calcAct('dias_educacion')"></td>
-              <td><input type="number" id="dias_educacion_s1" min="0" max="7" class="num-inp" oninput="calcAct('dias_educacion')"></td>
-              <td class="total-cell" id="dias_educacion_total"></td>
             </tr>
           </tbody>
         </table>
