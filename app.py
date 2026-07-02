@@ -305,7 +305,7 @@ def _crear_snapshot_supabase():
         tipo='snapshot_supabase',
         num_registros=len(registros),
         snapshot_id=snapshot_id,
-        notas=f'Rotacion elimino {num_borrados} filas viejas' if num_borrados else None
+        notas=f'Rotación eliminó {num_borrados} filas viejas' if num_borrados else None
     )
 
     return {
@@ -328,7 +328,7 @@ def _generar_excel_backup(registros):
 
 
 def _stats_backup():
-    """Consulta metadata para el panel de estado del modulo de respaldos."""
+    """Consulta metadata para el panel de estado del módulo de respaldos."""
     import urllib.request, json
     stats = {
         'num_registros_vivos': None,
@@ -2599,9 +2599,9 @@ if es_unodc and tab_respaldos is not None:
                 subtxt = f'{us["num_registros"]} registros'
             else:
                 fecha_str = 'Nunca'
-                subtxt = 'Sin snapshots aun'
+                subtxt = 'Sin snapshots aún'
             st.markdown(
-                f'<div class="kpi green"><div class="kpi-lbl">Ultimo snapshot Supabase</div>'
+                f'<div class="kpi green"><div class="kpi-lbl">Último snapshot Supabase</div>'
                 f'<div class="kpi-val" style="font-size:1.1rem;">{fecha_str}</div>'
                 f'<div class="kpi-sub">{subtxt}</div></div>',
                 unsafe_allow_html=True
@@ -2612,7 +2612,7 @@ if es_unodc and tab_respaldos is not None:
             st.markdown(
                 f'<div class="kpi"><div class="kpi-lbl">Snapshots almacenados</div>'
                 f'<div class="kpi-val">{n_snap if n_snap is not None else "—"}</div>'
-                f'<div class="kpi-sub">retencion: 12 semanas</div></div>',
+                f'<div class="kpi-sub">retención: 12 semanas</div></div>',
                 unsafe_allow_html=True
             )
 
@@ -2623,9 +2623,9 @@ if es_unodc and tab_respaldos is not None:
             else:
                 fecha_str = 'Nunca'
             st.markdown(
-                f'<div class="kpi orange"><div class="kpi-lbl">Ultima descarga Excel</div>'
+                f'<div class="kpi orange"><div class="kpi-lbl">Última descarga Excel</div>'
                 f'<div class="kpi-val" style="font-size:1.1rem;">{fecha_str}</div>'
-                f'<div class="kpi-sub">ultimo registrado</div></div>',
+                f'<div class="kpi-sub">último registrado</div></div>',
                 unsafe_allow_html=True
             )
 
@@ -2635,8 +2635,8 @@ if es_unodc and tab_respaldos is not None:
         st.markdown(
             '<div style="font-size:.85rem;color:#555;margin-bottom:.8rem;">'
             'Descarga un archivo <code>.xlsx</code> con todos los registros de <code>top_registros</code>. '
-            'Se abre directamente en Excel. Este archivo es tu respaldo de largo plazo: guardalo '
-            'en Google Drive, disco duro externo o donde tu institucion lo respalde. '
+            'Se abre directamente en Excel. Este archivo es tu respaldo de largo plazo: guárdalo '
+            'en Google Drive, disco duro externo o donde tu institución lo respalde. '
             'No queda copia en Supabase.'
             '</div>',
             unsafe_allow_html=True
@@ -2678,9 +2678,9 @@ if es_unodc and tab_respaldos is not None:
         st.markdown(
             '<div style="font-size:.85rem;color:#555;margin-bottom:.8rem;">'
             'Crea una copia interna de <code>top_registros</code> en la tabla <code>top_registros_backup</code>. '
-            'Sirve como recuperacion rapida (se accede desde SQL Editor de Supabase) sin '
-            'depender de archivos locales. Cada snapshot se rota automaticamente: los que tengan '
-            f'mas de <b>{RETENCION_SEMANAS_BACKUP} semanas</b> se eliminan al crear uno nuevo. '
+            'Sirve como recuperación rápida (se accede desde SQL Editor de Supabase) sin '
+            'depender de archivos locales. Cada snapshot se rota automáticamente: los que tengan '
+            f'más de <b>{RETENCION_SEMANAS_BACKUP} semanas</b> se eliminan al crear uno nuevo. '
             'Uso recomendado: una vez por semana.'
             '</div>',
             unsafe_allow_html=True
@@ -2697,7 +2697,7 @@ if es_unodc and tab_respaldos is not None:
                     if resultado['num_borrados'] > 0:
                         msg += f' Se eliminaron {resultado["num_borrados"]} filas de snapshots antiguos.'
                     st.success(msg)
-                    st.info('Recarga la pestana para ver el panel de estado actualizado.')
+                    st.info('Recarga la pestaña para ver el panel de estado actualizado.')
                 except Exception as e:
                     st.error(f'Error creando snapshot: {e}')
 
@@ -2707,10 +2707,10 @@ if es_unodc and tab_respaldos is not None:
             'padding:.7rem 1rem;border-radius:6px;font-size:.8rem;color:#555;">'
             '<b>Notas operativas:</b><br>'
             '• El respaldo Excel es tu red de seguridad principal (vive fuera de Supabase).<br>'
-            '• Los snapshots en Supabase son recuperacion rapida (12 semanas de historial).<br>'
-            '• Para restaurar un snapshot: contactar al equipo tecnico. La restauracion se '
+            '• Los snapshots en Supabase son recuperación rápida (12 semanas de historial).<br>'
+            '• Para restaurar un snapshot: contactar al equipo técnico. La restauración se '
             'hace manual desde SQL Editor para evitar errores accidentales.<br>'
-            '• Este modulo solo esta disponible con rol UNODC.'
+            '• Este módulo solo está disponible con rol UNODC.'
             '</div>',
             unsafe_allow_html=True
         )
