@@ -610,21 +610,20 @@ function toggleNA(campo) {
     if (tot) tot.textContent = '';
   }
 }
-function validarCruceCodigoFecha() {
+function validarCruceCodigoFecha(mostrarError=true) {
   const codEl = document.getElementById('codigo_paciente');
   const fnEl  = document.getElementById('fecha_nacimiento');
   const cod   = codEl.value.trim();
   const fn    = fnEl.value;
-  if (!cod || !fn) return;
-  if (!/^[A-ZÁÉÍÓÚÑ]{4}\d{8}$/.test(cod)) return;
+  if (!cod || !fn) return true;
+  if (!/^[A-ZÁÉÍÓÚÑ]{4}\d{8}$/.test(cod)) return true;
   const dd = cod.slice(4,6); const mm = cod.slice(6,8); const aaaa = cod.slice(8,12);
   const fechaCodigo = `${aaaa}-${mm}-${dd}`;
   if (fechaCodigo !== fn) {
-    codEl.classList.add('error'); fnEl.classList.add('error');
-    mostrarToast('⚠ La fecha de nacimiento no coincide con el código del paciente. Por favor verifique.', true);
-  } else {
-    codEl.classList.remove('error'); fnEl.classList.remove('error');
+    if (mostrarError) mostrarToast('⚠ La fecha de nacimiento no coincide con el código del paciente. Por favor verifique.', true);
+    return false;
   }
+  return true;
 }
 
 const codigoInp=document.getElementById('codigo_paciente');
@@ -693,8 +692,11 @@ async function enviarFormulario() {
   if(!document.querySelector('input[name="calidad_vida"]:checked')){ok=false;errMsg.push('Calidad de vida');}
   if(document.querySelectorAll('.inp-error').length>0){ok=false;errMsg.push('Hay valores fuera de rango (0–7)');}
   const errFechas=validarFechas(); if(errFechas.length>0){ok=false;errMsg=errMsg.concat(errFechas);}
-  validarCruceCodigoFecha();
-  if(document.getElementById('codigo_paciente').classList.contains('error')||document.getElementById('fecha_nacimiento').classList.contains('error')){ok=false;errMsg.push('La fecha de nacimiento no coincide con el código del paciente');}
+  if(!validarCruceCodigoFecha(false)){
+    document.getElementById('codigo_paciente').classList.add('error');
+    document.getElementById('fecha_nacimiento').classList.add('error');
+    ok=false; errMsg.push('La fecha de nacimiento no coincide con el código del paciente');
+  }
   if(!ok){mostrarToast('⚠ '+(errMsg.length?errMsg[0]:'Complete los campos obligatorios (*)'),true);return;}
 
   const btn=document.getElementById('btnEnviar'); btn.disabled=true; btn.textContent='Enviando…';
