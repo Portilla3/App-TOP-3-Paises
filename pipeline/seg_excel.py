@@ -207,6 +207,9 @@ def detectar_columnas(cols):
     trab     = detectar('7)', contiene='trabajo remunerado', termina='Total (0-28)')
     estud    = detectar('7)', contiene='colegio', termina='Total (0-28)') or \
                detectar('7)', contiene='instituto', termina='Total (0-28)')
+    # Flags NA (columnas de Supabase)
+    trab_na  = next((c for c in cols if c.endswith('_TOP1') and 'trabajo_na' in c.lower()), None)
+    educ_na  = next((c for c in cols if c.endswith('_TOP1') and 'educacion_na' in c.lower()), None)
     sust_ppal = next(
         (par(c) for c in cols if c.endswith('_TOP1')
          and c.replace('_TOP1','').startswith('2)')
@@ -215,7 +218,8 @@ def detectar_columnas(cols):
     DC = dict(
         sust_cols=sust_cols, tr_sn=tr_sn,
         vif=vif, sal_psi=sal_psi, sal_fis=sal_fis, cal_vid=cal_vid,
-        viv1=viv1, viv2=viv2, trab=trab, estud=estud, sust_ppal=sust_ppal
+        viv1=viv1, viv2=viv2, trab=trab, estud=estud, sust_ppal=sust_ppal,
+        trab_na=trab_na, educ_na=educ_na
     )
     for k, v in DC.items():
         if isinstance(v, tuple) and v[0] is None and k not in ('sust_cols','tr_sn'):
@@ -395,17 +399,22 @@ def build_seguimiento(wb, seg, N_total, N_seg, DC, seg_tiempo=None):
     # ── 6. DÍAS TRABAJADOS Y ESTUDIADOS ──────────────────────────────────────
     R = sec(ws, R, '6', 'Días Trabajados y Estudiados (últimas 4 semanas, 0–28)')
     R = hdrs(ws, R, ['Actividad', 'TOP 1\nProm. días', 'N válido\nTOP 1', 'TOP 2\nProm. días', 'N válido\nTOP 2', 'Cambio'])
-    for i, (lbl, (c1, c2)) in enumerate([
-        ('Días de trabajo remunerado',          DC['trab']),
-        ('Días asistidos a inst. educativa',    DC['estud']),
+    for i, (lbl, (c1, c2), col_na) in enumerate([
+        ('Días de trabajo remunerado',          DC['trab'],  DC.get('trab_na')),
+        ('Días asistidos a inst. educativa',    DC['estud'], DC.get('educ_na')),
     ]):
         if c1 is None: continue
         s1 = v1(seg, c1); s2 = v2(seg, c2)
-        m1 = float(s1.mean()); m2 = float(s2.mean()) if c2 else np.nan
+        # Excluir registros donde el flag NA esté activo
+        if col_na and col_na in seg.columns:
+            mask_na = seg[col_na].astype(str).str.lower().isin(['true','1','t'])
+            s1 = s1[~mask_na]; s2 = s2[~mask_na] if c2 else s2
+        m1 = float(s1.mean()) if s1.notna().any() else np.nan
+        m2 = float(s2.mean()) if c2 and s2.notna().any() else np.nan
         nv1_ = int(s1.notna().sum()); nv2_ = int(s2.notna().sum()) if c2 else 0
         ch = cambio(m1, m2, mejor_si_sube=True)
-        R = drow(ws, R, [lbl, round(m1,1), nv1_, round(m2,1) if not np.isnan(m2) else 0, nv2_, ch], alt=i%2==0)
-    R = note(ws, R, 'Promedio sobre todos los pacientes (incluye 0). ↑ Mejora (más días de actividad).')
+        R = drow(ws, R, [lbl, round(m1,1) if not np.isnan(m1) else 0, nv1_, round(m2,1) if not np.isnan(m2) else 0, nv2_, ch], alt=i%2==0)
+    R = note(ws, R, 'Promedio excluye registros con "No aplica" marcado. ↑ Mejora (más días de actividad).')
 
     # ── 7. TRANSGRESIÓN GENERAL ───────────────────────────────────────────────
     R = sec(ws, R, '7', 'Transgresión a la Norma Social (presencia de algún incidente)')
