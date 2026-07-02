@@ -811,8 +811,8 @@
 <div id="toast"></div>
 
 <script>
-const SUPABASE_URL = '%%SUPABASE_URL%%';
-const SUPABASE_KEY = '%%SUPABASE_KEY%%';
+const SUPABASE_URL = 'https://jxpomdznhdtfturfafor.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Id7N23jxKYu7FVyYwHcnOA_UWrYFqmn';
 
 // ID del registro encontrado (para el UPDATE)
 let registroId = null;
@@ -917,7 +917,7 @@ async function buscarRegistro() {
   btn.textContent = 'Buscando…';
 
   try {
-    const url = `${SUPABASE_URL}/rest/v1/top_registros?codigo_paciente=eq.${encodeURIComponent(codigo)}&fecha_entrevista=eq.${fecha}&pais=eq.M%C3%A9xico%C3%BA&select=*`;
+    const url = `${SUPABASE_URL}/rest/v1/top_registros?codigo_paciente=eq.${encodeURIComponent(codigo)}&fecha_entrevista=eq.${fecha}&pais=eq.M%C3%A9xico%20CIJ&select=*`;
     const resp = await fetch(url, {
       headers: {
         'apikey': SUPABASE_KEY,
