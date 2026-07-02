@@ -217,6 +217,184 @@ def _eliminar_por_pais(pais):
     with urllib.request.urlopen(req) as r:
         return r.status
 
+# ══════════════════════════════════════════════════════════════════════════════
+# MÓDULO DE RESPALDOS · funciones helper
+# ══════════════════════════════════════════════════════════════════════════════
+
+RETENCION_SEMANAS_BACKUP = 12  # Snapshots más viejos que esto se eliminan al rotar
+
+def _leer_todos_registros_full():
+    """Descarga todos los registros de top_registros sin filtro de país."""
+    import urllib.request, json
+    url = _sb_url() + '?select=*&order=id.asc'
+    req = urllib.request.Request(url, headers=_sb_headers())
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read().decode('utf-8'))
+
+
+def _registrar_backup_log(tipo, num_registros, snapshot_id=None, notas=None):
+    """Inserta una fila en backup_log. Silencioso si falla."""
+    import urllib.request, urllib.error, json
+    try:
+        url = _sb_url(tabla='backup_log')
+        hdrs = _sb_headers()
+        hdrs['Prefer'] = 'return=minimal'
+        payload = {
+            'tipo': tipo,
+            'num_registros': num_registros,
+            'snapshot_id': snapshot_id,
+            'notas': notas,
+        }
+        data = json.dumps(payload).encode('utf-8')
+        req = urllib.request.Request(url, data=data, method='POST', headers=hdrs)
+        with urllib.request.urlopen(req) as r:
+            return r.status
+    except Exception:
+        return None
+
+
+def _crear_snapshot_supabase():
+    """Crea snapshot completo en top_registros_backup y elimina los antiguos."""
+    import urllib.request, urllib.error, urllib.parse, json
+    from datetime import datetime, timedelta
+
+    registros = _leer_todos_registros_full()
+    if not registros:
+        raise Exception('No hay registros en top_registros para respaldar.')
+
+    snapshot_id = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+
+    filas_backup = []
+    for reg in registros:
+        filas_backup.append({
+            'snapshot_id': snapshot_id,
+            'id_original': reg.get('id'),
+            'pais': reg.get('pais'),
+            'registro': reg,
+        })
+
+    LOTE = 100
+    url_ins = _sb_url(tabla='top_registros_backup')
+    hdrs = _sb_headers()
+    hdrs['Prefer'] = 'return=minimal'
+    for i in range(0, len(filas_backup), LOTE):
+        lote = filas_backup[i:i+LOTE]
+        data = json.dumps(lote).encode('utf-8')
+        req = urllib.request.Request(url_ins, data=data, method='POST', headers=hdrs)
+        try:
+            with urllib.request.urlopen(req) as r:
+                pass
+        except urllib.error.HTTPError as e:
+            detalle = e.read().decode('utf-8')
+            raise Exception(f'Error insertando snapshot: HTTP {e.code}: {detalle}')
+
+    fecha_limite = (datetime.now() - timedelta(weeks=RETENCION_SEMANAS_BACKUP)).isoformat()
+    url_del = _sb_url(tabla='top_registros_backup') + f'?fecha_backup=lt.{urllib.parse.quote(fecha_limite)}'
+    hdrs_del = _sb_headers()
+    hdrs_del['Prefer'] = 'return=representation'
+    req_del = urllib.request.Request(url_del, method='DELETE', headers=hdrs_del)
+    num_borrados = 0
+    try:
+        with urllib.request.urlopen(req_del) as r:
+            borrados = json.loads(r.read().decode('utf-8'))
+            num_borrados = len(borrados) if isinstance(borrados, list) else 0
+    except Exception:
+        pass
+
+    _registrar_backup_log(
+        tipo='snapshot_supabase',
+        num_registros=len(registros),
+        snapshot_id=snapshot_id,
+        notas=f'Rotacion elimino {num_borrados} filas viejas' if num_borrados else None
+    )
+
+    return {
+        'snapshot_id': snapshot_id,
+        'num_registros': len(registros),
+        'num_borrados': num_borrados,
+    }
+
+
+def _generar_excel_backup(registros):
+    """Genera archivo Excel (BytesIO) con todos los registros."""
+    import pandas as pd
+    from io import BytesIO
+    df = pd.DataFrame(registros)
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='top_registros', index=False)
+    buf.seek(0)
+    return buf
+
+
+def _stats_backup():
+    """Consulta metadata para el panel de estado del modulo de respaldos."""
+    import urllib.request, json
+    stats = {
+        'num_registros_vivos': None,
+        'ultimo_snapshot': None,
+        'num_snapshots_vivos': None,
+        'ultimo_excel': None,
+    }
+
+    try:
+        url = _sb_url() + '?select=id'
+        hdrs = _sb_headers()
+        hdrs['Prefer'] = 'count=exact'
+        hdrs['Range'] = '0-0'
+        req = urllib.request.Request(url, headers=hdrs)
+        with urllib.request.urlopen(req) as r:
+            content_range = r.headers.get('Content-Range', '')
+            if '/' in content_range:
+                stats['num_registros_vivos'] = int(content_range.split('/')[-1])
+    except Exception:
+        pass
+
+    try:
+        url = _sb_url(tabla='top_registros_backup') + '?select=snapshot_id,fecha_backup&order=fecha_backup.desc&limit=1'
+        req = urllib.request.Request(url, headers=_sb_headers())
+        with urllib.request.urlopen(req) as r:
+            data = json.loads(r.read().decode('utf-8'))
+            if data:
+                snap_id = data[0]['snapshot_id']
+                url_c = _sb_url(tabla='top_registros_backup') + f'?snapshot_id=eq.{snap_id}&select=backup_id'
+                hdrs_c = _sb_headers()
+                hdrs_c['Prefer'] = 'count=exact'
+                hdrs_c['Range'] = '0-0'
+                req_c = urllib.request.Request(url_c, headers=hdrs_c)
+                with urllib.request.urlopen(req_c) as rc:
+                    cr = rc.headers.get('Content-Range', '')
+                    num = int(cr.split('/')[-1]) if '/' in cr else None
+                stats['ultimo_snapshot'] = {
+                    'fecha': data[0]['fecha_backup'],
+                    'snapshot_id': snap_id,
+                    'num_registros': num,
+                }
+    except Exception:
+        pass
+
+    try:
+        url = _sb_url(tabla='top_registros_backup') + '?select=snapshot_id'
+        req = urllib.request.Request(url, headers=_sb_headers())
+        with urllib.request.urlopen(req) as r:
+            data = json.loads(r.read().decode('utf-8'))
+            stats['num_snapshots_vivos'] = len(set(d['snapshot_id'] for d in data))
+    except Exception:
+        pass
+
+    try:
+        url = _sb_url(tabla='backup_log') + '?tipo=eq.excel_export&select=fecha,num_registros&order=fecha.desc&limit=1'
+        req = urllib.request.Request(url, headers=_sb_headers())
+        with urllib.request.urlopen(req) as r:
+            data = json.loads(r.read().decode('utf-8'))
+            if data:
+                stats['ultimo_excel'] = data[0]
+    except Exception:
+        pass
+
+    return stats
+
+
 def _migrar_excel_jotform(df, pais):
     """Mapea columnas JotForm → campos Supabase y retorna lista de registros"""
     import unicodedata
@@ -550,10 +728,13 @@ with st.sidebar:
 # PESTAÑAS
 # ══════════════════════════════════════════════════════════════════════════════
 if es_unodc:
-    tab_reportes, tab_correccion, tab_migracion = st.tabs(['📊 Reportes', '✏️ Corrección de registros', '📥 Migración JotForm'])
+    tab_reportes, tab_correccion, tab_migracion, tab_respaldos = st.tabs(
+        ['📊 Reportes', '✏️ Corrección de registros', '📥 Migración JotForm', '💾 Respaldos']
+    )
 else:
     tab_reportes, tab_correccion = st.tabs(['📊 Reportes', '✏️ Corrección de registros'])
     tab_migracion = None
+    tab_respaldos = None
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -2375,3 +2556,161 @@ if es_unodc and tab_migracion is not None:
                     st.error(f'Error al borrar: {e}')
             else:
                 st.error('Debes escribir exactamente BORRAR para confirmar.')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 4: RESPALDOS (solo UNODC)
+# ══════════════════════════════════════════════════════════════════════════════
+if es_unodc and tab_respaldos is not None:
+    with tab_respaldos:
+        st.markdown(
+            '<div style="background:#E3F2FD;border-left:4px solid #1F3864;'
+            'padding:.8rem 1.2rem;border-radius:6px;margin-bottom:1.2rem;font-size:.88rem;">'
+            '<b>💾 Módulo exclusivo UNODC.</b> Permite generar respaldos completos '
+            'de la base de datos QALAT. El respaldo Excel se descarga a tu computador '
+            'y se guarda donde tú decidas. El snapshot en Supabase queda en la base '
+            'como copia de seguridad interna (retención automática de 12 semanas).'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        st.markdown('<div class="sec">📊 Estado actual</div>', unsafe_allow_html=True)
+        try:
+            stats = _stats_backup()
+        except Exception as e:
+            st.error(f'No se pudo cargar el panel de estado: {e}')
+            stats = {}
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            n_vivos = stats.get('num_registros_vivos')
+            st.markdown(
+                f'<div class="kpi"><div class="kpi-lbl">Registros vivos</div>'
+                f'<div class="kpi-val">{n_vivos if n_vivos is not None else "—"}</div>'
+                f'<div class="kpi-sub">en top_registros</div></div>',
+                unsafe_allow_html=True
+            )
+
+        with col2:
+            us = stats.get('ultimo_snapshot')
+            if us:
+                fecha_str = us['fecha'][:16].replace('T', ' ')
+                subtxt = f'{us["num_registros"]} registros'
+            else:
+                fecha_str = 'Nunca'
+                subtxt = 'Sin snapshots aun'
+            st.markdown(
+                f'<div class="kpi green"><div class="kpi-lbl">Ultimo snapshot Supabase</div>'
+                f'<div class="kpi-val" style="font-size:1.1rem;">{fecha_str}</div>'
+                f'<div class="kpi-sub">{subtxt}</div></div>',
+                unsafe_allow_html=True
+            )
+
+        with col3:
+            n_snap = stats.get('num_snapshots_vivos')
+            st.markdown(
+                f'<div class="kpi"><div class="kpi-lbl">Snapshots almacenados</div>'
+                f'<div class="kpi-val">{n_snap if n_snap is not None else "—"}</div>'
+                f'<div class="kpi-sub">retencion: 12 semanas</div></div>',
+                unsafe_allow_html=True
+            )
+
+        with col4:
+            ue = stats.get('ultimo_excel')
+            if ue:
+                fecha_str = ue['fecha'][:16].replace('T', ' ')
+            else:
+                fecha_str = 'Nunca'
+            st.markdown(
+                f'<div class="kpi orange"><div class="kpi-lbl">Ultima descarga Excel</div>'
+                f'<div class="kpi-val" style="font-size:1.1rem;">{fecha_str}</div>'
+                f'<div class="kpi-sub">ultimo registrado</div></div>',
+                unsafe_allow_html=True
+            )
+
+        st.markdown('<br>', unsafe_allow_html=True)
+
+        st.markdown('<div class="sec">1️⃣ Descargar respaldo Excel</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div style="font-size:.85rem;color:#555;margin-bottom:.8rem;">'
+            'Descarga un archivo <code>.xlsx</code> con todos los registros de <code>top_registros</code>. '
+            'Se abre directamente en Excel. Este archivo es tu respaldo de largo plazo: guardalo '
+            'en Google Drive, disco duro externo o donde tu institucion lo respalde. '
+            'No queda copia en Supabase.'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        if st.button('📥 Generar archivo Excel', key='btn_gen_excel', type='primary'):
+            with st.spinner('Descargando registros y armando Excel...'):
+                try:
+                    registros = _leer_todos_registros_full()
+                    if not registros:
+                        st.warning('No hay registros en la base para respaldar.')
+                    else:
+                        buf = _generar_excel_backup(registros)
+                        from datetime import datetime as _dt
+                        nombre = f'respaldo_top_registros_{_dt.now().strftime("%Y-%m-%d_%H%M%S")}.xlsx'
+                        st.session_state['backup_excel_buf'] = buf.getvalue()
+                        st.session_state['backup_excel_nombre'] = nombre
+                        _registrar_backup_log(
+                            tipo='excel_export',
+                            num_registros=len(registros),
+                            notas=f'Archivo generado: {nombre}'
+                        )
+                        st.success(f'✓ Archivo listo: {len(registros)} registros. Click abajo para descargar.')
+                except Exception as e:
+                    st.error(f'Error generando Excel: {e}')
+
+        if 'backup_excel_buf' in st.session_state:
+            st.download_button(
+                label='⬇ Descargar ' + st.session_state.get('backup_excel_nombre', 'respaldo.xlsx'),
+                data=st.session_state['backup_excel_buf'],
+                file_name=st.session_state.get('backup_excel_nombre', 'respaldo.xlsx'),
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                key='dl_excel_backup'
+            )
+
+        st.markdown('<br>', unsafe_allow_html=True)
+
+        st.markdown('<div class="sec">2️⃣ Crear snapshot en Supabase</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div style="font-size:.85rem;color:#555;margin-bottom:.8rem;">'
+            'Crea una copia interna de <code>top_registros</code> en la tabla <code>top_registros_backup</code>. '
+            'Sirve como recuperacion rapida (se accede desde SQL Editor de Supabase) sin '
+            'depender de archivos locales. Cada snapshot se rota automaticamente: los que tengan '
+            f'mas de <b>{RETENCION_SEMANAS_BACKUP} semanas</b> se eliminan al crear uno nuevo. '
+            'Uso recomendado: una vez por semana.'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        if st.button('📦 Crear snapshot ahora', key='btn_crear_snapshot', type='primary'):
+            with st.spinner('Creando snapshot y rotando los antiguos...'):
+                try:
+                    resultado = _crear_snapshot_supabase()
+                    msg = (
+                        f'✓ Snapshot creado: **{resultado["snapshot_id"]}** · '
+                        f'{resultado["num_registros"]} registros respaldados.'
+                    )
+                    if resultado['num_borrados'] > 0:
+                        msg += f' Se eliminaron {resultado["num_borrados"]} filas de snapshots antiguos.'
+                    st.success(msg)
+                    st.info('Recarga la pestana para ver el panel de estado actualizado.')
+                except Exception as e:
+                    st.error(f'Error creando snapshot: {e}')
+
+        st.markdown('<br>', unsafe_allow_html=True)
+        st.markdown(
+            '<div style="background:#F5F5F5;border-left:4px solid #999;'
+            'padding:.7rem 1rem;border-radius:6px;font-size:.8rem;color:#555;">'
+            '<b>Notas operativas:</b><br>'
+            '• El respaldo Excel es tu red de seguridad principal (vive fuera de Supabase).<br>'
+            '• Los snapshots en Supabase son recuperacion rapida (12 semanas de historial).<br>'
+            '• Para restaurar un snapshot: contactar al equipo tecnico. La restauracion se '
+            'hace manual desde SQL Editor para evitar errores accidentales.<br>'
+            '• Este modulo solo esta disponible con rol UNODC.'
+            '</div>',
+            unsafe_allow_html=True
+        )
