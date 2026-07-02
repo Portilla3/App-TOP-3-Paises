@@ -199,6 +199,10 @@ def detectar_columnas(cols):
                   and ('colegio' in c.lower() or 'instituto' in c.lower())
                   and 'Total (0-28)' in c), None)
 
+    # 6b. Flags NA trabajo/educación (columnas de Supabase)
+    trab_na  = next((c for c in cols if c.endswith('_TOP1') and 'trabajo_na' in c.lower()), None)
+    educ_na  = next((c for c in cols if c.endswith('_TOP1') and 'educacion_na' in c.lower()), None)
+
     # 7. Sustancia principal
     sust_ppal = next((c for c in cols if c.endswith('_TOP1')
                       and c.replace('_TOP1','').startswith('2)')
@@ -212,10 +216,11 @@ def detectar_columnas(cols):
     DC = dict(sust_cols=sust_cols, tr_sn=tr_sn, vif=vif,
               sal_psi=sal_psi, sal_fis=sal_fis, cal_vid=cal_vid,
               viv1=viv1, viv2=viv2, trab=trab, estud=estud,
+              trab_na=trab_na, educ_na=educ_na,
               sust_ppal=sust_ppal, sexo=sexo, fn=fn, fecha=fecha)
 
     for k, v in DC.items():
-        if v is None and k not in ('sust_cols', 'tr_sn'):
+        if v is None and k not in ('sust_cols', 'tr_sn', 'trab_na', 'educ_na'):
             print(f'  ⚠️  No encontrada: {k}')
     return DC
 
@@ -456,15 +461,19 @@ def build_report(wb, d, N, DC):
     # ── SECCIÓN 5: TRABAJO Y ESTUDIO ──────────────────────────────────────────
     R = sec(ws, R, '5', 'Días Trabajados y Días de Estudio al Ingreso (últimas 4 semanas, 0–28)')
     R = hdrs(ws, R, ['Actividad', 'Promedio\ndías', 'N con\nactividad (>0)', 'N válido', ''])
-    for i, (lbl, col) in enumerate([
-        ('Días de trabajo remunerado',       DC['trab']),
-        ('Días asistidos a inst. educativa', DC['estud']),
+    for i, (lbl, col, col_na) in enumerate([
+        ('Días de trabajo remunerado',       DC['trab'],  DC.get('trab_na')),
+        ('Días asistidos a inst. educativa', DC['estud'], DC.get('educ_na')),
     ]):
         if col is None: continue
-        v    = pd.to_numeric(d[col], errors='coerce')
+        v = pd.to_numeric(d[col], errors='coerce')
+        # Excluir registros donde el flag NA esté activo (True)
+        if col_na and col_na in d.columns:
+            mask_na = d[col_na].astype(str).str.lower().isin(['true','1','t'])
+            v = v[~mask_na]
         nv   = int(v.notna().sum()); n_act = int((v > 0).sum()); m = v.mean()
         R = drow(ws, R, [lbl, round(m,1) if not np.isnan(m) else 0, n_act, nv, ''], alt=i%2==0)
-    R = note(ws, R, 'Promedio sobre todos los pacientes (incluye quienes no trabajan/estudian = 0 días).')
+    R = note(ws, R, 'Promedio excluye registros con "No aplica" marcado. N válido = pacientes para quienes aplica el campo.')
 
     ws.freeze_panes = 'B5'
     ws.page_setup.orientation = 'portrait'
