@@ -215,6 +215,11 @@
   }
   input.prom-inp::-webkit-inner-spin-button,
   input.prom-inp::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .na-toggle { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .na-toggle label { font-size:.78rem; color:var(--texto-suave); font-weight:500; cursor:pointer; }
+  .na-toggle input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color:var(--azul-med); }
+  tr.fila-na td { opacity:.4; pointer-events:none; }
   input.prom-inp:focus {
     outline: none;
     border-color: var(--azul-med);
@@ -443,13 +448,13 @@
           <input type="date" id="fecha_entrevista" required>
         </div>
         <div class="campo">
-          <label>Fecha de nacimiento</label>
+          <label>Fecha de nacimiento <span class="req">*</span></label>
           <input type="date" id="fecha_nacimiento">
         </div>
         <div class="campo">
           <!-- Ecuador usa H/M en lugar de M/F -->
-          <label>Sexo</label>
-          <select id="sexo">
+          <label>Sexo <span class="req">*</span></label>
+          <select id="sexo" required>
             <option value="">— Seleccione —</option>
             <option value="H">Hombre</option>
             <option value="M">Mujer</option>
@@ -457,7 +462,7 @@
           </select>
         </div>
         <div class="campo span-2">
-          <label>Nombre del entrevistador</label>
+          <label>Nombre del entrevistador <span class="req">*</span></label>
           <input type="text" id="nombre_entrevistador" placeholder="Nombre completo">
         </div>
       </div>
@@ -696,13 +701,17 @@
       <p style="font-size:.75rem;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
         Días de actividad por semana (0–7)
       </p>
+            <div class="na-toggle">
+        <input type="checkbox" id="na_trabajo" onchange="toggleNA('trabajo')">
+        <label for="na_trabajo">No aplica — Días de trabajo remunerado (jubilado u otra situación)</label>
+      </div>
       <div class="tabla-wrap">
         <table class="act-table">
           <thead>
             <tr><th>Actividad</th><th>Última Sem.</th><th>Semana 3</th><th>Semana 2</th><th>Semana 1</th><th>Total</th></tr>
           </thead>
           <tbody>
-            <tr>
+            <tr id="fila-trabajo">
               <td style="font-weight:600">b. Trabajo remunerado</td>
               <td><input type="number" id="dias_trabajo_s4" min="0" max="7" class="num-inp" oninput="calcAct('dias_trabajo')"></td>
               <td><input type="number" id="dias_trabajo_s3" min="0" max="7" class="num-inp" oninput="calcAct('dias_trabajo')"></td>
@@ -710,7 +719,20 @@
               <td><input type="number" id="dias_trabajo_s1" min="0" max="7" class="num-inp" oninput="calcAct('dias_trabajo')"></td>
               <td class="total-cell" id="dias_trabajo_total"></td>
             </tr>
-            <tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="na-toggle" style="margin-top:10px">
+        <input type="checkbox" id="na_educacion" onchange="toggleNA('educacion')">
+        <label for="na_educacion">No aplica — Días asistidos a educación (no estudia o ya concluyó estudios)</label>
+      </div>
+      <div class="tabla-wrap">
+        <table class="act-table">
+          <thead>
+            <tr><th>Actividad</th><th>Última Sem.</th><th>Semana 3</th><th>Semana 2</th><th>Semana 1</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            <tr id="fila-educacion">
               <td style="font-weight:600">c. Educación</td>
               <td><input type="number" id="dias_educacion_s4" min="0" max="7" class="num-inp" oninput="calcAct('dias_educacion')"></td>
               <td><input type="number" id="dias_educacion_s3" min="0" max="7" class="num-inp" oninput="calcAct('dias_educacion')"></td>
@@ -718,7 +740,15 @@
               <td><input type="number" id="dias_educacion_s1" min="0" max="7" class="num-inp" oninput="calcAct('dias_educacion')"></td>
               <td class="total-cell" id="dias_educacion_total"></td>
             </tr>
-            <!-- d. Otras ocupaciones no remuneradas -->
+          </tbody>
+        </table>
+      </div>
+      <div class="tabla-wrap" style="margin-top:6px">
+        <table class="act-table">
+          <thead>
+            <tr><th>Actividad</th><th>Última Sem.</th><th>Semana 3</th><th>Semana 2</th><th>Semana 1</th><th>Total</th></tr>
+          </thead>
+          <tbody>
             <tr>
               <td style="font-weight:600">d. Otras ocupaciones no remuneradas</td>
               <td><input type="number" id="dias_otras_s4" min="0" max="7" class="num-inp" oninput="calcAct('dias_otras')"></td>
@@ -938,6 +968,44 @@ function calcAct(prefix) {
 });
 
 // ── VALIDACIÓN CÓDIGO PACIENTE ────────────────────────────
+
+function toggleNA(campo) {
+  const fila = document.getElementById('fila-' + campo);
+  const cb   = document.getElementById('na_' + campo);
+  if (cb.checked) {
+    fila.classList.add('fila-na');
+    ['s4','s3','s2','s1'].forEach(s => {
+      const el = document.getElementById('dias_' + campo + '_' + s);
+      if (el) { el.value = ''; el.disabled = true; }
+    });
+    const tot = document.getElementById('dias_' + campo + '_total');
+    if (tot) tot.textContent = 'N/A';
+  } else {
+    fila.classList.remove('fila-na');
+    ['s4','s3','s2','s1'].forEach(s => {
+      const el = document.getElementById('dias_' + campo + '_' + s);
+      if (el) el.disabled = false;
+    });
+    const tot = document.getElementById('dias_' + campo + '_total');
+    if (tot) tot.textContent = '';
+  }
+}
+
+function validarCruceCodigoFecha(mostrarError=true) {
+  const codEl = document.getElementById('codigo_paciente');
+  const fnEl  = document.getElementById('fecha_nacimiento');
+  const cod   = codEl.value.trim();
+  const fn    = fnEl.value;
+  if (!cod || !fn) return true;
+  if (!/^[A-ZÁÉÍÓÚÑ]{4}\d{8}$/.test(cod)) return true;
+  const dd = cod.slice(4,6); const mm = cod.slice(6,8); const aaaa = cod.slice(8,12);
+  const fechaCodigo = `${aaaa}-${mm}-${dd}`;
+  if (fechaCodigo !== fn) {
+    if (mostrarError) mostrarToast('⚠ La fecha de nacimiento no coincide con el código del paciente. Por favor verifique.', true);
+    return false;
+  }
+  return true;
+}
 const codigoInp = document.getElementById('codigo_paciente');
 codigoInp.addEventListener('input', () => {
   const pos = codigoInp.selectionStart;
@@ -997,6 +1065,7 @@ function validarFechas() {
   return errores;
 }
 document.getElementById('fecha_entrevista').addEventListener('change', validarFechas);
+document.getElementById('fecha_nacimiento').addEventListener('blur', validarCruceCodigoFecha);
 document.getElementById('fecha_nacimiento').addEventListener('change', validarFechas);
 
 // ── TOAST ────────────────────────────────────────────────
@@ -1013,7 +1082,7 @@ async function enviarFormulario() {
   let ok = true;
   let errMsg = [];
 
-  ['centro','etapa','codigo_paciente','fecha_entrevista','sustancia_principal'].forEach(id=>{
+  ['centro','etapa','codigo_paciente','fecha_entrevista','sustancia_principal','sexo','nombre_entrevistador','fecha_nacimiento'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el.value){el.classList.add('error');ok=false;}
     else el.classList.remove('error');
@@ -1027,6 +1096,29 @@ async function enviarFormulario() {
     errMsg.push('Código de paciente con formato incorrecto');
   }
 
+
+  // Validar: al menos una semana con valor por cada sustancia
+  const sustancias = ['alcohol', 'marihuana', 'pastabase', 'heroina', 'cocaina', 'sedantes'];
+  sustancias.forEach(sust => {
+    const semanas = ['s4','s3','s2','s1'];
+    const tieneAlMenosUna = semanas.some(sem => {
+      const el = document.querySelector(`input.${sem}[data-sust="${sust}"]`);
+      return el && el.value !== '' && !el.classList.contains('inp-error');
+    });
+    if (!tieneAlMenosUna) {
+      ok = false;
+      errMsg.push(`Registre al menos una semana para: ${sust.replace('_',' ')}`);
+    }
+  });
+  // Otra sustancia: solo obligatoria si se escribió el nombre
+  const otraNombre = document.getElementById('otra_sust_nombre')?.value?.trim();
+  if (otraNombre) {
+    const tieneOtra = ['s4','s3','s2','s1'].some(sem => {
+      const el = document.querySelector(`input.${sem}[data-sust="otra_sust"]`);
+      return el && el.value !== '' && !el.classList.contains('inp-error');
+    });
+    if (!tieneOtra) { ok=false; errMsg.push('Registre al menos una semana para la otra sustancia indicada'); }
+  }
   if(!document.querySelector('input[name="salud_mental"]:checked')){ok=false;errMsg.push('Salud mental');}
   if(!document.querySelector('input[name="salud_fisica"]:checked')){ok=false;errMsg.push('Salud física');}
   if(!document.querySelector('input[name="calidad_vida"]:checked')){ok=false;errMsg.push('Calidad de vida');}
@@ -1107,10 +1199,12 @@ async function enviarFormulario() {
     vif_total:tv('vif_total'),
 
     // Sección 3 — nombres de columna Ecuador
-    salud_mental: parseInt(document.querySelector('input[name="salud_mental"]:checked')?.value),
+    salud_psicologica: parseInt(document.querySelector('input[name="salud_mental"]:checked')?.value),
+    trabajo_na: document.getElementById('na_trabajo')?.checked||false,
     dias_trabajo_s4:n('dias_trabajo_s4'), dias_trabajo_s3:n('dias_trabajo_s3'),
     dias_trabajo_s2:n('dias_trabajo_s2'), dias_trabajo_s1:n('dias_trabajo_s1'),
     dias_trabajo_total:tv('dias_trabajo_total'),
+    educacion_na: document.getElementById('na_educacion')?.checked||false,
     dias_educacion_s4:n('dias_educacion_s4'), dias_educacion_s3:n('dias_educacion_s3'),
     dias_educacion_s2:n('dias_educacion_s2'), dias_educacion_s1:n('dias_educacion_s1'),
     dias_educacion_total:tv('dias_educacion_total'),
@@ -1137,6 +1231,8 @@ async function enviarFormulario() {
     if(resp.ok || resp.status===201){
       mostrarToast('✓ Registro enviado correctamente');
       document.getElementById('formTop').reset();
+      ['na_trabajo','na_educacion'].forEach(id=>{const el=document.getElementById(id);if(el){el.checked=false;}});
+      ['trabajo','educacion'].forEach(campo=>toggleNA(campo));
       Object.keys(toggleValues).forEach(k=>toggleValues[k]=null);
       document.querySelectorAll('.toggle-btn-group button').forEach(b=>b.classList.remove('activo-si','activo-no'));
       document.querySelectorAll('.total-cell').forEach(c=>c.textContent='');
