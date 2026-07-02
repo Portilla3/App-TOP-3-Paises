@@ -647,7 +647,7 @@ async function enviarFormulario() {
   if(codVal&&!/^[A-ZÁÉÍÓÚÑ]{4}\d{8}$/.test(codVal)){document.getElementById('codigo_paciente').classList.add('error');ok=false;errMsg.push('Código de paciente con formato incorrecto');}
 
   // Validar: al menos una semana con valor por cada sustancia
-  const sustancias = ['alcohol','marihuana','metanfetamina','cocaina','sedantes','otra_sust'];
+  const sustancias = ['alcohol','marihuana','metanfetamina','cocaina','sedantes'];
   sustancias.forEach(sust => {
     const semanas = ['s4','s3','s2','s1'];
     const tieneAlMenosUna = semanas.some(sem => {
@@ -659,6 +659,15 @@ async function enviarFormulario() {
       errMsg.push(`Registre al menos una semana para: ${sust.replace('_',' ')}`);
     }
   });
+  // Otra sustancia: solo obligatoria si se escribió el nombre
+  const otraNombre = document.getElementById('otra_sust_nombre')?.value?.trim();
+  if (otraNombre) {
+    const tieneOtra = ['s4','s3','s2','s1'].some(sem => {
+      const el = document.querySelector(`input.${sem}[data-sust="otra_sust"]`);
+      return el && el.value !== '' && !el.classList.contains('inp-error');
+    });
+    if (!tieneOtra) { ok=false; errMsg.push('Registre al menos una semana para la otra sustancia indicada'); }
+  }
   if(!document.querySelector('input[name="salud_psicologica"]:checked')){ok=false;errMsg.push('Salud psicológica');}
   if(!document.querySelector('input[name="salud_fisica"]:checked')){ok=false;errMsg.push('Salud física');}
   if(!document.querySelector('input[name="calidad_vida"]:checked')){ok=false;errMsg.push('Calidad de vida');}
