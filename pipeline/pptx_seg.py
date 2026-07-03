@@ -181,6 +181,28 @@ def detectar_columnas(cols):
     viv2    = find(['9)','basica'])
     sust_pp = find(['2)','sustancia','principal'])
 
+    # ── Respaldo formato plano (Supabase, vía RENAME_MAP, sin prefijo numerado) ──
+    if not sust_cols:
+        for c in cols:
+            if c.endswith('_TOP1') and 'Total (0-28)' in c:
+                for nombre in ['Alcohol','Marihuana','Pasta Base','Cocaína','Sedantes']:
+                    if _norm(nombre) in _norm(c):
+                        c1, c2 = par(c); sust_cols.append((nombre, c1, c2)); break
+    if not tr_sn:
+        for c in cols:
+            if c.endswith('_TOP1'):
+                base = _norm(c.replace('_TOP1',''))
+                for nombre in ['Hurto','Robo','Venta de droga','Riña/Pelea']:
+                    if _norm(nombre) == base:
+                        c1, c2 = par(c); tr_sn.append((nombre, c1, c2)); break
+    if vif == (None, None):     vif     = find(['vif','total'])
+    if sal_psi == (None, None): sal_psi = find(['psicolog'])
+    if sal_fis == (None, None): sal_fis = find(['salud','fisica'])
+    if cal_vid == (None, None): cal_vid = find(['calidad','vida'])
+    if viv1 == (None, None):    viv1    = find(['vivienda','estable'])
+    if viv2 == (None, None):    viv2    = find(['vivienda','basic'])
+    if sust_pp == (None, None): sust_pp = find(['sustancia','principal'])
+
     return dict(sust_cols=sust_cols, tr_sn=tr_sn, vif=vif,
                 sal_psi=sal_psi, sal_fis=sal_fis, cal_vid=cal_vid,
                 viv1=viv1, viv2=viv2, sust_pp=sust_pp)
