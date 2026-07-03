@@ -187,6 +187,37 @@ def detectar_columnas(cols):
     fn_col  = next((c for c in cols if c.endswith('_TOP1') and 'nacimiento' in c.lower()), None)
     fecha   = next((c for c in cols if c.endswith('_TOP1') and 'fecha entrevista' in c.lower()), None)
 
+    # ── Respaldo formato plano (Supabase, vía RENAME_MAP, sin prefijo numerado) ──
+    if not sust_cols:
+        for c in cols:
+            if c.endswith('_TOP1') and 'Total (0-28)' in c:
+                for nombre in ['Alcohol','Marihuana','Pasta Base','Cocaína','Sedantes']:
+                    if _norm(nombre) in _norm(c):
+                        sust_cols.append((nombre, c)); break
+    if not tr_sn:
+        for c in cols:
+            if c.endswith('_TOP1'):
+                base = _norm(c.replace('_TOP1',''))
+                for nombre in ['Hurto','Robo','Venta de droga','Riña/Pelea']:
+                    if _norm(nombre) == base:
+                        tr_sn.append((nombre, c)); break
+    if not vif:
+        vif = next((c for c in cols if c.endswith('_TOP1') and 'vif' in _norm(c) and 'total' in _norm(c)), None)
+    if not sal_psi:
+        sal_psi = next((c for c in cols if c.endswith('_TOP1') and 'psicolog' in _norm(c)), None)
+    if not sal_fis:
+        sal_fis = next((c for c in cols if c.endswith('_TOP1') and 'salud' in _norm(c) and 'fisica' in _norm(c)), None)
+    if not cal_vid:
+        cal_vid = next((c for c in cols if c.endswith('_TOP1') and 'calidad de vida' in _norm(c)), None)
+    if not viv1:
+        viv1 = next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'estable' in _norm(c)), None)
+    if not viv2:
+        viv2 = next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'basic' in _norm(c)), None)
+    if not sust_pp:
+        sust_pp = next((c for c in cols if c.endswith('_TOP1') and 'sustancia principal' in _norm(c)), None)
+    if not fecha:
+        fecha = next((c for c in cols if c.endswith('_TOP1') and 'fecha' in _norm(c) and 'entrevista' in _norm(c)), None)
+
     return dict(sust_cols=sust_cols, tr_sn=tr_sn, vif=vif,
                 sal_psi=sal_psi, sal_fis=sal_fis, cal_vid=cal_vid,
                 viv1=viv1, viv2=viv2, sust_pp=sust_pp,
