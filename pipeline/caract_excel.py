@@ -77,8 +77,8 @@ warnings.filterwarnings('ignore')
 
 def _es_positivo(valor):
     s = str(valor).strip().lower()
-    if s in ('sí', 'si'): return True
-    if s in ('no', 'no aplica', 'nunca', 'nan', ''): return False
+    if s in ('sí','si','s','true','verdadero'): return True
+    if s in ('no','n','no aplica','nunca','nan','false','falso',''): return False
     n = pd.to_numeric(valor, errors='coerce')
     return not pd.isna(n) and n > 0
 
@@ -488,8 +488,8 @@ def build_report(wb, d, N, DC):
         ('Vivienda con condiciones básicas', DC['viv2']),
     ]):
         if col is None: continue
-        nv  = int(d[col].isin(['Sí','No']).sum()) or N
-        n_s = int((d[col] == 'Sí').sum()); n_n = int((d[col] == 'No').sum())
+        nv  = int(d[col].notna().sum()) or N
+        n_s = int(d[col].apply(_es_positivo).sum()); n_n = nv - n_s
         R = drow(ws, R, [lbl, n_s, round(n_s/nv*100,1), n_n, nv], alt=i%2==0)
     R = note(ws, R, '% sobre casos con respuesta Sí/No válida.')
 
