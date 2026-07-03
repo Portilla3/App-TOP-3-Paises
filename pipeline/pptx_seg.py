@@ -124,10 +124,20 @@ def footer(slide, txt):
             align=PP_ALIGN.CENTER, italic=True)
 
 def fig_to_pptx(slide, fig, x, y, w, h):
+    from PIL import Image
     buf = io.BytesIO()
     fig.savefig(buf, format='png', dpi=130, bbox_inches='tight', facecolor='white')
     buf.seek(0); plt.close(fig)
-    slide.shapes.add_picture(buf, Inches(x), Inches(y), Inches(w), Inches(h))
+    img_w, img_h = Image.open(buf).size
+    buf.seek(0)
+    aspecto = img_w / img_h
+    if aspecto > (w / h):
+        new_w, new_h = w, w / aspecto
+    else:
+        new_h, new_w = h, h * aspecto
+    new_x = x + (w - new_w) / 2
+    new_y = y + (h - new_h) / 2
+    slide.shapes.add_picture(buf, Inches(new_x), Inches(new_y), Inches(new_w), Inches(new_h))
 
 def _ax_style(ax, horiz=False):
     ax.set_facecolor('white')
