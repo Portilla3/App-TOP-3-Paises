@@ -129,8 +129,8 @@ warnings.filterwarnings('ignore')
 
 def _es_positivo(valor):
     s = str(valor).strip().lower()
-    if s in ('sí', 'si'): return True
-    if s in ('no', 'no aplica', 'nunca', 'nan', ''): return False
+    if s in ('sí','si','s','true','verdadero'): return True
+    if s in ('no','n','no aplica','nunca','nan','false','falso',''): return False
     n = pd.to_numeric(valor, errors='coerce')
     return not pd.isna(n) and n > 0
 
@@ -353,8 +353,8 @@ def cargar_datos():
     # Vivienda (G10)
     def viv(col):
         if not col: return (0, 0, 0)
-        nv_ = int(df[col].isin(['Sí','No']).sum()) or N
-        n_  = int((df[col]=='Sí').sum())
+        n_  = int(df[col].apply(_es_positivo).sum())
+        nv_ = int(df[col].notna().sum()) or N
         return n_, round(n_/nv_*100,1), nv_
     R['viv1'] = viv(DC['viv1'])
     R['viv2'] = viv(DC['viv2'])
