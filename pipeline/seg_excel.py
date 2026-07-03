@@ -215,6 +215,34 @@ def detectar_columnas(cols):
          and c.replace('_TOP1','').startswith('2)')
          and 'sustancia principal' in c.lower()), (None, None))
 
+    # ── Respaldo formato plano (Supabase, vía RENAME_MAP, sin prefijo numerado) ──
+    if not sust_cols:
+        for c in cols:
+            if c.endswith('_TOP1') and 'Total (0-28)' in c:
+                for nombre in ['Alcohol','Marihuana','Pasta Base','Cocaína','Sedantes']:
+                    if _norm(nombre) in _norm(c):
+                        c1, c2 = par(c); sust_cols.append((nombre, c1, c2)); break
+    if not tr_sn:
+        for c in cols:
+            if c.endswith('_TOP1'):
+                base = _norm(c.replace('_TOP1',''))
+                for nombre in ['Hurto','Robo','Venta de droga','Riña/Pelea']:
+                    if _norm(nombre) == base:
+                        c1, c2 = par(c); tr_sn.append((nombre, c1, c2)); break
+    if vif == (None, None):      vif      = par(next((c for c in cols if c.endswith('_TOP1') and 'vif' in _norm(c) and 'total' in _norm(c)), ''))
+    if sal_psi == (None, None):  sal_psi  = par(next((c for c in cols if c.endswith('_TOP1') and 'psicolog' in _norm(c)), ''))
+    if sal_fis == (None, None):  sal_fis  = par(next((c for c in cols if c.endswith('_TOP1') and 'salud' in _norm(c) and 'fisica' in _norm(c)), ''))
+    if cal_vid == (None, None):  cal_vid  = par(next((c for c in cols if c.endswith('_TOP1') and 'calidad' in _norm(c) and 'vida' in _norm(c)), ''))
+    if viv1 == (None, None):     viv1     = par(next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'estable' in _norm(c)), ''))
+    if viv2 == (None, None):     viv2     = par(next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'basic' in _norm(c)), ''))
+    if trab == (None, None):     trab     = par(next((c for c in cols if c.endswith('_TOP1') and 'trabajo' in _norm(c) and 'total' in _norm(c)), ''))
+    if estud == (None, None):    estud    = par(next((c for c in cols if c.endswith('_TOP1') and 'educacion' in _norm(c) and 'total' in _norm(c)), ''))
+    if sust_ppal == (None, None):sust_ppal= par(next((c for c in cols if c.endswith('_TOP1') and 'sustancia principal' in _norm(c)), ''))
+    # limpiar pares con clave vacía (cuando next() no encontró nada)
+    def _clean(p): return (None, None) if not p[0] else p
+    vif, sal_psi, sal_fis, cal_vid, viv1, viv2, trab, estud, sust_ppal = [
+        _clean(p) for p in (vif, sal_psi, sal_fis, cal_vid, viv1, viv2, trab, estud, sust_ppal)]
+
     DC = dict(
         sust_cols=sust_cols, tr_sn=tr_sn,
         vif=vif, sal_psi=sal_psi, sal_fis=sal_fis, cal_vid=cal_vid,
