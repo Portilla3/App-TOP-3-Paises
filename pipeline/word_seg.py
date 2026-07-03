@@ -154,8 +154,8 @@ def _ax_style(ax,horiz=False):
 
 def _es_positivo(valor):
     s=str(valor).strip().lower()
-    if s in ('sí','si'): return True
-    if s in ('no','no aplica','nunca','nan',''): return False
+    if s in ('sí','si','s','true','verdadero'): return True
+    if s in ('no','n','no aplica','nunca','nan','false','falso',''): return False
     n=pd.to_numeric(valor,errors='coerce'); return not pd.isna(n) and n>0
 
 def flecha(v1,v2,mejor_si_sube=True):
@@ -195,6 +195,30 @@ def detectar_columnas(cols):
     sexo=next((c for c in cols if c.endswith('_TOP1') and 'sexo' in c.lower()),None)
     fn_col=next((c for c in cols if c.endswith('_TOP1') and 'nacimiento' in c.lower()),None)
     fecha=next((c for c in cols if c.endswith('_TOP1') and 'fecha entrevista' in c.lower()),None)
+
+    # ── Respaldo formato plano (Supabase, vía RENAME_MAP, sin prefijo numerado) ──
+    if not sust_cols:
+        for c in cols:
+            if c.endswith('_TOP1') and 'Total (0-28)' in c:
+                for nombre in ['Alcohol','Marihuana','Pasta Base','Cocaína','Sedantes']:
+                    if _norm(nombre) in _norm(c):
+                        c1,c2=par(c); sust_cols.append((nombre,c1,c2)); break
+    if not tr_sn:
+        for c in cols:
+            if c.endswith('_TOP1'):
+                base=_norm(c.replace('_TOP1',''))
+                for nombre in ['Hurto','Robo','Venta de droga','Riña/Pelea']:
+                    if _norm(nombre)==base:
+                        c1,c2=par(c); tr_sn.append((nombre,c1,c2)); break
+    if not vif[0]:     vif     = safe(par(next((c for c in cols if c.endswith('_TOP1') and 'vif' in _norm(c) and 'total' in _norm(c)),'') or ''))
+    if not sal_psi[0]: sal_psi = safe(par(next((c for c in cols if c.endswith('_TOP1') and 'psicolog' in _norm(c)),'') or ''))
+    if not sal_fis[0]: sal_fis = safe(par(next((c for c in cols if c.endswith('_TOP1') and 'salud' in _norm(c) and 'fisica' in _norm(c)),'') or ''))
+    if not cal_vid[0]: cal_vid = safe(par(next((c for c in cols if c.endswith('_TOP1') and 'calidad de vida' in _norm(c)),'') or ''))
+    if not viv1[0]:    viv1    = safe(par(next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'estable' in _norm(c)),'') or ''))
+    if not viv2[0]:    viv2    = safe(par(next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'basic' in _norm(c)),'') or ''))
+    if not sust_pp[0]: sust_pp = safe(par(next((c for c in cols if c.endswith('_TOP1') and 'sustancia principal' in _norm(c)),'') or ''))
+    if not fecha:      fecha   = next((c for c in cols if c.endswith('_TOP1') and 'fecha' in _norm(c) and 'entrevista' in _norm(c)), None)
+
     return dict(sust_cols=sust_cols,tr_sn=tr_sn,vif=vif,sal_psi=sal_psi,sal_fis=sal_fis,
                 cal_vid=cal_vid,viv1=viv1,viv2=viv2,sust_pp=sust_pp,sexo=sexo,fn_col=fn_col,fecha=fecha)
 
@@ -363,8 +387,9 @@ def cargar_datos():
     # Vivienda TOP1 vs TOP2
     def viv(col,df_):
         if not col or col not in df_.columns: return (0,0,N_seg)
-        nv=int(df_[col].isin(['Sí','No']).sum()) or N_seg
-        n=int((df_[col]=='Sí').sum()); return n,round(n/nv*100,1),nv
+        n=int(df_[col].apply(_es_positivo).sum())
+        nv=int(df_[col].notna().sum()) or N_seg
+        return n,round(n/nv*100,1),nv
     c_viv1_1,c_viv1_2=DC['viv1']; c_viv2_1,c_viv2_2=DC['viv2']
     R['viv1_t1']=viv(c_viv1_1,seg); R['viv1_t2']=viv(c_viv1_2,seg)
     R['viv2_t1']=viv(c_viv2_1,seg); R['viv2_t2']=viv(c_viv2_2,seg)
