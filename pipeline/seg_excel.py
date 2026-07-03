@@ -77,8 +77,8 @@ warnings.filterwarnings('ignore')
 
 def _es_positivo(valor):
     s = str(valor).strip().lower()
-    if s in ('sí', 'si'): return True
-    if s in ('no', 'no aplica', 'nunca', 'nan', ''): return False
+    if s in ('sí','si','s','true','verdadero'): return True
+    if s in ('no','n','no aplica','nunca','nan','false','falso',''): return False
     n = pd.to_numeric(valor, errors='coerce')
     return not pd.isna(n) and n > 0
 
@@ -304,7 +304,7 @@ def cargar_datos():
 # Helpers para leer columna con sufijo correcto
 def v1(df, col): return pd.to_numeric(df[col], errors='coerce') if col else pd.Series(dtype=float)
 def v2(df, col): return pd.to_numeric(df[col], errors='coerce') if col else pd.Series(dtype=float)
-def si_sn(df, col): return df[col] == 'Sí' if col and col in df.columns else pd.Series([False]*len(df))
+def si_sn(df, col): return df[col].apply(_es_positivo) if col and col in df.columns else pd.Series([False]*len(df))
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HOJA 1: TABLAS DE SEGUIMIENTO
@@ -415,10 +415,10 @@ def build_seguimiento(wb, seg, N_total, N_seg, DC, seg_tiempo=None):
         ('Vivienda con condiciones básicas', DC['viv2']),
     ]):
         if c1 is None: continue
-        nv1_ = int(seg[c1].isin(['Sí','No']).sum()) or N_seg
-        nv2_ = int(seg[c2].isin(['Sí','No']).sum()) if c2 else N_seg
-        n1 = int((seg[c1]=='Sí').sum())
-        n2 = int((seg[c2]=='Sí').sum()) if c2 else 0
+        nv1_ = int(seg[c1].notna().sum()) or N_seg
+        nv2_ = int(seg[c2].notna().sum()) if c2 else N_seg
+        n1 = int(seg[c1].apply(_es_positivo).sum())
+        n2 = int(seg[c2].apply(_es_positivo).sum()) if c2 else 0
         p1 = round(n1/nv1_*100,1); p2 = round(n2/nv2_*100,1) if c2 else 0
         ch = cambio(p1, p2, mejor_si_sube=True)
         R = drow(ws, R, [lbl, n1, p1, n2, p2, ch], alt=i%2==0)
