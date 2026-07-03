@@ -93,7 +93,7 @@ LABELS = {
 
 RENAME_MAP = {
     'codigo_paciente':     'Código de identificación del paciente',
-    'fecha_entrevista':    'Fecha de entrevista TOP',
+    'fecha_entrevista':    'Fecha entrevista TOP',
     'fecha_nacimiento':    'Fecha de nacimiento',
     'centro':              'Código del centro de tratamiento',
     'etapa':               'Etapa',
