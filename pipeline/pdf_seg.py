@@ -197,6 +197,30 @@ def detectar_columnas(cols):
     fn_col  = next((c for c in cols if c.endswith('_TOP1') and 'nacimiento' in c.lower()), None)
     fecha   = next((c for c in cols if c.endswith('_TOP1') and 'fecha entrevista' in c.lower()), None)
 
+    # ── Respaldo formato plano (Supabase, vía RENAME_MAP, sin prefijo numerado) ──
+    if not sust_cols:
+        for c in cols:
+            if c.endswith('_TOP1') and 'Total (0-28)' in c:
+                for nombre in ['Alcohol','Marihuana','Pasta Base','Cocaína','Sedantes']:
+                    if _norm(nombre) in _norm(c):
+                        c1, c2 = par(c); sust_cols.append((nombre, c1, c2)); break
+    if not tr_sn:
+        for c in cols:
+            if c.endswith('_TOP1'):
+                base = _norm(c.replace('_TOP1',''))
+                for nombre in ['Hurto','Robo','Venta de droga','Riña/Pelea']:
+                    if _norm(nombre) == base:
+                        c1, c2 = par(c); tr_sn.append((nombre, c1, c2)); break
+    if not vif[0]:     vif     = par(next((c for c in cols if c.endswith('_TOP1') and 'vif' in _norm(c) and 'total' in _norm(c)), None) or '')
+    if not sal_psi[0]: sal_psi = par(next((c for c in cols if c.endswith('_TOP1') and 'psicolog' in _norm(c)), None) or '')
+    if not sal_fis[0]: sal_fis = par(next((c for c in cols if c.endswith('_TOP1') and 'salud' in _norm(c) and 'fisica' in _norm(c)), None) or '')
+    if not cal_vid[0]: cal_vid = par(next((c for c in cols if c.endswith('_TOP1') and 'calidad de vida' in _norm(c)), None) or '')
+    if not viv1[0]:    viv1    = par(next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'estable' in _norm(c)), None) or '')
+    if not viv2[0]:    viv2    = par(next((c for c in cols if c.endswith('_TOP1') and 'vivienda' in _norm(c) and 'basic' in _norm(c)), None) or '')
+    if not sust_pp[0]: sust_pp = par(next((c for c in cols if c.endswith('_TOP1') and 'sustancia principal' in _norm(c)), None) or '')
+    if not fecha:
+        fecha = next((c for c in cols if c.endswith('_TOP1') and 'fecha' in _norm(c) and 'entrevista' in _norm(c)), None)
+
     # limpiar pares donde c1 es cadena vacía (cuando next devuelve None)
     def safe(p): return p if (p[0] and p[0] in set(cols)) else (None, None)
 
