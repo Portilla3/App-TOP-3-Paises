@@ -77,8 +77,8 @@ def auto_archivo_wide():
 
 def _es_positivo(valor):
     s = str(valor).strip().lower()
-    if s in ('sí','si'): return True
-    if s in ('no','no aplica','nunca','nan',''): return False
+    if s in ('sí','si','s','true','verdadero'): return True
+    if s in ('no','n','no aplica','nunca','nan','false','falso',''): return False
     n = pd.to_numeric(valor, errors='coerce')
     return not pd.isna(n) and n > 0
 
@@ -257,8 +257,8 @@ def cargar_datos():
         return round(float(v.mean()),1) if v.notna().sum()>0 else 0
     def viv_pct(col):
         if not col or col not in seg.columns: return 0
-        nv = int(seg[col].isin(['Sí','No']).sum()) or N
-        return pct(int((seg[col]=='Sí').sum()), nv)
+        nv = int(seg[col].notna().sum()) or N
+        return pct(int(seg[col].apply(_es_positivo).sum()), nv)
 
     # Tiempo seguimiento
     _fc1 = next((c for c in seg.columns if 'fecha entrevista' in c.lower() and c.endswith('_TOP1')), None)
