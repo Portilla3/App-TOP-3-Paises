@@ -1,0 +1,33 @@
+# Streamlit secrets
+.streamlit/secrets.toml
+secrets.toml
+
+# Ambientes de configuración
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Editores
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Respaldos locales y datos
+*.xlsx
+*.csv
+*.xls
+respaldo_*
+snapshot_*
+
+# Backups temporales
+*.bak
+*~
