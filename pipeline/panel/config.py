@@ -172,3 +172,89 @@ def ingresos_por_centro(df):
 
     agg = tmp.groupby('centro').size().reset_index(name='n_ingresos')
     return agg.sort_values('n_ingresos', ascending=False).reset_index(drop=True)
+
+
+def continuidad_por_centro(df):
+    """
+    Para cada centro calcula el % de pacientes con ingreso que también
+    tienen al menos un segundo registro TOP (cualquier etapa distinta de ingreso).
+
+    Definición operativa (aprobada por Rodrigo, sesión 3):
+      Numerador  = pacientes del centro con etapa='ingreso' que aparecen
+                   además con etapa in {en_tratamiento, egreso, seguimiento}
+      Denominador = pacientes del centro con etapa='ingreso'
+
+    Args:
+        df: DataFrame con columnas 'centro', 'etapa', 'codigo_paciente'
+
+    Returns:
+        pd.DataFrame con columnas: centro, n_ingresos, n_con_continuidad,
+        pct_continuidad (float 0-100). Ordenado descendente por pct_continuidad.
+    """
+    cols_req = {'centro', 'etapa', 'codigo_paciente'}
+    if df is None or df.empty or not cols_req.issubset(df.columns):
+        return pd.DataFrame(columns=[
+            'centro', 'n_ingresos', 'n_con_continuidad', 'pct_continuidad'
+        ])
+
+    tmp = df.copy()
+    tmp['centro']          = tmp['centro'].astype(str).str.strip()
+    tmp['etapa']           = tmp['etapa'].fillna('').astype(str)
+    tmp['codigo_paciente'] = tmp['codigo_paciente'].astype(str).str.strip()
+    tmp = tmp[(tmp['centro'] != '') & (tmp['codigo_paciente'] != '')]
+
+    filas = []
+    ETAPAS_SEGUNDA = {'en_tratamiento', 'egreso', 'seguimiento'}
+    for centro, grupo in tmp.groupby('centro'):
+        pacientes_ingreso = set(
+            grupo.loc[grupo['etapa'] == 'ingreso', 'codigo_paciente']
+        )
+        pacientes_segunda = set(
+            grupo.loc[grupo['etapa'].isin(ETAPAS_SEGUNDA), 'codigo_paciente']
+        )
+        n_ing  = len(pacientes_ingreso)
+        n_cont = len(pacientes_ingreso & pacientes_segunda)
+        pct    = (n_cont / n_ing * 100) if n_ing > 0 else 0.0
+        filas.append({
+            'centro':            centro,
+            'n_ingresos':        n_ing,
+            'n_con_continuidad': n_cont,
+            'pct_continuidad':   pct,
+        })
+
+    if not filas:
+        return pd.DataFrame(columns=[
+            'centro', 'n_ingresos', 'n_con_continuidad', 'pct_continuidad'
+        ])
+
+    out = pd.DataFrame(filas)
+    return out.sort_values('pct_continuidad', ascending=False).reset_index(drop=True)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HELPERS DE UI COMPARTIDOS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def titulo_seccion(icono, texto, subtitulo=None):
+    """
+    Devuelve el HTML del título de una sección del Panel de gestión.
+    Reemplaza la vieja franja azul '.sec' por un título limpio dentro
+    de la card blanca (que se activa con st.container(border=True)).
+
+    Args:
+        icono: emoji o carácter unicode (ej: '🚦', '🏆')
+        texto: título principal en negro
+        subtitulo: opcional, texto gris pequeño debajo
+    """
+    sub_html = (
+        f'<div style="font-size:.82rem;color:#777;margin-top:.15rem;">{subtitulo}</div>'
+        if subtitulo else ''
+    )
+    return (
+        f'<div style="padding:.15rem .1rem .55rem .1rem;">'
+        f'  <div style="font-size:1.02rem;font-weight:600;color:#1F1F1F;">'
+        f'    {icono}&nbsp;&nbsp;{texto}'
+        f'  </div>'
+        f'  {sub_html}'
+        f'</div>'
+    )
