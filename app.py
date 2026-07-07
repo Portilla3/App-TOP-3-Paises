@@ -17,9 +17,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pipeline.wide_top import procesar_wide
 from pipeline.runner   import run_script, run_paquetes_centros
 from pipeline.panel.data import cargar_datos_pais, invalidar_cache_pais
-from pipeline.panel     import metricas as panel_metricas
-from pipeline.panel     import semaforo as panel_semaforo
-from pipeline.panel     import ranking  as panel_ranking
+from pipeline.panel     import metricas    as panel_metricas
+from pipeline.panel     import semaforo    as panel_semaforo
+from pipeline.panel     import ranking     as panel_ranking
+from pipeline.panel     import continuidad as panel_continuidad
+from pipeline.panel     import piramide    as panel_piramide
+from pipeline.panel     import sustancia   as panel_sustancia
 
 NAVY='#1F3864'; MID='#2E75B6'; ACCENT='#00B0F0'
 ORANGE='#C8590A'; RED='#C00000'; GREEN='#538135'; WHITE='#FFFFFF'
@@ -804,13 +807,33 @@ with tab_panel:
 
         st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
-        # ── Ranking de ingresos por centro ────────────────────────────────────
-        panel_ranking.render(df_panel, pais_panel, centro_id=None)
+        # ── Ranking + Continuidad lado a lado ─────────────────────────────────
+        col_rk, col_cont = st.columns(2, gap='medium')
+        with col_rk:
+            panel_ranking.render(df_panel, pais_panel, centro_id=None)
+        with col_cont:
+            panel_continuidad.render(df_panel, pais_panel, centro_id=None)
+
+        st.markdown('<div style="height:1.2rem"></div>', unsafe_allow_html=True)
+
+        # ── Perfil de pacientes al ingreso: Pirámide + Sustancia (2 col) ──────
+        st.markdown(
+            '<div style="font-size:1.15rem;font-weight:700;color:#1F1F1F;'
+            'margin:.2rem 0 .1rem 0;">Perfil de pacientes al ingreso</div>'
+            '<div style="font-size:.82rem;color:#777;margin-bottom:.7rem;">'
+            'información de la primera evaluación TOP · no incluye seguimientos</div>',
+            unsafe_allow_html=True
+        )
+        col_pir, col_sust = st.columns(2, gap='medium')
+        with col_pir:
+            panel_piramide.render(df_panel, pais_panel, centro_id=None)
+        with col_sust:
+            panel_sustancia.render(df_panel, pais_panel, centro_id=None)
 
         st.markdown('---')
         st.caption(
-            '🚧 Próximos componentes: Continuidad por centro · Perfil de pacientes '
-            '(pirámide, sustancia, días de consumo, transgresión) · Reporte de avance.'
+            '🚧 Próximos componentes: Días de consumo por sustancia · '
+            'Transgresión a la ley · Reporte de avance por centro.'
         )
 
 
