@@ -30,6 +30,7 @@ from pipeline.panel.config import (
     color_semaforo,
     etiqueta_semaforo,
     prioridad_semaforo,
+    titulo_seccion,
     COLOR_VERDE, COLOR_AMARILLO, COLOR_ROJO, COLOR_GRIS,
 )
 
@@ -57,16 +58,24 @@ def render(df, pais, centro_id=None):
         pais: nombre del país (usado en título)
         centro_id: si viene con valor, resalta ese centro con borde grueso.
     """
-    st.markdown(
-        '<div class="sec">🚦 Actividad reciente por centro</div>',
-        unsafe_allow_html=True
-    )
+    with st.container(border=True):
+        st.markdown(
+            titulo_seccion('🚦', 'Actividad reciente por centro',
+                           'días desde el último registro TOP aplicado'),
+            unsafe_allow_html=True
+        )
 
-    actividad = actividad_por_centro(df)
+        actividad = actividad_por_centro(df)
 
-    if actividad.empty:
-        st.info('ℹ Aún no hay centros con registros para este país.')
-        return
+        if actividad.empty:
+            st.info('ℹ Aún no hay centros con registros para este país.')
+            return
+
+        _pintar_grid_y_leyenda(actividad, centro_id)
+
+
+def _pintar_grid_y_leyenda(actividad, centro_id):
+    """Función interna: pinta el grid Plotly y la leyenda debajo."""
 
     n_centros = len(actividad)
     n_filas   = math.ceil(n_centros / COLS_POR_FILA)
