@@ -63,27 +63,28 @@ def _grafico(ranking, centro_id):
         marker=dict(color=colores_rev, line=dict(width=0)),
         text=ranking_rev['n_ingresos'],
         textposition='outside',
-        textfont=dict(color=NAVY, size=12, family='Arial'),
+        textfont=dict(color=NAVY, size=15, family='Arial'),
         hovertemplate='<b>%{y}</b><br>Ingresos: %{x}<extra></extra>',
         cliponaxis=False,
         showlegend=False,
     ))
 
-    # Altura dinámica: 34 px por barra + margen fijo
+    # Altura dinámica: más compacto que antes (26 px por barra)
     n = len(ranking)
-    alto = max(180, n * 34 + 40)
+    alto = max(150, n * 26 + 30)
 
     fig.update_layout(
         height=alto,
-        margin=dict(l=10, r=60, t=10, b=10),
-        barmode='overlay',    # las dos barras se superponen (fondo + real)
+        margin=dict(l=10, r=60, t=6, b=6),
+        barmode='overlay',
+        bargap=0.18,           # menos separación entre barras
         xaxis=dict(
             visible=False,
             range=[0, max_val * 1.18],
             fixedrange=True,
         ),
         yaxis=dict(
-            tickfont=dict(size=11, color=NAVY, family='Arial'),
+            tickfont=dict(size=13, color=NAVY, family='Arial'),
             automargin=True,
             fixedrange=True,
         ),
