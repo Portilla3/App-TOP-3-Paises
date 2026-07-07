@@ -122,14 +122,20 @@ def render(df, pais, centro_id=None):
 
     m = _calcular_metricas(df_local)
 
+    # Tamaños tipográficos aumentados solo para el Panel de gestión.
+    # Override de los estilos globales de app.py (.kpi-lbl, .kpi-val, .kpi-sub).
+    S_LBL = 'font-size:.95rem;color:#555;margin-bottom:.25rem;font-weight:500;'
+    S_VAL = 'font-size:2.3rem;font-weight:800;color:#1F3864;line-height:1.05;'
+    S_SUB = 'font-size:.85rem;color:#777;margin-top:.25rem;'
+
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown(
             f'''<div class="kpi">
-                <div class="kpi-lbl">Total de registros</div>
-                <div class="kpi-val">{m["total_registros"]:,}</div>
-                <div class="kpi-sub">{m["n_ingresos"]:,} ingresos + {m["n_seguimientos"]:,} seguimientos</div>
+                <div style="{S_LBL}">Total de registros</div>
+                <div style="{S_VAL}">{m["total_registros"]:,}</div>
+                <div style="{S_SUB}">{m["n_ingresos"]:,} ingresos + {m["n_seguimientos"]:,} seguimientos</div>
             </div>'''.replace(',', '.'),
             unsafe_allow_html=True
         )
@@ -137,9 +143,9 @@ def render(df, pais, centro_id=None):
     with col2:
         st.markdown(
             f'''<div class="kpi">
-                <div class="kpi-lbl">Pacientes ingresados</div>
-                <div class="kpi-val">{m["pacientes_ingresados"]:,}</div>
-                <div class="kpi-sub">primera evaluación aplicada</div>
+                <div style="{S_LBL}">Pacientes ingresados</div>
+                <div style="{S_VAL}">{m["pacientes_ingresados"]:,}</div>
+                <div style="{S_SUB}">primera evaluación aplicada</div>
             </div>'''.replace(',', '.'),
             unsafe_allow_html=True
         )
@@ -148,9 +154,9 @@ def render(df, pais, centro_id=None):
         color_class = 'green' if m['pct_con_seguimiento'] >= 10 else ('orange' if m['pct_con_seguimiento'] >= 3 else 'red')
         st.markdown(
             f'''<div class="kpi {color_class}">
-                <div class="kpi-lbl">Con seguimiento</div>
-                <div class="kpi-val">{m["pct_con_seguimiento"]:.1f}%</div>
-                <div class="kpi-sub">{m["pacientes_con_seguimiento"]:,} de {m["pacientes_ingresados"]:,} pacientes</div>
+                <div style="{S_LBL}">Con seguimiento</div>
+                <div style="{S_VAL}">{m["pct_con_seguimiento"]:.1f}%</div>
+                <div style="{S_SUB}">{m["pacientes_con_seguimiento"]:,} de {m["pacientes_ingresados"]:,} pacientes</div>
             </div>'''.replace(',', '.'),
             unsafe_allow_html=True
         )
@@ -158,9 +164,9 @@ def render(df, pais, centro_id=None):
     with col4:
         st.markdown(
             f'''<div class="kpi">
-                <div class="kpi-lbl">Centros activos</div>
-                <div class="kpi-val">{m["centros_activos"]}</div>
-                <div class="kpi-sub">con al menos un registro</div>
+                <div style="{S_LBL}">Centros activos</div>
+                <div style="{S_VAL}">{m["centros_activos"]}</div>
+                <div style="{S_SUB}">con al menos un registro</div>
             </div>''',
             unsafe_allow_html=True
         )
