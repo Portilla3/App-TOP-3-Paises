@@ -1,10 +1,13 @@
 """
 pipeline.panel.ranking — Ranking horizontal por ingresos acumulados por centro.
 
-Muestra todos los centros del país ordenados por número de registros con
-etapa='ingreso', de mayor a menor. Altura del gráfico se ajusta al número
-de centros para mantener legibilidad tanto en países pequeños (8 centros)
-como grandes (21 centros de México CIJ).
+Muestra los centros del país ordenados por número de registros con
+etapa='ingreso', de mayor a menor. Diseño según mockup aprobado:
+  - Barra de fondo clara al 100% del máximo (referencia visual)
+  - Barra sólida color primario con el valor real
+  - Nombre del centro a la izquierda, valor al final de la barra
+  - Ejes ocultos, sin gridlines
+  - Top 10 visible por defecto; si hay más centros, expander con el resto
 
 Función expuesta:
   render(df, pais, centro_id=None)
@@ -15,10 +18,79 @@ import plotly.graph_objects as go
 from pipeline.panel.config import ingresos_por_centro
 
 
-# Paleta del panel (mantener consistencia con app.py)
-NAVY  = '#1F3864'
-MID   = '#2E75B6'
-ACCENT= '#00B0F0'
+NAVY   = '#1F3864'
+MID    = '#2E75B6'
+FONDO  = '#E8EEF7'   # gris azulado muy claro para barra de referencia
+DESTAC = '#00B0F0'   # cyan para centro destacado
+
+
+TOP_N_VISIBLE = 10
+
+
+def _grafico(ranking, centro_id):
+    """Construye el go.Figure con barras horizontales según diseño mockup."""
+    max_val = int(ranking['n_ingresos'].max()) if not ranking.empty else 1
+    if max_val == 0:
+        max_val = 1
+
+    # Colores de barra: normal MID, destacado DESTAC
+    colores = [
+        DESTAC if centro_id and str(c).strip() == str(centro_id).strip() else MID
+        for c in ranking['centro']
+    ]
+
+    # Plotly pinta de abajo hacia arriba en horizontal, así que invertimos
+    ranking_rev = ranking.iloc[::-1].reset_index(drop=True)
+    colores_rev = colores[::-1]
+
+    fig = go.Figure()
+
+    # Barra de fondo (referencia al máximo)
+    fig.add_trace(go.Bar(
+        x=[max_val] * len(ranking_rev),
+        y=ranking_rev['centro'],
+        orientation='h',
+        marker=dict(color=FONDO, line=dict(width=0)),
+        hoverinfo='skip',
+        showlegend=False,
+    ))
+
+    # Barra real con el valor
+    fig.add_trace(go.Bar(
+        x=ranking_rev['n_ingresos'],
+        y=ranking_rev['centro'],
+        orientation='h',
+        marker=dict(color=colores_rev, line=dict(width=0)),
+        text=ranking_rev['n_ingresos'],
+        textposition='outside',
+        textfont=dict(color=NAVY, size=12, family='Arial'),
+        hovertemplate='<b>%{y}</b><br>Ingresos: %{x}<extra></extra>',
+        cliponaxis=False,
+        showlegend=False,
+    ))
+
+    # Altura dinámica: 34 px por barra + margen fijo
+    n = len(ranking)
+    alto = max(180, n * 34 + 40)
+
+    fig.update_layout(
+        height=alto,
+        margin=dict(l=10, r=60, t=10, b=10),
+        barmode='overlay',    # las dos barras se superponen (fondo + real)
+        xaxis=dict(
+            visible=False,
+            range=[0, max_val * 1.18],
+            fixedrange=True,
+        ),
+        yaxis=dict(
+            tickfont=dict(size=11, color=NAVY, family='Arial'),
+            automargin=True,
+            fixedrange=True,
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+    )
+    return fig
 
 
 def render(df, pais, centro_id=None):
@@ -28,7 +100,7 @@ def render(df, pais, centro_id=None):
     Args:
         df: DataFrame del país (columnas 'centro' y 'etapa')
         pais: nombre del país (para título contextual)
-        centro_id: si viene con valor, resalta ese centro. Los demás quedan atenuados.
+        centro_id: si viene con valor, resalta ese centro en cyan.
     """
     st.markdown(
         '<div class="sec">🏆 Ranking de ingresos por centro</div>',
@@ -41,57 +113,29 @@ def render(df, pais, centro_id=None):
         st.info('ℹ Aún no hay ingresos registrados para calcular el ranking.')
         return
 
-    # Colores: si hay centro destacado, ese va NAVY y el resto ACCENT atenuado
-    if centro_id:
-        colores = [
-            NAVY if str(c).strip() == str(centro_id).strip() else '#B4C7E7'
-            for c in ranking['centro']
-        ]
+    total = len(ranking)
+
+    if total <= TOP_N_VISIBLE:
+        # Todos caben en la vista principal
+        st.plotly_chart(
+            _grafico(ranking, centro_id),
+            use_container_width=True,
+            config={'displayModeBar': False}
+        )
     else:
-        colores = [MID] * len(ranking)
+        # Top N visible + expander con el resto
+        top     = ranking.head(TOP_N_VISIBLE).reset_index(drop=True)
+        resto   = ranking.iloc[TOP_N_VISIBLE:].reset_index(drop=True)
 
-    # Plotly con barras horizontales. Para que la barra más alta quede arriba,
-    # invertimos el orden (Plotly pinta de abajo hacia arriba).
-    ranking_reverso = ranking.iloc[::-1].reset_index(drop=True)
-    colores_reverso = colores[::-1]
+        st.plotly_chart(
+            _grafico(top, centro_id),
+            use_container_width=True,
+            config={'displayModeBar': False}
+        )
 
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=ranking_reverso['n_ingresos'],
-        y=ranking_reverso['centro'],
-        orientation='h',
-        marker=dict(color=colores_reverso, line=dict(color='white', width=1)),
-        text=ranking_reverso['n_ingresos'],
-        textposition='outside',
-        textfont=dict(color=NAVY, size=12, family='Arial'),
-        hovertemplate='<b>%{y}</b><br>Ingresos: %{x}<extra></extra>',
-        cliponaxis=False,
-    ))
-
-    # Altura dinámica: 30 px por centro + margen fijo, mínimo 200
-    n = len(ranking)
-    alto = max(200, n * 30 + 60)
-
-    max_val = int(ranking['n_ingresos'].max()) if not ranking.empty else 0
-
-    fig.update_layout(
-        height=alto,
-        margin=dict(l=10, r=60, t=10, b=20),
-        xaxis=dict(
-            title='Registros de ingreso',
-            title_font=dict(size=11, color='#666'),
-            tickfont=dict(size=10, color='#666'),
-            gridcolor='#EEE',
-            zerolinecolor='#DDD',
-            range=[0, max_val * 1.15 if max_val > 0 else 1],
-        ),
-        yaxis=dict(
-            tickfont=dict(size=11, color=NAVY, family='Arial'),
-            automargin=True,
-        ),
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-        showlegend=False,
-    )
-
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        with st.expander(f'▼ Ver otros {len(resto)} centros'):
+            st.plotly_chart(
+                _grafico(resto, centro_id),
+                use_container_width=True,
+                config={'displayModeBar': False}
+            )
