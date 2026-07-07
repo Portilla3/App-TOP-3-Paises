@@ -1,21 +1,21 @@
 """
 pipeline.panel.semaforo — Semáforo horizontal de actividad reciente por centro.
 
-Componente estrella del Panel de gestión. Grid de 11 columnas con un cuadrado
-por centro, coloreado según los días desde el último registro TOP.
+Componente estrella del Panel de gestión. Grid de hasta 11 columnas con un
+cuadrado por centro, coloreado según los días desde el último registro TOP.
+
+Diseño según mockup aprobado:
+  - Cuadros de proporción cuadrada, separados por espacio blanco
+  - Colores suaves (verde #8BC34A, amarillo #F0A836, rojo #E15D5D, gris #B4BAC2)
+  - Código del centro dentro del cuadro con fuente adaptativa
+  - Tooltip con detalle al pasar el mouse
+  - Leyenda estilo mockup con conteo por estado
 
 Colores (definidos en config.py):
   - Verde   : 0-14  días → activo
   - Amarillo: 15-44 días → atrasado
   - Rojo    : 45+   días → inactivo
-  - Gris    : sin registros (centro configurado pero sin actividad)
-
-Layout:
-  - Máximo 11 columnas
-  - N centros → ceil(N/11) filas
-  - Aspect ratio 1:1 por celda
-  - Código del centro visible dentro del cuadro
-  - Tooltip con detalle al pasar el mouse
+  - Gris    : sin registros
 
 Función expuesta:
   render(df, pais, centro_id=None)
@@ -29,11 +29,23 @@ from pipeline.panel.config import (
     actividad_por_centro,
     color_semaforo,
     etiqueta_semaforo,
+    prioridad_semaforo,
     COLOR_VERDE, COLOR_AMARILLO, COLOR_ROJO, COLOR_GRIS,
 )
 
 
 COLS_POR_FILA = 11
+
+
+def _tamano_fuente(codigo):
+    """Ajusta el tamaño de la fuente al largo del código para que quepa dentro."""
+    n = len(str(codigo))
+    if n <= 3:  return 13
+    if n <= 4:  return 11
+    if n <= 5:  return 10
+    if n <= 6:  return 9
+    if n <= 7:  return 8
+    return 7
 
 
 def render(df, pais, centro_id=None):
@@ -43,7 +55,7 @@ def render(df, pais, centro_id=None):
     Args:
         df: DataFrame del país (columnas 'centro' y 'fecha_entrevista')
         pais: nombre del país (usado en título)
-        centro_id: si viene con valor, resalta ese centro. Por ahora no filtra.
+        centro_id: si viene con valor, resalta ese centro con borde grueso.
     """
     st.markdown(
         '<div class="sec">🚦 Actividad reciente por centro</div>',
@@ -56,22 +68,56 @@ def render(df, pais, centro_id=None):
         st.info('ℹ Aún no hay centros con registros para este país.')
         return
 
-    # Preparar datos para el grid
-    n_centros  = len(actividad)
-    n_filas    = math.ceil(n_centros / COLS_POR_FILA)
-    n_cols_uso = min(n_centros, COLS_POR_FILA)
+    n_centros = len(actividad)
+    n_filas   = math.ceil(n_centros / COLS_POR_FILA)
 
-    # Coordenadas y estilo por centro
-    xs, ys, colores, textos, hovers = [], [], [], [], []
+    # Ordenar por prioridad de color (verde → amarillo → rojo → gris)
+    # y dentro de cada grupo, por días ascendente (los más recientes primero).
+    actividad = actividad.copy()
+    actividad['_prio'] = actividad['dias'].apply(prioridad_semaforo)
+    actividad['_dias_orden'] = actividad['dias'].fillna(999999)
+    actividad = actividad.sort_values(
+        by=['_prio', '_dias_orden', 'centro']
+    ).reset_index(drop=True)
+
+    # Cada cuadro ocupa una celda (col, fila). Margen chico para que estén juntos.
+    MARGEN = 0.04
+
+    fig = go.Figure()
+
     for i, row in actividad.iterrows():
-        col = i % COLS_POR_FILA
+        col  = i % COLS_POR_FILA
         fila = i // COLS_POR_FILA
-        xs.append(col)
-        ys.append(-fila)   # negativo para que la fila 0 quede arriba
-        color = color_semaforo(row['dias'])
-        colores.append(color)
-        textos.append(row['centro'])
 
+        color = color_semaforo(row['dias'])
+        codigo = str(row['centro'])
+
+        x0 = col + MARGEN
+        x1 = col + 1 - MARGEN
+        y0 = -fila - 1 + MARGEN
+        y1 = -fila - MARGEN
+
+        # Borde: blanco por defecto, navy grueso si es el centro destacado
+        borde_color = '#1F3864' if centro_id and codigo == str(centro_id).strip() else 'white'
+        borde_ancho = 3 if centro_id and codigo == str(centro_id).strip() else 2
+
+        fig.add_shape(
+            type='rect',
+            x0=x0, x1=x1, y0=y0, y1=y1,
+            fillcolor=color,
+            line=dict(color=borde_color, width=borde_ancho),
+            layer='below',
+        )
+
+        fig.add_annotation(
+            x=(x0 + x1) / 2,
+            y=(y0 + y1) / 2,
+            text=f'<b>{codigo}</b>',
+            showarrow=False,
+            font=dict(color='white', size=_tamano_fuente(codigo), family='Arial'),
+        )
+
+        # Punto invisible para tooltip
         etiq = etiqueta_semaforo(row['dias'])
         dias_val = row['dias']
         tiene_fecha = pd.notna(row['ultima_fecha']) and pd.notna(dias_val)
@@ -82,99 +128,77 @@ def render(df, pais, centro_id=None):
             fecha_str = '—'
             dias_str  = 'sin datos'
 
-        hovers.append(
-            f"<b>{row['centro']}</b><br>"
+        hover = (
+            f"<b>{codigo}</b><br>"
             f"Último registro: {fecha_str}<br>"
             f"Días transcurridos: {dias_str}<br>"
             f"Registros totales: {int(row['n_registros'])}<br>"
             f"Estado: <b>{etiq}</b>"
         )
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=xs, y=ys,
-        mode='markers+text',
-        marker=dict(
-            symbol='square',
-            size=70,
-            color=colores,
-            line=dict(color='white', width=3),
-        ),
-        text=textos,
-        textposition='middle center',
-        textfont=dict(color='white', size=13, family='Arial Black'),
-        hovertext=hovers,
-        hoverinfo='text',
-        showlegend=False,
-    ))
+        fig.add_trace(go.Scatter(
+            x=[(x0 + x1) / 2],
+            y=[(y0 + y1) / 2],
+            mode='markers',
+            marker=dict(size=45, color='rgba(0,0,0,0)'),
+            hovertext=[hover],
+            hoverinfo='text',
+            showlegend=False,
+        ))
 
-    # Altura dinámica: 90 px por fila + márgenes
-    alto = max(140, n_filas * 90 + 40)
+    alto = max(120, n_filas * 68 + 20)
 
     fig.update_layout(
         height=alto,
-        margin=dict(l=10, r=10, t=10, b=10),
+        margin=dict(l=6, r=6, t=6, b=6),
         xaxis=dict(
             visible=False,
-            range=[-0.5, COLS_POR_FILA - 0.5],
+            range=[-0.1, COLS_POR_FILA + 0.1],
             fixedrange=True,
         ),
         yaxis=dict(
             visible=False,
-            range=[-n_filas + 0.5, 0.5],
+            range=[-n_filas - 0.1, 0.1],
             scaleanchor='x',
             scaleratio=1,
             fixedrange=True,
         ),
         plot_bgcolor='white',
         paper_bgcolor='white',
+        showlegend=False,
     )
 
     st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # Leyenda con conteo por estado
-    verdes    = sum(1 for c in colores if c == COLOR_VERDE)
-    amarillos = sum(1 for c in colores if c == COLOR_AMARILLO)
-    rojos     = sum(1 for c in colores if c == COLOR_ROJO)
-    grises    = sum(1 for c in colores if c == COLOR_GRIS)
+    # Leyenda tipo mockup: "Al día (0 a 14 días): N"
+    colores_actuales = [color_semaforo(d) for d in actividad['dias']]
+    verdes    = sum(1 for c in colores_actuales if c == COLOR_VERDE)
+    amarillos = sum(1 for c in colores_actuales if c == COLOR_AMARILLO)
+    rojos     = sum(1 for c in colores_actuales if c == COLOR_ROJO)
+    grises    = sum(1 for c in colores_actuales if c == COLOR_GRIS)
 
-    lg1, lg2, lg3, lg4, lg5 = st.columns([1, 1, 1, 1, 2])
-    with lg1:
-        st.markdown(
-            f'<div style="text-align:center;font-size:.82rem;">'
-            f'<span style="display:inline-block;width:12px;height:12px;background:{COLOR_VERDE};'
-            f'border-radius:3px;margin-right:5px;vertical-align:middle;"></span>'
-            f'Activos (0-14 días): <b>{verdes}</b></div>',
-            unsafe_allow_html=True
+    def _leg_item(color, texto, valor):
+        return (
+            f'<span style="display:inline-flex;align-items:center;margin-right:1.5rem;font-size:.83rem;">'
+            f'<span style="display:inline-block;width:12px;height:12px;background:{color};'
+            f'border-radius:3px;margin-right:6px;"></span>'
+            f'{texto}: <b style="margin-left:4px;">{valor}</b>'
+            f'</span>'
         )
-    with lg2:
-        st.markdown(
-            f'<div style="text-align:center;font-size:.82rem;">'
-            f'<span style="display:inline-block;width:12px;height:12px;background:{COLOR_AMARILLO};'
-            f'border-radius:3px;margin-right:5px;vertical-align:middle;"></span>'
-            f'Atrasados (15-44): <b>{amarillos}</b></div>',
-            unsafe_allow_html=True
-        )
-    with lg3:
-        st.markdown(
-            f'<div style="text-align:center;font-size:.82rem;">'
-            f'<span style="display:inline-block;width:12px;height:12px;background:{COLOR_ROJO};'
-            f'border-radius:3px;margin-right:5px;vertical-align:middle;"></span>'
-            f'Inactivos (45+): <b>{rojos}</b></div>',
-            unsafe_allow_html=True
-        )
-    with lg4:
-        if grises > 0:
-            st.markdown(
-                f'<div style="text-align:center;font-size:.82rem;">'
-                f'<span style="display:inline-block;width:12px;height:12px;background:{COLOR_GRIS};'
-                f'border-radius:3px;margin-right:5px;vertical-align:middle;"></span>'
-                f'Sin datos: <b>{grises}</b></div>',
-                unsafe_allow_html=True
-            )
-    with lg5:
-        st.markdown(
-            f'<div style="text-align:right;font-size:.75rem;color:#666;">'
-            f'Total centros: <b>{n_centros}</b> · Fecha de corte: hoy</div>',
-            unsafe_allow_html=True
-        )
+
+    leyenda_html = _leg_item(COLOR_VERDE, 'Al día (0 a 14 días)', verdes)
+    leyenda_html += _leg_item(COLOR_AMARILLO, 'Con rezago (15 a 44)', amarillos)
+    leyenda_html += _leg_item(COLOR_ROJO, 'Inactivo (45+)', rojos)
+    if grises > 0:
+        leyenda_html += _leg_item(COLOR_GRIS, 'Sin datos', grises)
+
+    footer = (
+        f'<div style="display:flex;justify-content:space-between;align-items:center;'
+        f'padding:.4rem .2rem .2rem .2rem;">'
+        f'<div>{leyenda_html}</div>'
+        f'<div style="font-size:.75rem;color:#888;">'
+        f'{n_centros} centros · días desde el último registro'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(footer, unsafe_allow_html=True)
