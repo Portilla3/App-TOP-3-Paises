@@ -16,6 +16,8 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pipeline.wide_top import procesar_wide
 from pipeline.runner   import run_script, run_paquetes_centros
+from pipeline.panel.data import cargar_datos_pais, invalidar_cache_pais
+from pipeline.panel     import metricas as panel_metricas
 
 NAVY='#1F3864'; MID='#2E75B6'; ACCENT='#00B0F0'
 ORANGE='#C8590A'; RED='#C00000'; GREEN='#538135'; WHITE='#FFFFFF'
@@ -728,13 +730,77 @@ with st.sidebar:
 # PESTAÑAS
 # ══════════════════════════════════════════════════════════════════════════════
 if es_unodc:
-    tab_reportes, tab_correccion, tab_migracion, tab_respaldos = st.tabs(
-        ['📊 Reportes', '✏️ Corrección de registros', '📥 Migración JotForm', '💾 Respaldos']
+    tab_panel, tab_reportes, tab_correccion, tab_migracion, tab_respaldos = st.tabs(
+        ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros',
+         '📥 Migración JotForm (obsoleta)', '💾 Respaldos']
     )
 else:
-    tab_reportes, tab_correccion = st.tabs(['📊 Reportes', '✏️ Corrección de registros'])
+    tab_panel, tab_reportes, tab_correccion = st.tabs(
+        ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros']
+    )
     tab_migracion = None
     tab_respaldos = None
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# TAB 0: PANEL DE GESTIÓN
+# ──────────────────────────────────────────────────────────────────────────────
+with tab_panel:
+
+    # UNODC: selectbox de país arriba; país: usa pais_fijo directo
+    if es_unodc:
+        col_sel, col_refresh = st.columns([4, 1])
+        with col_sel:
+            pais_panel = st.selectbox(
+                'País a visualizar',
+                PAISES_ACTIVOS,
+                format_func=lambda p: f"{PAISES_CONFIG[p]['flag']}  {p}",
+                key='panel_pais_sb'
+            )
+        with col_refresh:
+            st.markdown('<div style="height:1.7rem"></div>', unsafe_allow_html=True)
+            if st.button('🔄 Actualizar', use_container_width=True, key='panel_refresh_unodc'):
+                invalidar_cache_pais()
+                st.rerun()
+    else:
+        pais_panel = pais_fijo
+        col_titulo, col_refresh = st.columns([5, 1])
+        with col_titulo:
+            st.markdown(
+                f'<div class="sec">🏠 Panel de gestión · {PAISES_CONFIG[pais_panel]["flag"]} {pais_panel}</div>',
+                unsafe_allow_html=True
+            )
+        with col_refresh:
+            st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+            if st.button('🔄 Actualizar', use_container_width=True, key='panel_refresh_pais'):
+                invalidar_cache_pais()
+                st.rerun()
+
+    # Carga automática con manejo de error blindado
+    try:
+        df_panel = cargar_datos_pais(pais_panel)
+    except KeyError:
+        st.error('⚠ Las credenciales de Supabase no están configuradas en Secrets.')
+        st.stop()
+    except Exception as e:
+        st.error(f'❌ No se pudieron cargar los datos: {e}')
+        if st.button('🔄 Reintentar', key='panel_retry'):
+            invalidar_cache_pais()
+            st.rerun()
+        st.stop()
+
+    if df_panel.empty:
+        st.info(f'ℹ Aún no hay registros para {pais_panel} en la base.')
+    else:
+        # ── Métricas superiores ───────────────────────────────────────────────
+        panel_metricas.render(df_panel, pais_panel, centro_id=None)
+
+        st.markdown('---')
+        st.caption(
+            '🚧 Componentes en construcción: Semáforo de actividad · Ranking · '
+            'Continuidad · Perfil de pacientes · Reporte de avance. '
+            'Se agregan en las próximas sesiones de Etapa 1.'
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
