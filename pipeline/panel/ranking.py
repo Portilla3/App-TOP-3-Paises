@@ -15,7 +15,7 @@ Función expuesta:
 import streamlit as st
 import plotly.graph_objects as go
 
-from pipeline.panel.config import ingresos_por_centro
+from pipeline.panel.config import ingresos_por_centro, titulo_seccion
 
 
 NAVY   = '#1F3864'
@@ -103,40 +103,40 @@ def render(df, pais, centro_id=None):
         pais: nombre del país (para título contextual)
         centro_id: si viene con valor, resalta ese centro en cyan.
     """
-    st.markdown(
-        '<div class="sec">🏆 Ranking de ingresos por centro</div>',
-        unsafe_allow_html=True
-    )
-
-    ranking = ingresos_por_centro(df)
-
-    if ranking.empty:
-        st.info('ℹ Aún no hay ingresos registrados para calcular el ranking.')
-        return
-
-    total = len(ranking)
-
-    if total <= TOP_N_VISIBLE:
-        # Todos caben en la vista principal
-        st.plotly_chart(
-            _grafico(ranking, centro_id),
-            use_container_width=True,
-            config={'displayModeBar': False}
-        )
-    else:
-        # Top N visible + expander con el resto
-        top     = ranking.head(TOP_N_VISIBLE).reset_index(drop=True)
-        resto   = ranking.iloc[TOP_N_VISIBLE:].reset_index(drop=True)
-
-        st.plotly_chart(
-            _grafico(top, centro_id),
-            use_container_width=True,
-            config={'displayModeBar': False}
+    with st.container(border=True):
+        st.markdown(
+            titulo_seccion('🏆', 'Ranking por ingresos acumulados',
+                           'pacientes con primera evaluación TOP'),
+            unsafe_allow_html=True
         )
 
-        with st.expander(f'▼ Ver otros {len(resto)} centros'):
+        ranking = ingresos_por_centro(df)
+
+        if ranking.empty:
+            st.info('ℹ Aún no hay ingresos registrados para calcular el ranking.')
+            return
+
+        total = len(ranking)
+
+        if total <= TOP_N_VISIBLE:
             st.plotly_chart(
-                _grafico(resto, centro_id),
+                _grafico(ranking, centro_id),
                 use_container_width=True,
                 config={'displayModeBar': False}
             )
+        else:
+            top     = ranking.head(TOP_N_VISIBLE).reset_index(drop=True)
+            resto   = ranking.iloc[TOP_N_VISIBLE:].reset_index(drop=True)
+
+            st.plotly_chart(
+                _grafico(top, centro_id),
+                use_container_width=True,
+                config={'displayModeBar': False}
+            )
+
+            with st.expander(f'▼ Ver otros {len(resto)} centros'):
+                st.plotly_chart(
+                    _grafico(resto, centro_id),
+                    use_container_width=True,
+                    config={'displayModeBar': False}
+                )
