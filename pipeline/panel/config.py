@@ -23,11 +23,11 @@ SEMAFORO_UMBRAL_VERDE     = 14   # 0-14 días  → verde   (activo)
 SEMAFORO_UMBRAL_AMARILLO  = 44   # 15-44 días → amarillo (atrasado)
                                  # 45+ días   → rojo    (inactivo)
 
-# Paleta consistente con app.py
-COLOR_VERDE    = '#538135'
-COLOR_AMARILLO = '#E8A100'
-COLOR_ROJO     = '#C00000'
-COLOR_GRIS     = '#9AA0A6'   # centros sin registros
+# Paleta consistente con app.py y mockup aprobado
+COLOR_VERDE    = '#8BC34A'
+COLOR_AMARILLO = '#F0A836'
+COLOR_ROJO     = '#E15D5D'
+COLOR_GRIS     = '#B4BAC2'   # centros sin registros
 
 
 def _es_vacio(dias):
@@ -68,6 +68,20 @@ def etiqueta_semaforo(dias_desde_ultimo):
     if dias_desde_ultimo <= SEMAFORO_UMBRAL_AMARILLO:
         return 'atrasado'
     return 'inactivo'
+
+
+def prioridad_semaforo(dias_desde_ultimo):
+    """
+    Devuelve un entero para ordenar centros por color:
+      0 = verde (activo), 1 = amarillo (atrasado), 2 = rojo (inactivo), 3 = gris (sin datos)
+    """
+    if _es_vacio(dias_desde_ultimo):
+        return 3
+    if dias_desde_ultimo <= SEMAFORO_UMBRAL_VERDE:
+        return 0
+    if dias_desde_ultimo <= SEMAFORO_UMBRAL_AMARILLO:
+        return 1
+    return 2
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
