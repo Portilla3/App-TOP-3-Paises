@@ -18,6 +18,8 @@ from pipeline.wide_top import procesar_wide
 from pipeline.runner   import run_script, run_paquetes_centros
 from pipeline.panel.data import cargar_datos_pais, invalidar_cache_pais
 from pipeline.panel     import metricas as panel_metricas
+from pipeline.panel     import semaforo as panel_semaforo
+from pipeline.panel     import ranking  as panel_ranking
 
 NAVY='#1F3864'; MID='#2E75B6'; ACCENT='#00B0F0'
 ORANGE='#C8590A'; RED='#C00000'; GREEN='#538135'; WHITE='#FFFFFF'
@@ -795,11 +797,20 @@ with tab_panel:
         # ── Métricas superiores ───────────────────────────────────────────────
         panel_metricas.render(df_panel, pais_panel, centro_id=None)
 
+        st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
+
+        # ── Semáforo de actividad reciente por centro ─────────────────────────
+        panel_semaforo.render(df_panel, pais_panel, centro_id=None)
+
+        st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
+
+        # ── Ranking de ingresos por centro ────────────────────────────────────
+        panel_ranking.render(df_panel, pais_panel, centro_id=None)
+
         st.markdown('---')
         st.caption(
-            '🚧 Componentes en construcción: Semáforo de actividad · Ranking · '
-            'Continuidad · Perfil de pacientes · Reporte de avance. '
-            'Se agregan en las próximas sesiones de Etapa 1.'
+            '🚧 Próximos componentes: Continuidad por centro · Perfil de pacientes '
+            '(pirámide, sustancia, días de consumo, transgresión) · Reporte de avance.'
         )
 
 
