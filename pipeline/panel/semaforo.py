@@ -40,12 +40,12 @@ COLS_POR_FILA = 11
 def _tamano_fuente(codigo):
     """Ajusta el tamaño de la fuente al largo del código para que quepa dentro."""
     n = len(str(codigo))
-    if n <= 3:  return 13
-    if n <= 4:  return 11
-    if n <= 5:  return 10
-    if n <= 6:  return 9
-    if n <= 7:  return 8
-    return 7
+    if n <= 3:  return 15
+    if n <= 4:  return 13
+    if n <= 5:  return 12
+    if n <= 6:  return 11
+    if n <= 7:  return 10
+    return 9
 
 
 def render(df, pais, centro_id=None):
@@ -80,8 +80,8 @@ def render(df, pais, centro_id=None):
         by=['_prio', '_dias_orden', 'centro']
     ).reset_index(drop=True)
 
-    # Cada cuadro ocupa una celda (col, fila). Margen chico para que estén juntos.
-    MARGEN = 0.04
+    # Cada cuadro ocupa una celda (col, fila). Margen mínimo para que estén casi pegados.
+    MARGEN = 0.02
 
     fig = go.Figure()
 
@@ -114,39 +114,26 @@ def render(df, pais, centro_id=None):
             y=(y0 + y1) / 2,
             text=f'<b>{codigo}</b>',
             showarrow=False,
-            font=dict(color='white', size=_tamano_fuente(codigo), family='Arial'),
+            font=dict(color='#1F1F1F', size=_tamano_fuente(codigo), family='Arial'),
         )
 
-        # Punto invisible para tooltip
-        etiq = etiqueta_semaforo(row['dias'])
-        dias_val = row['dias']
-        tiene_fecha = pd.notna(row['ultima_fecha']) and pd.notna(dias_val)
-        if tiene_fecha:
-            fecha_str = row['ultima_fecha'].strftime('%d/%m/%Y')
-            dias_str  = f"{int(dias_val)} días"
-        else:
-            fecha_str = '—'
-            dias_str  = 'sin datos'
-
-        hover = (
-            f"<b>{codigo}</b><br>"
-            f"Último registro: {fecha_str}<br>"
-            f"Días transcurridos: {dias_str}<br>"
-            f"Registros totales: {int(row['n_registros'])}<br>"
-            f"Estado: <b>{etiq}</b>"
-        )
-
+        # Punto invisible para tooltip. Solo muestra el código en grande.
         fig.add_trace(go.Scatter(
             x=[(x0 + x1) / 2],
             y=[(y0 + y1) / 2],
             mode='markers',
             marker=dict(size=45, color='rgba(0,0,0,0)'),
-            hovertext=[hover],
+            hovertext=[f'<b>{codigo}</b>'],
             hoverinfo='text',
+            hoverlabel=dict(
+                bgcolor=color,
+                bordercolor='white',
+                font=dict(size=20, color='#1F1F1F', family='Arial'),
+            ),
             showlegend=False,
         ))
 
-    alto = max(120, n_filas * 68 + 20)
+    alto = max(140, n_filas * 85 + 20)
 
     fig.update_layout(
         height=alto,
