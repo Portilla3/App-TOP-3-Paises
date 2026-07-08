@@ -42,115 +42,85 @@ TEXTO_OSCURO = '#1F3864'
 
 # Cada categoría es un conjunto de valores normalizados (mayúsculas, sin tildes)
 # que se agrupan en ella. Ver _normalizar() abajo.
-CATEGORIAS_TOP = {
-    'Alcohol': {
-        'ALCOHOL',
-        'CERVEZA', 'VINO', 'RON', 'AGUARDIENTE', 'CANA PURA',
-        'ALCOHOL (RON)', 'ALCOHOL (CANA PURA)',
-        'ALCOHOL Y JUEGOS EN RED',   # comorbilidad, la sustancia principal es alcohol
-    },
-    'Cannabis/Marihuana': {
-        'MARIHUANA', 'MARIGUANA', 'MARIJUANA', 'CANNABIS',
-        'HASHISH', 'HACHIS', 'MOTA',
-    },
-    'Cocaína': {
-        'COCAINA', 'COCA',
-    },
-    'Pasta base': {
-        'PASTA BASE', 'PASTA', 'BASUCO',
-        'PASTA BASE/BASUCO', 'PASTA BASE / BASUCO',
-        'PBC',
-        'PASTA BASICA DE COCAINA', 'PASTA BASE DE COCAINA',
-        'PASTA BASICA',
-    },
-    'Crack/Cristal': {
-        'CRACK', 'PIEDRA',
-        'CRISTAL', 'METANFETAMINAS', 'METANFETAMINA',
-    },
-    'Tabaco/Nicotina': {
-        'TABACO', 'CIGARRO', 'CIGARRILLO', 'CIGARRILLOS', 'CIGARROS',
-        'CIGARRO (NICOTINA)', 'NICOTINA',
-    },
-    'Sedantes': {
-        'SEDANTES', 'BENZODIACEPINAS', 'BENZODIAZEPINAS',
-        'CLONAZEPAM', 'DIAZEPAM', 'ALPRAZOLAM',
-    },
-    'Heroína': {
-        'HEROINA', 'OPIO', 'OPIACEOS',
-    },
-    'Inhalables': {
-        'INHALABLES', 'INHALANTES', 'TOLUENO', 'PEGAMENTO', 'THINNER',
-    },
+# ── Taxonomía alineada a wide_top.norm_sust_v3 (wide es fuente de verdad) ────
+# Orden de evaluación importa: la primera regla que matchea gana.
+# Cada entrada: (lista_de_substrings, nombre_categoria)
+_REGLAS = [
+    (['alcohol','alchol','cerveza','licor','aguard','beer','wine','ron'],  'Alcohol'),
+    (['marihu','marhuana','cannabis','cannbis','marij','weed','crispy'],   'Cannabis/Marihuana'),
+    (['tusi','tussi','tusy','tuci','2cb'],                                 'Tusi'),
+    (['pasta base','pasta basica','papelillo','pbc','basuco','bazuco'],    'Pasta base'),
+    (['metanfet','anfetam','cristal','crystal'],                           'Metanfetamina'),
+    (['crack','piedra','paco'],                                            'Crack/Cristal'),
+    (['cocain','cocai','perico','coke'],                                   'Cocaína'),
+    (['tabaco','cigarr','nicot'],                                          'Tabaco/Nicotina'),
+    (['inhalant','thiner','activo','pegamento','solvente'],                'Inhalables'),
+    (['sedant','benzod','tranqui','clonaz','diazep','rivotril'],           'Sedantes'),
+    (['opiod','heroina','morfin','fentanil','tramad'],                     'Opiáceos'),
+    (['extasis','mdma','xtc'],                                             'Éxtasis'),
+    (['ketam'],                                                            'Ketamina'),
+]
+
+# Orden visual fijo para el gráfico (de más a menos frecuente esperado)
+ORDEN_CATEGORIAS = [r[1] for r in _REGLAS]
+
+# Valores no informativos: se descartan (None) igual que en wide
+_DESCARTAR = {
+    'ninguno','ninguna','niega','no aplica','no consume','nada',
+    'ludopatia','juego','apuesta','gaming','azar',
 }
 
-# Orden fijo de las categorías principales (para consistencia visual entre países).
-# El ranking real se ordena por conteo desc, pero este orden se usa como criterio
-# secundario de desempate.
-ORDEN_CATEGORIAS = list(CATEGORIAS_TOP.keys())
+import re as _re
 
-# Valores considerados "no informativos" (van a Otras, se detallan en hover)
-NO_INFORMATIVOS = {
-    'OTRA', 'OTRO', 'OTRAS', 'OTROS',
-    'OTRA SUSTANCIA', 'OTRAS SUSTANCIAS',
-    'NO SABE', 'NS', 'NR', 'NO RESPONDE',
-    'NINGUNA', 'NINGUNO', 'NINGUN',
-    'SI', 'S', 'NO', 'N',
-    'NADA', 'NULO', 'NULL', 'NA',
-}
-
-
-# Construir lookup invertido (valor_normalizado → categoría)
-_LOOKUP = {}
-for _cat, _vals in CATEGORIAS_TOP.items():
-    for _v in _vals:
-        _LOOKUP[_v] = _cat
-
-
-def _normalizar(s):
-    """Mayúsculas + sin tildes + strip."""
-    if s is None or (isinstance(s, float) and pd.isna(s)):
-        return ''
-    txt = str(s).strip().upper()
-    txt = ''.join(
-        c for c in unicodedata.normalize('NFD', txt)
-        if unicodedata.category(c) != 'Mn'
-    )
-    return txt
-
-
-def _es_multiple(norm):
-    """True si el valor contiene indicios de múltiples sustancias."""
-    if not norm or norm in _LOOKUP:
-        return False
-    if '/' in norm: return True
-    if ',' in norm: return True
-    if ' + ' in norm: return True
-    if f' Y ' in f' {norm} ': return True
-    return False
-
-
-def _clasificar(valor_original):
+def _clasificar_sustancia(valor_original):
     """
-    Retorna la categoría oficial (o 'Otras') y una subclase para el hover.
-
-    Returns:
-        (categoria, subclase)
-          categoria in ORDEN_CATEGORIAS + ['Otras']
-          subclase in {'canonico', 'sin_reconocer', 'no_informativo',
-                       'multiple', 'en_blanco'}
+    Replica la lógica de wide_top.norm_sust_v3:
+      - Quita paréntesis
+      - Toma primera sustancia en entradas múltiples (split / , + y)
+      - Quita tildes y pasa a minúsculas
+      - Evalúa reglas en orden
+    Retorna: (categoria_str, subclase_str)
+      subclase in {'canonico','no_informativo','multiple','en_blanco','sin_reconocer'}
     """
-    norm = _normalizar(valor_original)
-    if norm == '':
+    if valor_original is None or (isinstance(valor_original, float) and pd.isna(valor_original)):
         return ('Otras', 'en_blanco')
-    if norm in _LOOKUP:
-        return (_LOOKUP[norm], 'canonico')
-    if norm in NO_INFORMATIVOS:
+
+    raw = str(valor_original).strip()
+    if raw == '':
+        return ('Otras', 'en_blanco')
+
+    # Preprocesamiento igual a wide
+    raw = _re.split(r'[\r\n]', raw)[0].strip()
+    raw = _re.sub(r'\(.*?\)', '', raw).strip()
+    raw = _re.sub(r'^(las dos|ambas|los dos|ambos)[,\s]+', '', raw, flags=_re.IGNORECASE).strip()
+
+    es_multiple = bool(_re.search(r'\s+y\s+|[/,+]', raw))
+    primera = _re.split(r'\s+y\s+|[/,+]', raw, maxsplit=1)[0].strip()
+
+    # Normalizar: minúsculas + sin tildes
+    n = unicodedata.normalize('NFD', primera.lower()).encode('ascii', 'ignore').decode()
+
+    # Descartar no informativos
+    if any(x in n for x in _DESCARTAR):
         return ('Otras', 'no_informativo')
-    if _es_multiple(norm):
+
+    # Evaluar reglas en orden
+    for keywords, categoria in _REGLAS:
+        if any(x in n for x in keywords):
+            return (categoria, 'canonico')
+
+    # No reconocido
+    if es_multiple:
         return ('Otras', 'multiple')
-    # Valor no reconocido (ej: LSD, POPPERS, ANFETAMINAS, TUSI, KETAMINA...)
-    # Va a Otras según taxonomía TOP oficial.
     return ('Otras', 'sin_reconocer')
+
+
+# Alias para mantener compatibilidad con el resto del archivo
+def _clasificar(valor_original):
+    return _clasificar_sustancia(valor_original)
+
+
+
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
