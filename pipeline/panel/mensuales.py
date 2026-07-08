@@ -138,13 +138,13 @@ def render(df, pais, centro_id=None):
         # El acumulado siempre gana, así que el eje se define por él.
         max_acum = int(mensual['acumulado'].max()) if not mensual.empty else 1
         fig.update_layout(
-            height=200,
-            margin=dict(l=10, r=10, t=10, b=20),
+            height=160,
+            margin=dict(l=8, r=8, t=4, b=15),
             barmode='overlay',
             bargap=0.25,
             showlegend=False,
             xaxis=dict(
-                tickfont=dict(size=11, color=TEXTO_OSCURO, family='Arial'),
+                tickfont=dict(size=10, color=TEXTO_OSCURO, family='Arial'),
                 fixedrange=True,
                 showgrid=False,
             ),
