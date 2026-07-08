@@ -46,6 +46,8 @@ NOMBRES_CANONICOS = {
     'PASTA BASE':  'Pasta base',
     'PASTA':       'Pasta base',
     'BASUCO':      'Pasta base',
+    'PASTA BASE/BASUCO': 'Pasta base',
+    'PASTA BASE / BASUCO': 'Pasta base',
     'CRACK':       'Crack',
     'PIEDRA':      'Crack',
     'HEROINA':     'Heroína',
@@ -113,6 +115,8 @@ def _calcular_sustancias(df):
         'ranking': pd.DataFrame(columns=['sustancia', 'n', 'pct']),
         'n_otra_sin_especificar': 0,
         'pct_otra_sin_especificar': 0.0,
+        'n_en_blanco': 0,
+        'pct_en_blanco': 0.0,
         'total_valid': 0,
     }
 
@@ -126,19 +130,27 @@ def _calcular_sustancias(df):
     if tmp.empty:
         return vacio
 
+    total_ingreso = len(tmp)   # total de pacientes con TOP1 (denominador honesto)
+
     tmp['sust_norm'] = tmp['sustancia_principal'].apply(_normalizar)
+
+    # Contar los en blanco antes de filtrarlos
+    n_blanco = int((tmp['sust_norm'] == '').sum())
     tmp = tmp[tmp['sust_norm'] != '']
+
     if tmp.empty:
-        return vacio
+        return {
+            **vacio,
+            'n_en_blanco': n_blanco,
+            'pct_en_blanco': (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
+        }
 
     # Separar "Otra sustancia" genérica antes de contar
-    # Valores considerados no informativos y excluidos del ranking:
     NO_INFORMATIVOS = {
         'OTRA', 'OTRO', 'OTRAS', 'OTROS',
         'OTRA SUSTANCIA', 'OTRAS SUSTANCIAS',
         'NO SABE', 'NS', 'NR', 'NO RESPONDE', 'NINGUNA', 'NINGUNO',
     }
-    total_todos = len(tmp)
     mask_no_inf = tmp['sust_norm'].isin(NO_INFORMATIVOS)
     n_no_inf = int(mask_no_inf.sum())
 
@@ -147,8 +159,9 @@ def _calcular_sustancias(df):
         return {
             **vacio,
             'n_otra_sin_especificar': n_no_inf,
-            'pct_otra_sin_especificar': (n_no_inf / total_todos * 100) if total_todos else 0.0,
-            'total_valid': 0,
+            'pct_otra_sin_especificar': (n_no_inf / total_ingreso * 100) if total_ingreso else 0.0,
+            'n_en_blanco': n_blanco,
+            'pct_en_blanco': (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
         }
 
     total_valid = len(ranking_src)
@@ -160,7 +173,7 @@ def _calcular_sustancias(df):
         resto = conteo.iloc[TOP_N_SUSTANCIAS:]
         if len(resto) > 0:
             fila_resto = pd.DataFrame([{
-                'sust_norm': '__RESTO__',   # marcador interno
+                'sust_norm': '__RESTO__',
                 'n': int(resto['n'].sum())
             }])
             top = pd.concat([top, fila_resto], ignore_index=True)
@@ -177,7 +190,9 @@ def _calcular_sustancias(df):
     return {
         'ranking': conteo[['sustancia', 'n', 'pct']],
         'n_otra_sin_especificar': n_no_inf,
-        'pct_otra_sin_especificar': (n_no_inf / total_todos * 100) if total_todos else 0.0,
+        'pct_otra_sin_especificar': (n_no_inf / total_ingreso * 100) if total_ingreso else 0.0,
+        'n_en_blanco': n_blanco,
+        'pct_en_blanco': (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
         'total_valid': total_valid,
     }
 
@@ -196,9 +211,11 @@ def render(df, pais, centro_id=None):
             df_local = df
 
         res = _calcular_sustancias(df_local)
-        conteo   = res['ranking']
-        n_no_inf = res['n_otra_sin_especificar']
+        conteo     = res['ranking']
+        n_no_inf   = res['n_otra_sin_especificar']
         pct_no_inf = res['pct_otra_sin_especificar']
+        n_blanco   = res['n_en_blanco']
+        pct_blanco = res['pct_en_blanco']
 
         # Título con subtítulo dinámico según haya "Otra sustancia" o no
         subtitulo = '% de pacientes al ingreso · sustancias específicas'
@@ -208,10 +225,10 @@ def render(df, pais, centro_id=None):
         )
 
         if conteo.empty:
-            if n_no_inf > 0:
+            if n_no_inf > 0 or n_blanco > 0:
                 st.info(
-                    f'ℹ Todos los pacientes al ingreso declararon "Otra sustancia" '
-                    f'sin especificar cuál ({n_no_inf} pacientes).'
+                    f'ℹ No hay sustancias específicas para rankear. '
+                    f'{n_no_inf} declararon "Otra sustancia", {n_blanco} sin dato.'
                 )
             else:
                 st.info('ℹ Aún no hay datos de sustancia principal para el ingreso.')
@@ -257,12 +274,21 @@ def render(df, pais, centro_id=None):
 
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-        # Nota abajo si hay pacientes con "Otra sustancia" sin especificar
+        # Notas debajo del gráfico
+        notas = []
         if n_no_inf > 0:
+            notas.append(
+                f'⚠ {n_no_inf} ({pct_no_inf:.1f}%) declararon "Otra sustancia" sin especificar'
+                .replace('.', ',')
+            )
+        if n_blanco > 0:
+            notas.append(
+                f'⚠ {n_blanco} ({pct_blanco:.1f}%) sin dato de sustancia principal'
+                .replace('.', ',')
+            )
+        if notas:
             st.markdown(
-                f'<div style="font-size:.72rem;color:#B45309;padding:.15rem .1rem 0 .1rem;">'
-                f'⚠ {n_no_inf} pacientes ({pct_no_inf:.1f}%) declararon '
-                f'"Otra sustancia" sin especificar cuál. No entran al ranking.'
-                f'</div>'.replace('.', ','),
+                f'<div style="font-size:.72rem;color:#B45309;padding:.15rem .1rem 0 .1rem;'
+                f'line-height:1.4;">' + ' &nbsp;·&nbsp; '.join(notas) + '</div>',
                 unsafe_allow_html=True
             )
