@@ -247,12 +247,12 @@ def titulo_seccion(icono, texto, subtitulo=None):
         subtitulo: opcional, texto gris pequeño debajo
     """
     sub_html = (
-        f'<div style="font-size:.82rem;color:#777;margin-top:.15rem;">{subtitulo}</div>'
+        f'<div style="font-size:.72rem;color:#777;margin-top:.05rem;line-height:1.15;">{subtitulo}</div>'
         if subtitulo else ''
     )
     return (
-        f'<div style="padding:.05rem .1rem .3rem .1rem;">'
-        f'  <div style="font-size:1rem;font-weight:600;color:#1F1F1F;">'
+        f'<div style="padding:.02rem .1rem .18rem .1rem;">'
+        f'  <div style="font-size:.92rem;font-weight:600;color:#1F1F1F;line-height:1.15;">'
         f'    {icono}&nbsp;&nbsp;{texto}'
         f'  </div>'
         f'  {sub_html}'
