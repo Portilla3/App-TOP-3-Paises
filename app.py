@@ -19,6 +19,7 @@ from pipeline.runner   import run_script, run_paquetes_centros
 from pipeline.panel.data import cargar_datos_pais, invalidar_cache_pais
 from pipeline.panel     import metricas    as panel_metricas
 from pipeline.panel     import semaforo    as panel_semaforo
+from pipeline.panel     import mensuales   as panel_mensuales
 from pipeline.panel     import ranking     as panel_ranking
 from pipeline.panel     import continuidad as panel_continuidad
 from pipeline.panel     import piramide    as panel_piramide
@@ -772,7 +773,9 @@ with tab_panel:
         col_titulo, col_refresh = st.columns([5, 1])
         with col_titulo:
             st.markdown(
-                f'<div class="sec">🏠 Panel de gestión · {PAISES_CONFIG[pais_panel]["flag"]} {pais_panel}</div>',
+                f'<div style="font-size:1.25rem;font-weight:700;color:#1F1F1F;'
+                f'padding:.35rem 0;">🏠 Panel de gestión · '
+                f'{PAISES_CONFIG[pais_panel]["flag"]} {pais_panel}</div>',
                 unsafe_allow_html=True
             )
         with col_refresh:
@@ -800,12 +803,17 @@ with tab_panel:
         # ── Métricas superiores ───────────────────────────────────────────────
         panel_metricas.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
         # ── Semáforo de actividad reciente por centro ─────────────────────────
         panel_semaforo.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+
+        # ── Registros mensuales (barras + curva acumulada) ────────────────────
+        panel_mensuales.render(df_panel, pais_panel, centro_id=None)
+
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
         # ── Ranking + Continuidad lado a lado ─────────────────────────────────
         col_rk, col_cont = st.columns(2, gap='medium')
@@ -814,13 +822,13 @@ with tab_panel:
         with col_cont:
             panel_continuidad.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('<div style="height:1.2rem"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:.9rem"></div>', unsafe_allow_html=True)
 
         # ── Perfil de pacientes al ingreso: Pirámide + Sustancia (2 col) ──────
         st.markdown(
-            '<div style="font-size:1.15rem;font-weight:700;color:#1F1F1F;'
-            'margin:.2rem 0 .1rem 0;">Perfil de pacientes al ingreso</div>'
-            '<div style="font-size:.82rem;color:#777;margin-bottom:.7rem;">'
+            '<div style="font-size:1.1rem;font-weight:700;color:#1F1F1F;'
+            'margin:.15rem 0 .05rem 0;">Perfil de pacientes al ingreso</div>'
+            '<div style="font-size:.8rem;color:#777;margin-bottom:.5rem;">'
             'información de la primera evaluación TOP · no incluye seguimientos</div>',
             unsafe_allow_html=True
         )
