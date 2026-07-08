@@ -136,19 +136,44 @@ def safe_mean(s):
     return c.mean(), int(c.notna().sum())
 
 # ── Normalización sustancia principal ─────────────────────────────────────────
+# Alineada con wide_top.norm_sust_v3 (wide es la fuente de verdad).
+# Cambios respecto a la versión anterior:
+#   1. Usa _norm() para quitar tildes antes de comparar (fix bug Cocaína con tilde)
+#   2. Descarta NINGUNO/NADA/etc. → None en vez de 'Otras'
+#   3. Agrega Tusi como categoría propia
+#   4. Pasta Base: keywords ampliadas (pbc, basuco, bazuco, pasta basica)
+#   5. Metanfetamina va ANTES de Crack (cristal → Metanfetamina, no Crack)
+#   6. Descarta primera sustancia en entradas múltiples (split por / , + y)
+import re as _re
+
 def norm_sust(s):
-    if pd.isna(s) or str(s).strip() == '0': return None
-    s = str(s).strip().lower()
-    if any(x in s for x in ['alcohol','cerveza','licor','aguard','alchol','bebida']): return 'Alcohol'
-    if any(x in s for x in ['marihu','marjhu','marhuana','cannabis','cannbis','cannabin']): return 'Cannabis/Marihuana'
-    if any(x in s for x in ['crack','cristal','piedra','paco']): return 'Crack/Cristal'
-    if any(x in s for x in ['pasta base','pasta','papelillo']): return 'Pasta Base'
-    if any(x in s for x in ['cocain','perico','coca ']): return 'Cocaína'
-    if any(x in s for x in ['tabaco','cigarr','nicot']): return 'Tabaco/Nicotina'
-    if any(x in s for x in ['inhalant','thiner','activo','resistol','cemento']): return 'Inhalantes'
-    if any(x in s for x in ['sedant','benzod','tranqui','valium','clonaz']): return 'Sedantes'
-    if any(x in s for x in ['opiod','heroina','morfin','fentanil']): return 'Opiáceos'
-    if any(x in s for x in ['metanfet','anfetam']): return 'Metanfetamina'
+    if pd.isna(s): return None
+    raw = str(s).strip()
+    if raw in ('0', ''): return None
+    # Tomar solo primera línea y quitar contenido entre paréntesis
+    raw = _re.split(r'[\r\n]', raw)[0].strip()
+    raw = _re.sub(r'\(.*?\)', '', raw).strip()
+    raw = _re.sub(r'^(las dos|ambas|los dos|ambos)[,\s]+', '', raw, flags=_re.IGNORECASE).strip()
+    # Si hay múltiples sustancias, tomar solo la primera declarada
+    primera = _re.split(r'\s+y\s+|[/,+]', raw, maxsplit=1)[0].strip()
+    n = _norm(primera)   # minúsculas + sin tildes (usa _norm() ya definida en este archivo)
+    # Descartar respuestas no informativas
+    if any(x in n for x in ['ninguno','ninguna','niega','no aplica','no consume','nada']): return None
+    if any(x in n for x in ['ludopatia','juego','apuesta','gaming','azar']): return None
+    # Clasificación (mismo orden que wide_top.norm_sust_v3)
+    if any(x in n for x in ['alcohol','alchol','cerveza','licor','aguard','beer','wine','ron']): return 'Alcohol'
+    if any(x in n for x in ['marihu','marhuana','cannabis','cannbis','marij','weed','crispy']): return 'Cannabis/Marihuana'
+    if any(x in n for x in ['tusi','tussi','tusy','tuci','2cb']): return 'Tusi'
+    if any(x in n for x in ['pasta base','pasta basica','papelillo','pbc','basuco','bazuco']): return 'Pasta Base'
+    if any(x in n for x in ['metanfet','anfetam','cristal','crystal']): return 'Metanfetamina'
+    if any(x in n for x in ['crack','piedra','paco']): return 'Crack/Cristal'
+    if any(x in n for x in ['cocain','cocai','perico','coke']): return 'Cocaína'
+    if any(x in n for x in ['tabaco','cigarr','nicot']): return 'Tabaco/Nicotina'
+    if any(x in n for x in ['inhalant','thiner','activo','pegamento','solvente']): return 'Inhalantes'
+    if any(x in n for x in ['sedant','benzod','tranqui','valium','clonaz','diazep','rivotril']): return 'Sedantes'
+    if any(x in n for x in ['opiod','heroina','morfin','fentanil','tramad']): return 'Opiáceos'
+    if any(x in n for x in ['extasis','mdma','xtc']): return 'Éxtasis'
+    if any(x in n for x in ['ketam']): return 'Ketamina'
     return 'Otras'
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -362,8 +387,9 @@ def build_report(wb, d, N, DC):
     if DC['sust_ppal']:
         sr   = d[DC['sust_ppal']].apply(norm_sust).dropna()
         nv_s = len(sr); vc = sr.value_counts()
-        cats = ['Alcohol','Cannabis/Marihuana','Pasta Base','Cocaína','Crack/Cristal',
-                'Tabaco/Nicotina','Inhalantes','Sedantes','Opiáceos','Metanfetamina','Otras']
+        cats = ['Alcohol','Cannabis/Marihuana','Tusi','Pasta Base','Metanfetamina',
+                'Crack/Cristal','Cocaína','Tabaco/Nicotina','Inhalantes',
+                'Sedantes','Opiáceos','Éxtasis','Ketamina','Otras']
         for i, cat in enumerate(cats):
             n_c = int(vc.get(cat, 0))
             if n_c == 0: continue
