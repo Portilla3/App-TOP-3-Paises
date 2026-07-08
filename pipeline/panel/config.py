@@ -251,8 +251,8 @@ def titulo_seccion(icono, texto, subtitulo=None):
         if subtitulo else ''
     )
     return (
-        f'<div style="padding:.15rem .1rem .55rem .1rem;">'
-        f'  <div style="font-size:1.02rem;font-weight:600;color:#1F1F1F;">'
+        f'<div style="padding:.05rem .1rem .3rem .1rem;">'
+        f'  <div style="font-size:1rem;font-weight:600;color:#1F1F1F;">'
         f'    {icono}&nbsp;&nbsp;{texto}'
         f'  </div>'
         f'  {sub_html}'
