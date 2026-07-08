@@ -184,10 +184,10 @@ def render(df, pais, centro_id=None):
         rango = max_abs * 1.25 if max_abs > 0 else 1
 
         fig.update_layout(
-            height=220,
+            height=170,
             barmode='overlay',
-            bargap=0.12,
-            margin=dict(l=10, r=10, t=4, b=32),
+            bargap=0.10,
+            margin=dict(l=8, r=8, t=2, b=25),
             xaxis=dict(
                 visible=False,
                 range=[-rango, rango],
