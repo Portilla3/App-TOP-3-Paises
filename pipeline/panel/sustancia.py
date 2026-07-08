@@ -95,71 +95,126 @@ def _display(clave_normalizada):
 def _calcular_sustancias(df):
     """
     Filtra a etapa=ingreso, normaliza el texto (mayúsculas + sin tildes)
-    y agrupa por sustancia_principal. Las que quedan fuera del TOP_N
-    se agregan como 'Otras'.
+    y agrupa por sustancia_principal.
+
+    Separa: (a) el ranking con sustancias específicas + bucket 'Otras (menos
+    frecuentes)' si hay más de TOP_N, y (b) el conteo de pacientes que
+    declararon 'Otra sustancia' sin especificar (no entra al ranking porque
+    no informa qué droga es el problema).
 
     Returns:
-        pd.DataFrame con columnas: sustancia, n, pct.
+        dict con claves:
+            ranking: pd.DataFrame con columnas sustancia, n, pct
+            n_otra_sin_especificar: int (pacientes con 'Otra')
+            pct_otra_sin_especificar: float
+            total_valid: int
     """
+    vacio = {
+        'ranking': pd.DataFrame(columns=['sustancia', 'n', 'pct']),
+        'n_otra_sin_especificar': 0,
+        'pct_otra_sin_especificar': 0.0,
+        'total_valid': 0,
+    }
+
     cols_req = {'etapa', 'sustancia_principal'}
     if df is None or df.empty or not cols_req.issubset(df.columns):
-        return pd.DataFrame(columns=['sustancia', 'n', 'pct'])
+        return vacio
 
     tmp = df.copy()
     tmp['etapa'] = tmp['etapa'].fillna('').astype(str)
     tmp = tmp[tmp['etapa'] == 'ingreso']
     if tmp.empty:
-        return pd.DataFrame(columns=['sustancia', 'n', 'pct'])
+        return vacio
 
-    # Normalizar antes de contar: 'Alcohol' == 'ALCOHOL' == 'alcohol'
     tmp['sust_norm'] = tmp['sustancia_principal'].apply(_normalizar)
     tmp = tmp[tmp['sust_norm'] != '']
     if tmp.empty:
-        return pd.DataFrame(columns=['sustancia', 'n', 'pct'])
+        return vacio
 
-    conteo = tmp.groupby('sust_norm').size().reset_index(name='n')
+    # Separar "Otra sustancia" genérica antes de contar
+    # Valores considerados no informativos y excluidos del ranking:
+    NO_INFORMATIVOS = {
+        'OTRA', 'OTRO', 'OTRAS', 'OTROS',
+        'OTRA SUSTANCIA', 'OTRAS SUSTANCIAS',
+        'NO SABE', 'NS', 'NR', 'NO RESPONDE', 'NINGUNA', 'NINGUNO',
+    }
+    total_todos = len(tmp)
+    mask_no_inf = tmp['sust_norm'].isin(NO_INFORMATIVOS)
+    n_no_inf = int(mask_no_inf.sum())
+
+    ranking_src = tmp[~mask_no_inf]
+    if ranking_src.empty:
+        return {
+            **vacio,
+            'n_otra_sin_especificar': n_no_inf,
+            'pct_otra_sin_especificar': (n_no_inf / total_todos * 100) if total_todos else 0.0,
+            'total_valid': 0,
+        }
+
+    total_valid = len(ranking_src)
+    conteo = ranking_src.groupby('sust_norm').size().reset_index(name='n')
     conteo = conteo.sort_values('n', ascending=False).reset_index(drop=True)
-
-    total = int(conteo['n'].sum())
 
     if len(conteo) > TOP_N_SUSTANCIAS:
         top   = conteo.iloc[:TOP_N_SUSTANCIAS].copy()
         resto = conteo.iloc[TOP_N_SUSTANCIAS:]
         if len(resto) > 0:
-            fila_otras = pd.DataFrame([{
-                'sust_norm': 'OTRAS',
+            fila_resto = pd.DataFrame([{
+                'sust_norm': '__RESTO__',   # marcador interno
                 'n': int(resto['n'].sum())
             }])
-            top = pd.concat([top, fila_otras], ignore_index=True)
+            top = pd.concat([top, fila_resto], ignore_index=True)
         conteo = top
 
-    # Aplicar nombre canónico para display
-    conteo['sustancia'] = conteo['sust_norm'].apply(_display)
-    conteo['pct']       = conteo['n'] / total * 100
-    return conteo[['sustancia', 'n', 'pct']]
+    def _label(k):
+        if k == '__RESTO__':
+            return 'Otras (menos frecuentes)'
+        return _display(k)
+
+    conteo['sustancia'] = conteo['sust_norm'].apply(_label)
+    conteo['pct']       = conteo['n'] / total_valid * 100
+
+    return {
+        'ranking': conteo[['sustancia', 'n', 'pct']],
+        'n_otra_sin_especificar': n_no_inf,
+        'pct_otra_sin_especificar': (n_no_inf / total_todos * 100) if total_todos else 0.0,
+        'total_valid': total_valid,
+    }
 
 
 def render(df, pais, centro_id=None):
     """
     Pinta las barras de sustancia principal declarada al ingreso.
+    Excluye del ranking los registros con 'Otra sustancia' sin especificar
+    y los muestra como nota debajo del gráfico.
     """
     with st.container(border=True):
-        st.markdown(
-            titulo_seccion('💊', 'Sustancia principal declarada',
-                           '% de pacientes al ingreso'),
-            unsafe_allow_html=True
-        )
-
         # Filtrado opcional por centro
         if centro_id and 'centro' in df.columns:
             df_local = df[df['centro'].astype(str).str.strip() == str(centro_id).strip()].copy()
         else:
             df_local = df
 
-        conteo = _calcular_sustancias(df_local)
+        res = _calcular_sustancias(df_local)
+        conteo   = res['ranking']
+        n_no_inf = res['n_otra_sin_especificar']
+        pct_no_inf = res['pct_otra_sin_especificar']
+
+        # Título con subtítulo dinámico según haya "Otra sustancia" o no
+        subtitulo = '% de pacientes al ingreso · sustancias específicas'
+        st.markdown(
+            titulo_seccion('💊', 'Sustancia principal declarada', subtitulo),
+            unsafe_allow_html=True
+        )
 
         if conteo.empty:
-            st.info('ℹ Aún no hay datos de sustancia principal para el ingreso.')
+            if n_no_inf > 0:
+                st.info(
+                    f'ℹ Todos los pacientes al ingreso declararon "Otra sustancia" '
+                    f'sin especificar cuál ({n_no_inf} pacientes).'
+                )
+            else:
+                st.info('ℹ Aún no hay datos de sustancia principal para el ingreso.')
             return
 
         textos = [f'{p:.0f}%' for p in conteo['pct']]
@@ -175,7 +230,7 @@ def render(df, pais, centro_id=None):
             marker=dict(color=COLOR_BARRA, line=dict(width=0)),
             text=textos,
             textposition='outside',
-            textfont=dict(color=TEXTO_OSCURO, size=13, family='Arial'),
+            textfont=dict(color=TEXTO_OSCURO, size=12, family='Arial'),
             hovertext=hovers,
             hoverinfo='text',
             showlegend=False,
@@ -185,10 +240,10 @@ def render(df, pais, centro_id=None):
         max_pct = float(conteo['pct'].max()) if not conteo.empty else 100.0
 
         fig.update_layout(
-            height=220,
-            margin=dict(l=10, r=10, t=15, b=15),
+            height=170,
+            margin=dict(l=8, r=8, t=10, b=8),
             xaxis=dict(
-                tickfont=dict(size=12, color=TEXTO_OSCURO, family='Arial'),
+                tickfont=dict(size=11, color=TEXTO_OSCURO, family='Arial'),
                 fixedrange=True,
             ),
             yaxis=dict(
@@ -201,3 +256,13 @@ def render(df, pais, centro_id=None):
         )
 
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+
+        # Nota abajo si hay pacientes con "Otra sustancia" sin especificar
+        if n_no_inf > 0:
+            st.markdown(
+                f'<div style="font-size:.72rem;color:#B45309;padding:.15rem .1rem 0 .1rem;">'
+                f'⚠ {n_no_inf} pacientes ({pct_no_inf:.1f}%) declararon '
+                f'"Otra sustancia" sin especificar cuál. No entran al ranking.'
+                f'</div>'.replace('.', ','),
+                unsafe_allow_html=True
+            )
