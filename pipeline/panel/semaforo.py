@@ -142,8 +142,8 @@ def _pintar_grid_y_leyenda(actividad, centro_id):
             showlegend=False,
         ))
 
-    # Altura más compacta (Rodrigo pidió menos espacio vertical)
-    alto = max(120, n_filas * 82 + 12)
+    # Altura muy compacta (tablero denso)
+    alto = max(90, n_filas * 62 + 8)
 
     # Usar el número real de columnas ocupadas (no 11 fijo) para que los cuadros
     # ocupen todo el ancho disponible cuando el país tiene pocos centros.
