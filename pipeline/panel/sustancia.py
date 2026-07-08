@@ -1,24 +1,27 @@
 """
 pipeline.panel.sustancia — Sustancia principal declarada al ingreso.
 
-Muestra el ranking de sustancias declaradas como principales por los pacientes
-al momento del ingreso (etapa='ingreso'). El campo Supabase es 'sustancia_principal'
-(text libre normalizado por los formularios de cada país).
+Aplica la TAXONOMÍA OFICIAL del TOP/UNODC:
+  - Alcohol
+  - Cannabis/Marihuana
+  - Cocaína (clorhidrato)
+  - Pasta base
+  - Crack/Cristal (crack + metanfetaminas)
+  - Tabaco/Nicotina
+  - Sedantes
+  - Heroína
+  - Inhalables
+  - Otras  (todo lo demás: Tusi, Ketamina, LSD, "Otra sustancia",
+           múltiples sustancias declaradas, sin dato)
 
 Diseño:
-  - Barras verticales, top 5-6 sustancias, resto agrupado en "Otras"
-  - Color verde consistente con el bloque perfil
-  - Porcentaje encima de cada barra
-  - Nombre de la sustancia debajo
+  - Barras verticales verdes con % del total de pacientes al ingreso
+  - Todas las categorías con al menos 1 registro se muestran
+  - "Otras" siempre al final (aunque supere alguna categoría principal)
+  - Hover en "Otras" muestra el detalle interno
 
 Función expuesta:
   render(df, pais, centro_id=None)
-
-Notas de instrumento:
-  Este componente es agnóstico al catálogo de sustancias por país. Se limita
-  a leer 'sustancia_principal' tal como viene en Supabase y a agrupar.
-  Cuando lleguemos a "columnas_instrumento" para el gráfico de "Días de
-  consumo por sustancia" (sesión 4), ese sí necesita el catálogo por país.
 """
 import unicodedata
 import streamlit as st
@@ -29,106 +32,85 @@ from pipeline.panel.config import titulo_seccion
 
 
 COLOR_BARRA  = '#2E9B6C'   # verde consistente con continuidad
+COLOR_OTRAS  = '#8FA9B9'   # gris azulado para "Otras"
 TEXTO_OSCURO = '#1F3864'
 
 
-TOP_N_SUSTANCIAS = 6
+# ═══════════════════════════════════════════════════════════════════════════════
+# TAXONOMÍA OFICIAL TOP/UNODC
+# ═══════════════════════════════════════════════════════════════════════════════
 
+# Cada categoría es un conjunto de valores normalizados (mayúsculas, sin tildes)
+# que se agrupan en ella. Ver _normalizar() abajo.
+CATEGORIAS_TOP = {
+    'Alcohol': {
+        'ALCOHOL',
+        'CERVEZA', 'VINO', 'RON', 'AGUARDIENTE', 'CANA PURA',
+        'ALCOHOL (RON)', 'ALCOHOL (CANA PURA)',
+        'ALCOHOL Y JUEGOS EN RED',   # comorbilidad, la sustancia principal es alcohol
+    },
+    'Cannabis/Marihuana': {
+        'MARIHUANA', 'MARIGUANA', 'MARIJUANA', 'CANNABIS',
+        'HASHISH', 'HACHIS', 'MOTA',
+    },
+    'Cocaína': {
+        'COCAINA', 'COCA',
+    },
+    'Pasta base': {
+        'PASTA BASE', 'PASTA', 'BASUCO',
+        'PASTA BASE/BASUCO', 'PASTA BASE / BASUCO',
+        'PBC',
+        'PASTA BASICA DE COCAINA', 'PASTA BASE DE COCAINA',
+        'PASTA BASICA',
+    },
+    'Crack/Cristal': {
+        'CRACK', 'PIEDRA',
+        'CRISTAL', 'METANFETAMINAS', 'METANFETAMINA',
+    },
+    'Tabaco/Nicotina': {
+        'TABACO', 'CIGARRO', 'CIGARRILLO', 'CIGARRILLOS', 'CIGARROS',
+        'CIGARRO (NICOTINA)', 'NICOTINA',
+    },
+    'Sedantes': {
+        'SEDANTES', 'BENZODIACEPINAS', 'BENZODIAZEPINAS',
+        'CLONAZEPAM', 'DIAZEPAM', 'ALPRAZOLAM',
+    },
+    'Heroína': {
+        'HEROINA', 'OPIO', 'OPIACEOS',
+    },
+    'Inhalables': {
+        'INHALABLES', 'INHALANTES', 'TOLUENO', 'PEGAMENTO', 'THINNER',
+    },
+}
 
-# Nombres canónicos para display. Se aplica sobre la versión normalizada
-# (mayúsculas y sin tildes). Las que no estén en el mapa se muestran
-# en Title Case como fallback.
-NOMBRES_CANONICOS = {
-    # ── Alcohol y bebidas alcohólicas ─────────────────────────────
-    'ALCOHOL':                     'Alcohol',
-    'CERVEZA':                     'Alcohol',
-    'VINO':                        'Alcohol',
-    'RON':                         'Alcohol',
-    'ALCOHOL (RON)':               'Alcohol',
-    'ALCOHOL (CANA PURA)':         'Alcohol',
-    'CANA PURA':                   'Alcohol',
-    'AGUARDIENTE':                 'Alcohol',
-    'ALCOHOL Y JUEGOS EN RED':     'Alcohol',   # ludopatía + alcohol → principal es alcohol
+# Orden fijo de las categorías principales (para consistencia visual entre países).
+# El ranking real se ordena por conteo desc, pero este orden se usa como criterio
+# secundario de desempate.
+ORDEN_CATEGORIAS = list(CATEGORIAS_TOP.keys())
 
-    # ── Marihuana ─────────────────────────────────────────────────
-    'MARIHUANA':                   'Marihuana',
-    'MARIGUANA':                   'Marihuana',
-    'MARIJUANA':                   'Marihuana',
-    'CANNABIS':                    'Marihuana',
-
-    # ── Cocaína (clorhidrato) ─────────────────────────────────────
-    'COCAINA':                     'Cocaína',
-    'COCA':                        'Cocaína',
-
-    # ── Pasta base / Basuco / PBC ─────────────────────────────────
-    'PASTA BASE':                  'Pasta base',
-    'PASTA':                       'Pasta base',
-    'BASUCO':                      'Pasta base',
-    'PASTA BASE/BASUCO':           'Pasta base',
-    'PASTA BASE / BASUCO':         'Pasta base',
-    'PBC':                         'Pasta base',
-    'PASTA BASICA DE COCAINA':     'Pasta base',
-    'PASTA BASE DE COCAINA':       'Pasta base',
-    'PASTA BASICA':                'Pasta base',
-
-    # ── Crack ─────────────────────────────────────────────────────
-    'CRACK':                       'Crack',
-    'PIEDRA':                      'Crack',
-
-    # ── Tabaco / Nicotina ─────────────────────────────────────────
-    'TABACO':                      'Tabaco',
-    'CIGARRO':                     'Tabaco',
-    'CIGARRILLO':                  'Tabaco',
-    'CIGARRILLOS':                 'Tabaco',
-    'CIGARROS':                    'Tabaco',
-    'CIGARRO (NICOTINA)':          'Tabaco',
-    'NICOTINA':                    'Tabaco',
-
-    # ── Heroína / Opiáceos ────────────────────────────────────────
-    'HEROINA':                     'Heroína',
-    'OPIO':                        'Heroína',
-
-    # ── Sedantes / Benzodiacepinas ────────────────────────────────
-    'SEDANTES':                    'Sedantes',
-    'BENZODIACEPINAS':             'Sedantes',
-    'BENZODIAZEPINAS':             'Sedantes',
-
-    # ── Inhalables ────────────────────────────────────────────────
-    'INHALABLES':                  'Inhalables',
-    'INHALANTES':                  'Inhalables',
-    'TOLUENO':                     'Inhalables',
-    'PEGAMENTO':                   'Inhalables',
-
-    # ── Tusi (2C-B) ───────────────────────────────────────────────
-    'TUSI':                        'Tusi',
-    'TUSSI':                       'Tusi',
-    'DOS CG':                      'Tusi',
-    'TUSSI PLUS':                  'Tusi',
-
-    # ── Anfetaminas / Metanfetaminas ──────────────────────────────
-    'ANFETAMINAS':                 'Anfetaminas',
-    'METANFETAMINAS':              'Metanfetaminas',
-    'CRISTAL':                     'Metanfetaminas',
-    'METANFETAMINA':               'Metanfetaminas',
-
-    # ── Otras drogas específicas ──────────────────────────────────
-    'ECSTASY':                     'Éxtasis',
-    'EXTASIS':                     'Éxtasis',
-    'MDMA':                        'Éxtasis',
-    'LSD':                         'LSD',
-    'KETAMINA':                    'Ketamina',
-    'POPPERS':                     'Poppers',
-    'HASHISH':                     'Marihuana',
-    'HACHIS':                      'Marihuana',
+# Valores considerados "no informativos" (van a Otras, se detallan en hover)
+NO_INFORMATIVOS = {
+    'OTRA', 'OTRO', 'OTRAS', 'OTROS',
+    'OTRA SUSTANCIA', 'OTRAS SUSTANCIAS',
+    'NO SABE', 'NS', 'NR', 'NO RESPONDE',
+    'NINGUNA', 'NINGUNO', 'NINGUN',
+    'SI', 'S', 'NO', 'N',
+    'NADA', 'NULO', 'NULL', 'NA',
 }
 
 
+# Construir lookup invertido (valor_normalizado → categoría)
+_LOOKUP = {}
+for _cat, _vals in CATEGORIAS_TOP.items():
+    for _v in _vals:
+        _LOOKUP[_v] = _cat
+
+
 def _normalizar(s):
-    """Convierte a mayúsculas y quita tildes para comparación."""
+    """Mayúsculas + sin tildes + strip."""
     if s is None or (isinstance(s, float) and pd.isna(s)):
         return ''
     txt = str(s).strip().upper()
-    # Quitar tildes
     txt = ''.join(
         c for c in unicodedata.normalize('NFD', txt)
         if unicodedata.category(c) != 'Mn'
@@ -136,70 +118,59 @@ def _normalizar(s):
     return txt
 
 
-def _display(clave_normalizada):
-    """Devuelve el nombre canónico para mostrar. Fallback: Title Case."""
-    if clave_normalizada in NOMBRES_CANONICOS:
-        return NOMBRES_CANONICOS[clave_normalizada]
-    return clave_normalizada.title()
-
-
-# Valores considerados no informativos (excluidos del ranking)
-NO_INFORMATIVOS = {
-    'OTRA', 'OTRO', 'OTRAS', 'OTROS',
-    'OTRA SUSTANCIA', 'OTRAS SUSTANCIAS',
-    'NO SABE', 'NS', 'NR', 'NO RESPONDE',
-    'NINGUNA', 'NINGUNO', 'NINGUN',
-    'SI', 'S', 'NO', 'N',           # respuestas mal cargadas (si/no en lugar del nombre)
-    'NADA', 'NULO', 'NULL', 'NA',
-}
-
-
 def _es_multiple(norm):
-    """
-    True si el valor normalizado contiene indicios de MÚLTIPLES sustancias.
-    Detecta '/', ' Y ' entre sustancias, ' + ', ',' entre nombres.
-
-    NO cuenta como múltiple si el valor completo está en NOMBRES_CANONICOS,
-    porque eso significa que ya lo mapeamos a una sola sustancia principal
-    (ej: 'ALCOHOL Y JUEGOS EN RED' → Alcohol).
-    """
-    if not norm or norm in NOMBRES_CANONICOS:
+    """True si el valor contiene indicios de múltiples sustancias."""
+    if not norm or norm in _LOOKUP:
         return False
-    # Patrones típicos de múltiples sustancias
-    if '/' in norm:
-        return True
-    if ',' in norm:
-        return True
-    if ' + ' in norm:
-        return True
-    # ' Y ' como palabra completa: alcohol y cocaina, marihuana y crack, etc.
-    if f' Y ' in f' {norm} ':
-        return True
+    if '/' in norm: return True
+    if ',' in norm: return True
+    if ' + ' in norm: return True
+    if f' Y ' in f' {norm} ': return True
     return False
 
 
-def _calcular_sustancias(df):
+def _clasificar(valor_original):
     """
-    Filtra a etapa=ingreso, normaliza el texto (mayúsculas + sin tildes)
-    y clasifica cada valor en:
-      - Sustancia canónica (entra al ranking)
-      - "Otra sustancia" / "Ninguna" / "Si" (no_informativos)
-      - Múltiples sustancias (ej: 'PBC/MARIHUANA', 'Cocaína y Alcohol')
-      - En blanco
+    Retorna la categoría oficial (o 'Otras') y una subclase para el hover.
 
     Returns:
-        dict con: ranking (DataFrame), n_otra_sin_especificar, n_multiple,
-        n_en_blanco, pct_* correspondientes, total_valid.
+        (categoria, subclase)
+          categoria in ORDEN_CATEGORIAS + ['Otras']
+          subclase in {'canonico', 'sin_reconocer', 'no_informativo',
+                       'multiple', 'en_blanco'}
+    """
+    norm = _normalizar(valor_original)
+    if norm == '':
+        return ('Otras', 'en_blanco')
+    if norm in _LOOKUP:
+        return (_LOOKUP[norm], 'canonico')
+    if norm in NO_INFORMATIVOS:
+        return ('Otras', 'no_informativo')
+    if _es_multiple(norm):
+        return ('Otras', 'multiple')
+    # Valor no reconocido (ej: LSD, POPPERS, ANFETAMINAS, TUSI, KETAMINA...)
+    # Va a Otras según taxonomía TOP oficial.
+    return ('Otras', 'sin_reconocer')
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CÁLCULO
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _calcular_sustancias(df):
+    """
+    Aplica la taxonomía oficial y devuelve el ranking + desglose de "Otras".
+
+    Returns:
+        dict con:
+          ranking: pd.DataFrame [categoria, n, pct]  (siempre incluye Otras al final)
+          otras_desglose: dict {subclase → n}  para tooltip
+          total: int (denominador = pacientes con etapa=ingreso)
     """
     vacio = {
-        'ranking': pd.DataFrame(columns=['sustancia', 'n', 'pct']),
-        'n_otra_sin_especificar': 0,
-        'pct_otra_sin_especificar': 0.0,
-        'n_multiple': 0,
-        'pct_multiple': 0.0,
-        'n_en_blanco': 0,
-        'pct_en_blanco': 0.0,
-        'total_valid': 0,
+        'ranking': pd.DataFrame(columns=['categoria', 'n', 'pct']),
+        'otras_desglose': {},
+        'total': 0,
     }
 
     cols_req = {'etapa', 'sustancia_principal'}
@@ -212,117 +183,127 @@ def _calcular_sustancias(df):
     if tmp.empty:
         return vacio
 
-    total_ingreso = len(tmp)   # denominador honesto para pcts de notas
-    tmp['sust_norm'] = tmp['sustancia_principal'].apply(_normalizar)
+    total = len(tmp)
 
-    # 1) En blanco
-    n_blanco = int((tmp['sust_norm'] == '').sum())
-    tmp = tmp[tmp['sust_norm'] != '']
+    # Clasificar cada fila
+    clasificaciones = tmp['sustancia_principal'].apply(_clasificar)
+    tmp['categoria']  = clasificaciones.apply(lambda t: t[0])
+    tmp['subclase']   = clasificaciones.apply(lambda t: t[1])
 
-    # 2) No informativos explícitos ("Otra", "Si", "Ninguno", ...)
-    mask_no_inf = tmp['sust_norm'].isin(NO_INFORMATIVOS)
-    n_no_inf = int(mask_no_inf.sum())
+    # Conteos por categoría
+    conteos = tmp.groupby('categoria').size().to_dict()
 
-    # 3) Múltiples sustancias (después de descartar los canónicos con Y interno)
-    mask_multiple = tmp['sust_norm'].apply(_es_multiple) & ~mask_no_inf
-    n_multiple = int(mask_multiple.sum())
+    # Desglose interno de "Otras" (para hover)
+    otras = tmp[tmp['categoria'] == 'Otras']
+    otras_desglose = otras.groupby('subclase').size().to_dict()
 
-    # 4) Ranking: lo que queda después de excluir no_inf y múltiples
-    ranking_src = tmp[~(mask_no_inf | mask_multiple)]
+    # Además: detalle textual de las sustancias sin reconocer específicas
+    # (Tusi, Ketamina, LSD...) para que el hover sea más informativo
+    sin_reconocer_detalle = {}
+    if 'sin_reconocer' in otras_desglose:
+        sr = otras[otras['subclase'] == 'sin_reconocer']
+        sr_norm = sr['sustancia_principal'].apply(_normalizar)
+        for v in sr_norm.value_counts().items():
+            sin_reconocer_detalle[v[0]] = int(v[1])
 
-    if ranking_src.empty:
-        return {
-            **vacio,
-            'n_otra_sin_especificar': n_no_inf,
-            'pct_otra_sin_especificar': (n_no_inf / total_ingreso * 100) if total_ingreso else 0.0,
-            'n_multiple': n_multiple,
-            'pct_multiple': (n_multiple / total_ingreso * 100) if total_ingreso else 0.0,
-            'n_en_blanco': n_blanco,
-            'pct_en_blanco': (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
-        }
+    otras_desglose['_sin_reconocer_detalle'] = sin_reconocer_detalle
 
-    # Agrupar por nombre canónico (dos variantes de la misma sustancia se suman)
-    ranking_src = ranking_src.copy()
-    ranking_src['sust_canonica'] = ranking_src['sust_norm'].apply(_display)
-    total_valid = len(ranking_src)
-    conteo = ranking_src.groupby('sust_canonica').size().reset_index(name='n')
-    conteo = conteo.sort_values('n', ascending=False).reset_index(drop=True)
+    # Ranking: categorías principales ordenadas por conteo desc, luego "Otras" al final
+    principales = []
+    for cat in ORDEN_CATEGORIAS:
+        n = int(conteos.get(cat, 0))
+        if n > 0:
+            principales.append({'categoria': cat, 'n': n})
+    principales.sort(key=lambda d: -d['n'])
 
-    # Top-N + "Otras (menos frecuentes)" si hay más
-    if len(conteo) > TOP_N_SUSTANCIAS:
-        top   = conteo.iloc[:TOP_N_SUSTANCIAS].copy()
-        resto = conteo.iloc[TOP_N_SUSTANCIAS:]
-        if len(resto) > 0:
-            fila_resto = pd.DataFrame([{
-                'sust_canonica': 'Otras (menos frecuentes)',
-                'n': int(resto['n'].sum())
-            }])
-            top = pd.concat([top, fila_resto], ignore_index=True)
-        conteo = top
+    filas = list(principales)
+    n_otras = int(conteos.get('Otras', 0))
+    if n_otras > 0:
+        filas.append({'categoria': 'Otras', 'n': n_otras})
 
-    conteo = conteo.rename(columns={'sust_canonica': 'sustancia'})
-    conteo['pct'] = conteo['n'] / total_valid * 100
+    if not filas:
+        return vacio
+
+    ranking = pd.DataFrame(filas)
+    ranking['pct'] = ranking['n'] / total * 100
 
     return {
-        'ranking': conteo[['sustancia', 'n', 'pct']],
-        'n_otra_sin_especificar':   n_no_inf,
-        'pct_otra_sin_especificar': (n_no_inf / total_ingreso * 100) if total_ingreso else 0.0,
-        'n_multiple':               n_multiple,
-        'pct_multiple':             (n_multiple / total_ingreso * 100) if total_ingreso else 0.0,
-        'n_en_blanco':              n_blanco,
-        'pct_en_blanco':            (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
-        'total_valid':              total_valid,
+        'ranking': ranking,
+        'otras_desglose': otras_desglose,
+        'total': total,
     }
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# RENDER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _formatear_hover_otras(desglose):
+    """Construye el texto de hover para la barra 'Otras' con su desglose."""
+    partes = []
+    etiquetas = {
+        'sin_reconocer':    'Otras drogas específicas',
+        'no_informativo':   'Declaró "Otra sustancia"',
+        'multiple':         'Múltiples sustancias',
+        'en_blanco':        'Sin dato',
+    }
+    for k, label in etiquetas.items():
+        n = desglose.get(k, 0)
+        if n > 0:
+            partes.append(f'  · {label}: {n}')
+
+    detalle = desglose.get('_sin_reconocer_detalle', {})
+    if detalle:
+        partes.append('  ')
+        partes.append('  Detalle:')
+        for nombre, n in sorted(detalle.items(), key=lambda x: -x[1])[:8]:
+            partes.append(f'    - {nombre.title()}: {n}')
+
+    return '<br>'.join(partes) if partes else ''
+
+
 def render(df, pais, centro_id=None):
-    """
-    Pinta las barras de sustancia principal declarada al ingreso.
-    Excluye del ranking los registros con 'Otra sustancia' sin especificar
-    y los muestra como nota debajo del gráfico.
-    """
     with st.container(border=True):
-        # Filtrado opcional por centro
         if centro_id and 'centro' in df.columns:
             df_local = df[df['centro'].astype(str).str.strip() == str(centro_id).strip()].copy()
         else:
             df_local = df
 
         res = _calcular_sustancias(df_local)
-        conteo     = res['ranking']
-        n_no_inf   = res['n_otra_sin_especificar']
-        pct_no_inf = res['pct_otra_sin_especificar']
-        n_multiple = res['n_multiple']
-        pct_multiple = res['pct_multiple']
-        n_blanco   = res['n_en_blanco']
-        pct_blanco = res['pct_en_blanco']
+        ranking       = res['ranking']
+        otras_desglose = res['otras_desglose']
+        total         = res['total']
 
-        subtitulo = '% de pacientes al ingreso · sustancias específicas'
         st.markdown(
-            titulo_seccion('💊', 'Sustancia principal declarada', subtitulo),
+            titulo_seccion('💊', 'Sustancia principal declarada',
+                           f'% del total de pacientes al ingreso · N = {total}'),
             unsafe_allow_html=True
         )
 
-        if conteo.empty:
-            problemas = []
-            if n_no_inf > 0:   problemas.append(f'{n_no_inf} "Otra"')
-            if n_multiple > 0: problemas.append(f'{n_multiple} múltiples')
-            if n_blanco > 0:   problemas.append(f'{n_blanco} sin dato')
-            texto = ', '.join(problemas) if problemas else 'sin datos'
-            st.info(f'ℹ No hay sustancias específicas para rankear ({texto}).')
+        if ranking.empty:
+            st.info('ℹ Aún no hay datos de sustancia principal para el ingreso.')
             return
 
-        textos = [f'{p:.0f}%' for p in conteo['pct']]
-        hovers = [
-            f'<b>{s}</b><br>{n} pacientes<br>{p:.1f}%'.replace('.', ',')
-            for s, n, p in zip(conteo['sustancia'], conteo['n'], conteo['pct'])
-        ]
+        # Colores: Otras siempre en gris, las demás en verde
+        colores = [COLOR_OTRAS if c == 'Otras' else COLOR_BARRA for c in ranking['categoria']]
+
+        # Hovers
+        hovers = []
+        for _, row in ranking.iterrows():
+            base = f"<b>{row['categoria']}</b><br>{int(row['n'])} pacientes<br>{row['pct']:.1f}%".replace('.', ',')
+            if row['categoria'] == 'Otras':
+                detalle = _formatear_hover_otras(otras_desglose)
+                if detalle:
+                    base = base + '<br>' + detalle
+            hovers.append(base)
+
+        textos = [f'{p:.0f}%' for p in ranking['pct']]
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
-            x=conteo['sustancia'],
-            y=conteo['pct'],
-            marker=dict(color=COLOR_BARRA, line=dict(width=0)),
+            x=ranking['categoria'],
+            y=ranking['pct'],
+            marker=dict(color=colores, line=dict(width=0)),
             text=textos,
             textposition='outside',
             textfont=dict(color=TEXTO_OSCURO, size=12, family='Arial'),
@@ -332,14 +313,15 @@ def render(df, pais, centro_id=None):
             cliponaxis=False,
         ))
 
-        max_pct = float(conteo['pct'].max()) if not conteo.empty else 100.0
+        max_pct = float(ranking['pct'].max())
 
         fig.update_layout(
-            height=170,
+            height=175,
             margin=dict(l=8, r=8, t=10, b=8),
             xaxis=dict(
-                tickfont=dict(size=11, color=TEXTO_OSCURO, family='Arial'),
+                tickfont=dict(size=10, color=TEXTO_OSCURO, family='Arial'),
                 fixedrange=True,
+                tickangle=0,
             ),
             yaxis=dict(
                 visible=False,
@@ -352,26 +334,20 @@ def render(df, pais, centro_id=None):
 
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-        # Notas debajo del gráfico
-        notas = []
-        if n_no_inf > 0:
-            notas.append(
-                f'⚠ {n_no_inf} ({pct_no_inf:.1f}%) declararon "Otra sustancia" sin especificar'
-                .replace('.', ',')
-            )
-        if n_multiple > 0:
-            notas.append(
-                f'⚠ {n_multiple} ({pct_multiple:.1f}%) declararon múltiples sustancias'
-                .replace('.', ',')
-            )
-        if n_blanco > 0:
-            notas.append(
-                f'⚠ {n_blanco} ({pct_blanco:.1f}%) sin dato de sustancia principal'
-                .replace('.', ',')
-            )
-        if notas:
-            st.markdown(
-                f'<div style="font-size:.72rem;color:#B45309;padding:.15rem .1rem 0 .1rem;'
-                f'line-height:1.4;">' + ' &nbsp;·&nbsp; '.join(notas) + '</div>',
-                unsafe_allow_html=True
-            )
+        # Pequeña nota debajo con el desglose de "Otras" si hay algo relevante
+        if otras_desglose.get('no_informativo', 0) + otras_desglose.get('en_blanco', 0) + otras_desglose.get('multiple', 0) > 0:
+            partes = []
+            n_sr  = otras_desglose.get('sin_reconocer', 0)
+            n_ni  = otras_desglose.get('no_informativo', 0)
+            n_mul = otras_desglose.get('multiple', 0)
+            n_bl  = otras_desglose.get('en_blanco', 0)
+            if n_sr > 0:  partes.append(f'{n_sr} otras drogas específicas')
+            if n_ni > 0:  partes.append(f'{n_ni} "Otra sustancia"')
+            if n_mul > 0: partes.append(f'{n_mul} múltiples')
+            if n_bl > 0:  partes.append(f'{n_bl} sin dato')
+            if partes:
+                st.markdown(
+                    f'<div style="font-size:.7rem;color:#888;padding:.1rem .1rem 0 .1rem;'
+                    f'line-height:1.35;">Otras incluye: ' + ' · '.join(partes) + '</div>',
+                    unsafe_allow_html=True
+                )
