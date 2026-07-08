@@ -69,22 +69,22 @@ def _grafico(ranking, centro_id):
         showlegend=False,
     ))
 
-    # Altura dinámica compacta
+    # Altura ultra compacta
     n = len(ranking)
-    alto = max(120, n * 20 + 25)
+    alto = max(100, n * 16 + 18)
 
     fig.update_layout(
         height=alto,
-        margin=dict(l=10, r=55, t=4, b=4),
+        margin=dict(l=8, r=50, t=2, b=2),
         barmode='overlay',
-        bargap=0.12,
+        bargap=0.10,
         xaxis=dict(
             visible=False,
             range=[0, max_val * 1.18],
             fixedrange=True,
         ),
         yaxis=dict(
-            tickfont=dict(size=12, color=NAVY, family='Arial'),
+            tickfont=dict(size=11, color=NAVY, family='Arial'),
             automargin=True,
             fixedrange=True,
         ),
