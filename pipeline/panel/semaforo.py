@@ -142,21 +142,24 @@ def _pintar_grid_y_leyenda(actividad, centro_id):
             showlegend=False,
         ))
 
-    alto = max(140, n_filas * 85 + 20)
+    # Altura más compacta (Rodrigo pidió menos espacio vertical)
+    alto = max(120, n_filas * 82 + 12)
+
+    # Usar el número real de columnas ocupadas (no 11 fijo) para que los cuadros
+    # ocupen todo el ancho disponible cuando el país tiene pocos centros.
+    n_cols_uso = min(n_centros, COLS_POR_FILA)
 
     fig.update_layout(
         height=alto,
         margin=dict(l=6, r=6, t=6, b=6),
         xaxis=dict(
             visible=False,
-            range=[-0.1, COLS_POR_FILA + 0.1],
+            range=[-0.05, n_cols_uso + 0.05],
             fixedrange=True,
         ),
         yaxis=dict(
             visible=False,
-            range=[-n_filas - 0.1, 0.1],
-            scaleanchor='x',
-            scaleratio=1,
+            range=[-n_filas - 0.05, 0.05],
             fixedrange=True,
         ),
         plot_bgcolor='white',
