@@ -36,6 +36,10 @@ st.set_page_config(
 st.markdown(f"""<style>
 html,body,[class*="css"]{{font-family:'Calibri',sans-serif;}}
 .main{{background:#F8FAFD;}}
+/* Reducir padding lateral del contenedor principal para aprovechar el ancho */
+.main .block-container{{padding-left:1.6rem;padding-right:1.6rem;padding-top:1rem;max-width:none;}}
+/* Container border compacto (para st.container(border=True)) */
+div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;}}
 .qalat-hdr{{background:{NAVY};color:white;padding:1.2rem 2rem;border-radius:8px;margin-bottom:1.5rem;border-left:8px solid {MID};}}
 .qalat-hdr h1{{color:white;font-size:1.6rem;margin:0;}}
 .qalat-hdr h1 .instrumento{{font-size:2.2rem;font-weight:900;color:#9DC3E6;margin-left:.2rem;}}
@@ -803,36 +807,36 @@ with tab_panel:
         # ── Métricas superiores ───────────────────────────────────────────────
         panel_metricas.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
 
         # ── Semáforo de actividad reciente por centro ─────────────────────────
         panel_semaforo.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
 
         # ── Registros mensuales (barras + curva acumulada) ────────────────────
         panel_mensuales.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
 
         # ── Ranking + Continuidad lado a lado ─────────────────────────────────
-        col_rk, col_cont = st.columns(2, gap='medium')
+        col_rk, col_cont = st.columns(2, gap='small')
         with col_rk:
             panel_ranking.render(df_panel, pais_panel, centro_id=None)
         with col_cont:
             panel_continuidad.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('<div style="height:.9rem"></div>', unsafe_allow_html=True)
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
         # ── Perfil de pacientes al ingreso: Pirámide + Sustancia (2 col) ──────
         st.markdown(
-            '<div style="font-size:1.1rem;font-weight:700;color:#1F1F1F;'
-            'margin:.15rem 0 .05rem 0;">Perfil de pacientes al ingreso</div>'
-            '<div style="font-size:.8rem;color:#777;margin-bottom:.5rem;">'
+            '<div style="font-size:1rem;font-weight:700;color:#1F1F1F;'
+            'margin:.1rem 0 .02rem 0;">Perfil de pacientes al ingreso</div>'
+            '<div style="font-size:.72rem;color:#777;margin-bottom:.3rem;">'
             'información de la primera evaluación TOP · no incluye seguimientos</div>',
             unsafe_allow_html=True
         )
-        col_pir, col_sust = st.columns(2, gap='medium')
+        col_pir, col_sust = st.columns(2, gap='small')
         with col_pir:
             panel_piramide.render(df_panel, pais_panel, centro_id=None)
         with col_sust:
