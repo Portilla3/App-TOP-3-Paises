@@ -39,38 +39,87 @@ TOP_N_SUSTANCIAS = 6
 # (mayúsculas y sin tildes). Las que no estén en el mapa se muestran
 # en Title Case como fallback.
 NOMBRES_CANONICOS = {
-    'ALCOHOL':     'Alcohol',
-    'MARIHUANA':   'Marihuana',
-    'MARIGUANA':   'Marihuana',
-    'COCAINA':     'Cocaína',
-    'PASTA BASE':  'Pasta base',
-    'PASTA':       'Pasta base',
-    'BASUCO':      'Pasta base',
-    'PASTA BASE/BASUCO': 'Pasta base',
-    'PASTA BASE / BASUCO': 'Pasta base',
-    'CRACK':       'Crack',
-    'PIEDRA':      'Crack',
-    'HEROINA':     'Heroína',
-    'SEDANTES':    'Sedantes',
-    'BENZODIACEPINAS': 'Sedantes',
-    'INHALABLES':  'Inhalables',
-    'INHALANTES':  'Inhalables',
-    'TUSI':        'Tusi',
-    'TUSSI':       'Tusi',
-    'DOS CG':      'Tusi',
-    'ANFETAMINAS': 'Anfetaminas',
-    'METANFETAMINAS': 'Metanfetaminas',
-    'CRISTAL':     'Metanfetaminas',
-    'ECSTASY':     'Éxtasis',
-    'EXTASIS':     'Éxtasis',
-    'LSD':         'LSD',
-    'KETAMINA':    'Ketamina',
-    'OTRA':        'Otra',
-    'OTRO':        'Otra',
-    'OTRAS':       'Otras',
-    'OTROS':       'Otras',
-    'NINGUNA':     'Ninguna',
-    'NINGUNO':     'Ninguna',
+    # ── Alcohol y bebidas alcohólicas ─────────────────────────────
+    'ALCOHOL':                     'Alcohol',
+    'CERVEZA':                     'Alcohol',
+    'VINO':                        'Alcohol',
+    'RON':                         'Alcohol',
+    'ALCOHOL (RON)':               'Alcohol',
+    'ALCOHOL (CANA PURA)':         'Alcohol',
+    'CANA PURA':                   'Alcohol',
+    'AGUARDIENTE':                 'Alcohol',
+    'ALCOHOL Y JUEGOS EN RED':     'Alcohol',   # ludopatía + alcohol → principal es alcohol
+
+    # ── Marihuana ─────────────────────────────────────────────────
+    'MARIHUANA':                   'Marihuana',
+    'MARIGUANA':                   'Marihuana',
+    'MARIJUANA':                   'Marihuana',
+    'CANNABIS':                    'Marihuana',
+
+    # ── Cocaína (clorhidrato) ─────────────────────────────────────
+    'COCAINA':                     'Cocaína',
+    'COCA':                        'Cocaína',
+
+    # ── Pasta base / Basuco / PBC ─────────────────────────────────
+    'PASTA BASE':                  'Pasta base',
+    'PASTA':                       'Pasta base',
+    'BASUCO':                      'Pasta base',
+    'PASTA BASE/BASUCO':           'Pasta base',
+    'PASTA BASE / BASUCO':         'Pasta base',
+    'PBC':                         'Pasta base',
+    'PASTA BASICA DE COCAINA':     'Pasta base',
+    'PASTA BASE DE COCAINA':       'Pasta base',
+    'PASTA BASICA':                'Pasta base',
+
+    # ── Crack ─────────────────────────────────────────────────────
+    'CRACK':                       'Crack',
+    'PIEDRA':                      'Crack',
+
+    # ── Tabaco / Nicotina ─────────────────────────────────────────
+    'TABACO':                      'Tabaco',
+    'CIGARRO':                     'Tabaco',
+    'CIGARRILLO':                  'Tabaco',
+    'CIGARRILLOS':                 'Tabaco',
+    'CIGARROS':                    'Tabaco',
+    'CIGARRO (NICOTINA)':          'Tabaco',
+    'NICOTINA':                    'Tabaco',
+
+    # ── Heroína / Opiáceos ────────────────────────────────────────
+    'HEROINA':                     'Heroína',
+    'OPIO':                        'Heroína',
+
+    # ── Sedantes / Benzodiacepinas ────────────────────────────────
+    'SEDANTES':                    'Sedantes',
+    'BENZODIACEPINAS':             'Sedantes',
+    'BENZODIAZEPINAS':             'Sedantes',
+
+    # ── Inhalables ────────────────────────────────────────────────
+    'INHALABLES':                  'Inhalables',
+    'INHALANTES':                  'Inhalables',
+    'TOLUENO':                     'Inhalables',
+    'PEGAMENTO':                   'Inhalables',
+
+    # ── Tusi (2C-B) ───────────────────────────────────────────────
+    'TUSI':                        'Tusi',
+    'TUSSI':                       'Tusi',
+    'DOS CG':                      'Tusi',
+    'TUSSI PLUS':                  'Tusi',
+
+    # ── Anfetaminas / Metanfetaminas ──────────────────────────────
+    'ANFETAMINAS':                 'Anfetaminas',
+    'METANFETAMINAS':              'Metanfetaminas',
+    'CRISTAL':                     'Metanfetaminas',
+    'METANFETAMINA':               'Metanfetaminas',
+
+    # ── Otras drogas específicas ──────────────────────────────────
+    'ECSTASY':                     'Éxtasis',
+    'EXTASIS':                     'Éxtasis',
+    'MDMA':                        'Éxtasis',
+    'LSD':                         'LSD',
+    'KETAMINA':                    'Ketamina',
+    'POPPERS':                     'Poppers',
+    'HASHISH':                     'Marihuana',
+    'HACHIS':                      'Marihuana',
 }
 
 
@@ -94,27 +143,60 @@ def _display(clave_normalizada):
     return clave_normalizada.title()
 
 
+# Valores considerados no informativos (excluidos del ranking)
+NO_INFORMATIVOS = {
+    'OTRA', 'OTRO', 'OTRAS', 'OTROS',
+    'OTRA SUSTANCIA', 'OTRAS SUSTANCIAS',
+    'NO SABE', 'NS', 'NR', 'NO RESPONDE',
+    'NINGUNA', 'NINGUNO', 'NINGUN',
+    'SI', 'S', 'NO', 'N',           # respuestas mal cargadas (si/no en lugar del nombre)
+    'NADA', 'NULO', 'NULL', 'NA',
+}
+
+
+def _es_multiple(norm):
+    """
+    True si el valor normalizado contiene indicios de MÚLTIPLES sustancias.
+    Detecta '/', ' Y ' entre sustancias, ' + ', ',' entre nombres.
+
+    NO cuenta como múltiple si el valor completo está en NOMBRES_CANONICOS,
+    porque eso significa que ya lo mapeamos a una sola sustancia principal
+    (ej: 'ALCOHOL Y JUEGOS EN RED' → Alcohol).
+    """
+    if not norm or norm in NOMBRES_CANONICOS:
+        return False
+    # Patrones típicos de múltiples sustancias
+    if '/' in norm:
+        return True
+    if ',' in norm:
+        return True
+    if ' + ' in norm:
+        return True
+    # ' Y ' como palabra completa: alcohol y cocaina, marihuana y crack, etc.
+    if f' Y ' in f' {norm} ':
+        return True
+    return False
+
+
 def _calcular_sustancias(df):
     """
     Filtra a etapa=ingreso, normaliza el texto (mayúsculas + sin tildes)
-    y agrupa por sustancia_principal.
-
-    Separa: (a) el ranking con sustancias específicas + bucket 'Otras (menos
-    frecuentes)' si hay más de TOP_N, y (b) el conteo de pacientes que
-    declararon 'Otra sustancia' sin especificar (no entra al ranking porque
-    no informa qué droga es el problema).
+    y clasifica cada valor en:
+      - Sustancia canónica (entra al ranking)
+      - "Otra sustancia" / "Ninguna" / "Si" (no_informativos)
+      - Múltiples sustancias (ej: 'PBC/MARIHUANA', 'Cocaína y Alcohol')
+      - En blanco
 
     Returns:
-        dict con claves:
-            ranking: pd.DataFrame con columnas sustancia, n, pct
-            n_otra_sin_especificar: int (pacientes con 'Otra')
-            pct_otra_sin_especificar: float
-            total_valid: int
+        dict con: ranking (DataFrame), n_otra_sin_especificar, n_multiple,
+        n_en_blanco, pct_* correspondientes, total_valid.
     """
     vacio = {
         'ranking': pd.DataFrame(columns=['sustancia', 'n', 'pct']),
         'n_otra_sin_especificar': 0,
         'pct_otra_sin_especificar': 0.0,
+        'n_multiple': 0,
+        'pct_multiple': 0.0,
         'n_en_blanco': 0,
         'pct_en_blanco': 0.0,
         'total_valid': 0,
@@ -130,70 +212,66 @@ def _calcular_sustancias(df):
     if tmp.empty:
         return vacio
 
-    total_ingreso = len(tmp)   # total de pacientes con TOP1 (denominador honesto)
-
+    total_ingreso = len(tmp)   # denominador honesto para pcts de notas
     tmp['sust_norm'] = tmp['sustancia_principal'].apply(_normalizar)
 
-    # Contar los en blanco antes de filtrarlos
+    # 1) En blanco
     n_blanco = int((tmp['sust_norm'] == '').sum())
     tmp = tmp[tmp['sust_norm'] != '']
 
-    if tmp.empty:
-        return {
-            **vacio,
-            'n_en_blanco': n_blanco,
-            'pct_en_blanco': (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
-        }
-
-    # Separar "Otra sustancia" genérica antes de contar
-    NO_INFORMATIVOS = {
-        'OTRA', 'OTRO', 'OTRAS', 'OTROS',
-        'OTRA SUSTANCIA', 'OTRAS SUSTANCIAS',
-        'NO SABE', 'NS', 'NR', 'NO RESPONDE', 'NINGUNA', 'NINGUNO',
-    }
+    # 2) No informativos explícitos ("Otra", "Si", "Ninguno", ...)
     mask_no_inf = tmp['sust_norm'].isin(NO_INFORMATIVOS)
     n_no_inf = int(mask_no_inf.sum())
 
-    ranking_src = tmp[~mask_no_inf]
+    # 3) Múltiples sustancias (después de descartar los canónicos con Y interno)
+    mask_multiple = tmp['sust_norm'].apply(_es_multiple) & ~mask_no_inf
+    n_multiple = int(mask_multiple.sum())
+
+    # 4) Ranking: lo que queda después de excluir no_inf y múltiples
+    ranking_src = tmp[~(mask_no_inf | mask_multiple)]
+
     if ranking_src.empty:
         return {
             **vacio,
             'n_otra_sin_especificar': n_no_inf,
             'pct_otra_sin_especificar': (n_no_inf / total_ingreso * 100) if total_ingreso else 0.0,
+            'n_multiple': n_multiple,
+            'pct_multiple': (n_multiple / total_ingreso * 100) if total_ingreso else 0.0,
             'n_en_blanco': n_blanco,
             'pct_en_blanco': (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
         }
 
+    # Agrupar por nombre canónico (dos variantes de la misma sustancia se suman)
+    ranking_src = ranking_src.copy()
+    ranking_src['sust_canonica'] = ranking_src['sust_norm'].apply(_display)
     total_valid = len(ranking_src)
-    conteo = ranking_src.groupby('sust_norm').size().reset_index(name='n')
+    conteo = ranking_src.groupby('sust_canonica').size().reset_index(name='n')
     conteo = conteo.sort_values('n', ascending=False).reset_index(drop=True)
 
+    # Top-N + "Otras (menos frecuentes)" si hay más
     if len(conteo) > TOP_N_SUSTANCIAS:
         top   = conteo.iloc[:TOP_N_SUSTANCIAS].copy()
         resto = conteo.iloc[TOP_N_SUSTANCIAS:]
         if len(resto) > 0:
             fila_resto = pd.DataFrame([{
-                'sust_norm': '__RESTO__',
+                'sust_canonica': 'Otras (menos frecuentes)',
                 'n': int(resto['n'].sum())
             }])
             top = pd.concat([top, fila_resto], ignore_index=True)
         conteo = top
 
-    def _label(k):
-        if k == '__RESTO__':
-            return 'Otras (menos frecuentes)'
-        return _display(k)
-
-    conteo['sustancia'] = conteo['sust_norm'].apply(_label)
-    conteo['pct']       = conteo['n'] / total_valid * 100
+    conteo = conteo.rename(columns={'sust_canonica': 'sustancia'})
+    conteo['pct'] = conteo['n'] / total_valid * 100
 
     return {
         'ranking': conteo[['sustancia', 'n', 'pct']],
-        'n_otra_sin_especificar': n_no_inf,
+        'n_otra_sin_especificar':   n_no_inf,
         'pct_otra_sin_especificar': (n_no_inf / total_ingreso * 100) if total_ingreso else 0.0,
-        'n_en_blanco': n_blanco,
-        'pct_en_blanco': (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
-        'total_valid': total_valid,
+        'n_multiple':               n_multiple,
+        'pct_multiple':             (n_multiple / total_ingreso * 100) if total_ingreso else 0.0,
+        'n_en_blanco':              n_blanco,
+        'pct_en_blanco':            (n_blanco / total_ingreso * 100) if total_ingreso else 0.0,
+        'total_valid':              total_valid,
     }
 
 
@@ -214,10 +292,11 @@ def render(df, pais, centro_id=None):
         conteo     = res['ranking']
         n_no_inf   = res['n_otra_sin_especificar']
         pct_no_inf = res['pct_otra_sin_especificar']
+        n_multiple = res['n_multiple']
+        pct_multiple = res['pct_multiple']
         n_blanco   = res['n_en_blanco']
         pct_blanco = res['pct_en_blanco']
 
-        # Título con subtítulo dinámico según haya "Otra sustancia" o no
         subtitulo = '% de pacientes al ingreso · sustancias específicas'
         st.markdown(
             titulo_seccion('💊', 'Sustancia principal declarada', subtitulo),
@@ -225,13 +304,12 @@ def render(df, pais, centro_id=None):
         )
 
         if conteo.empty:
-            if n_no_inf > 0 or n_blanco > 0:
-                st.info(
-                    f'ℹ No hay sustancias específicas para rankear. '
-                    f'{n_no_inf} declararon "Otra sustancia", {n_blanco} sin dato.'
-                )
-            else:
-                st.info('ℹ Aún no hay datos de sustancia principal para el ingreso.')
+            problemas = []
+            if n_no_inf > 0:   problemas.append(f'{n_no_inf} "Otra"')
+            if n_multiple > 0: problemas.append(f'{n_multiple} múltiples')
+            if n_blanco > 0:   problemas.append(f'{n_blanco} sin dato')
+            texto = ', '.join(problemas) if problemas else 'sin datos'
+            st.info(f'ℹ No hay sustancias específicas para rankear ({texto}).')
             return
 
         textos = [f'{p:.0f}%' for p in conteo['pct']]
@@ -279,6 +357,11 @@ def render(df, pais, centro_id=None):
         if n_no_inf > 0:
             notas.append(
                 f'⚠ {n_no_inf} ({pct_no_inf:.1f}%) declararon "Otra sustancia" sin especificar'
+                .replace('.', ',')
+            )
+        if n_multiple > 0:
+            notas.append(
+                f'⚠ {n_multiple} ({pct_multiple:.1f}%) declararon múltiples sustancias'
                 .replace('.', ',')
             )
         if n_blanco > 0:
