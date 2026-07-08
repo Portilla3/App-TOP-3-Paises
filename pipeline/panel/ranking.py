@@ -69,22 +69,22 @@ def _grafico(ranking, centro_id):
         showlegend=False,
     ))
 
-    # Altura dinámica: más compacto que antes (26 px por barra)
+    # Altura dinámica compacta
     n = len(ranking)
-    alto = max(150, n * 26 + 30)
+    alto = max(120, n * 20 + 25)
 
     fig.update_layout(
         height=alto,
-        margin=dict(l=10, r=60, t=6, b=6),
+        margin=dict(l=10, r=55, t=4, b=4),
         barmode='overlay',
-        bargap=0.18,           # menos separación entre barras
+        bargap=0.12,
         xaxis=dict(
             visible=False,
             range=[0, max_val * 1.18],
             fixedrange=True,
         ),
         yaxis=dict(
-            tickfont=dict(size=13, color=NAVY, family='Arial'),
+            tickfont=dict(size=12, color=NAVY, family='Arial'),
             automargin=True,
             fixedrange=True,
         ),
