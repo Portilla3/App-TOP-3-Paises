@@ -100,6 +100,10 @@ def _clasificar_sustancia(valor_original):
     # Normalizar: minúsculas + sin tildes
     n = unicodedata.normalize('NFD', primera.lower()).encode('ascii', 'ignore').decode()
 
+    # Descartar string "nan"/"none"/"nat" que pandas genera al convertir NaN a str
+    if n in ('nan', 'none', 'nat', ''):
+        return ('Otras', 'en_blanco')
+
     # Descartar no informativos
     if any(x in n for x in _DESCARTAR):
         return ('Otras', 'no_informativo')
@@ -285,6 +289,9 @@ def render(df, pais, centro_id=None):
 
         max_pct = float(ranking['pct'].max())
 
+        # ticktext explícito: evita que Plotly añada sufijos como "(menos frecuentes)"
+        categorias_lista = list(ranking['categoria'])
+
         fig.update_layout(
             height=175,
             margin=dict(l=8, r=8, t=10, b=8),
@@ -292,6 +299,9 @@ def render(df, pais, centro_id=None):
                 tickfont=dict(size=10, color=TEXTO_OSCURO, family='Arial'),
                 fixedrange=True,
                 tickangle=0,
+                tickmode='array',
+                tickvals=categorias_lista,
+                ticktext=categorias_lista,
             ),
             yaxis=dict(
                 visible=False,
