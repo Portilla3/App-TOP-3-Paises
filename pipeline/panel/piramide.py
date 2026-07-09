@@ -1,17 +1,15 @@
 """
-pipeline.panel.piramide — Pirámide sexo × grupo etario al ingreso.
+pipeline.panel.piramide — Distribución de sexo al ingreso (dona).
 
-Componente del bloque "Perfil de pacientes al ingreso". Muestra la distribución
-demográfica de los pacientes que tienen etapa='ingreso' (solo primera evaluación).
+Reemplaza la pirámide etaria por una dona de tres segmentos:
+  - Hombres
+  - Mujeres
+  - Otros (todo lo que no sea M/F, incluyendo no binario, sin dato, etc.)
 
-Grupos etarios: 15-19, 20-29, 30-39, 40-49, 50+
-Sexos considerados: 'Masculino'/'Femenino' (con normalización de variantes).
-
-Diseño:
-  - Barras horizontales
-  - Mujeres a la izquierda (valores negativos en el eje), color púrpura
-  - Hombres a la derecha (valores positivos), color naranja
-  - Leyenda abajo con porcentajes totales por sexo
+Diseño consistente con la dona de transgresión:
+  - Dona central con % del grupo mayoritario
+  - Tres métricas debajo: n y % por grupo
+  - Sin leyenda flotante
 
 Función expuesta:
   render(df, pais, centro_id=None)
@@ -23,191 +21,160 @@ import plotly.graph_objects as go
 from pipeline.panel.config import titulo_seccion
 
 
-COLOR_MUJER   = '#7B68EE'   # púrpura suave
-COLOR_HOMBRE  = '#F26E4C'   # naranja
+COLOR_HOMBRE  = '#F26E4C'   # naranja (mismo que pirámide original)
+COLOR_MUJER   = '#7B68EE'   # púrpura (mismo que pirámide original)
+COLOR_OTROS   = '#B4BAC2'   # gris neutro
 TEXTO_OSCURO  = '#1F3864'
-
-GRUPOS_ETARIOS = ['15-19', '20-29', '30-39', '40-49', '50+']
-
-
-def _clasificar_edad(edad):
-    """Devuelve el grupo etario para una edad numérica."""
-    if pd.isna(edad):
-        return None
-    e = int(edad)
-    if e < 15:  return None    # menores de 15 no entran al análisis
-    if e < 20:  return '15-19'
-    if e < 30:  return '20-29'
-    if e < 40:  return '30-39'
-    if e < 50:  return '40-49'
-    return '50+'
 
 
 def _normalizar_sexo(v):
-    """Normaliza variantes de sexo a 'M', 'F' o None."""
-    if pd.isna(v):
-        return None
+    """Normaliza variantes a 'H', 'M' o 'Otros'."""
+    if v is None or (isinstance(v, float) and pd.isna(v)):
+        return 'Otros'
     s = str(v).strip().lower()
     if not s:
-        return None
-    if s.startswith('m'):  # Masculino, Male, M, Hombre → M
+        return 'Otros'
+    if s.startswith('h') or s in ('m', 'masculino', 'male', 'hombre'):
         # Distinguir Masculino de Mujer
-        if s.startswith('muj') or s.startswith('mujer') or s == 'm-mujer':
-            return 'F'
+        if s.startswith('muj') or s == 'mujer':
+            return 'M'
+        if s.startswith('h') or s in ('masculino', 'male', 'hombre'):
+            return 'H'
+    if s.startswith('f') or s in ('femenino', 'female', 'mujer'):
         return 'M'
-    if s.startswith('h'):  # Hombre → M
-        return 'M'
-    if s.startswith('f'):  # Femenino, F, Female → F
-        return 'F'
-    return None
+    if s.startswith('m') and not s.startswith('muj'):
+        return 'H'   # 'masculino', 'm'
+    return 'Otros'
 
 
-def _calcular_piramide(df, hoy=None):
+def _calcular_sexo(df):
     """
-    Filtra a etapa=ingreso y calcula conteo por (grupo_etario, sexo).
-
-    Returns:
-        dict con claves:
-            grupos: lista de grupos etarios en orden
-            mujeres: lista de conteos por grupo (M/F)
-            hombres: lista de conteos por grupo
-            total_m, total_h, pct_m, pct_h
+    Filtra etapa=ingreso y cuenta por grupo de sexo.
+    Retorna dict con n_hombres, n_mujeres, n_otros, total, pct_* .
     """
-    if hoy is None:
-        hoy = pd.Timestamp.now().normalize()
-
     vacio = {
-        'grupos': GRUPOS_ETARIOS,
-        'mujeres': [0] * len(GRUPOS_ETARIOS),
-        'hombres': [0] * len(GRUPOS_ETARIOS),
-        'total_m': 0, 'total_h': 0, 'pct_m': 0.0, 'pct_h': 0.0,
+        'n_hombres': 0, 'n_mujeres': 0, 'n_otros': 0, 'total': 0,
+        'pct_hombres': 0, 'pct_mujeres': 0, 'pct_otros': 0,
     }
-
-    cols_req = {'etapa', 'sexo', 'fecha_nacimiento'}
-    if df is None or df.empty or not cols_req.issubset(df.columns):
+    if df is None or df.empty or 'etapa' not in df.columns:
         return vacio
 
-    tmp = df.copy()
-    tmp['etapa'] = tmp['etapa'].fillna('').astype(str)
-    tmp = tmp[tmp['etapa'] == 'ingreso']
-    if tmp.empty:
+    df_ing = df[df['etapa'].astype(str).str.strip() == 'ingreso'].copy()
+    if df_ing.empty:
         return vacio
 
-    tmp['fecha_nacimiento'] = pd.to_datetime(tmp['fecha_nacimiento'], errors='coerce')
-    tmp['edad']  = ((hoy - tmp['fecha_nacimiento']).dt.days / 365.25).round().astype('Int64')
-    tmp['grupo'] = tmp['edad'].apply(_clasificar_edad)
-    tmp['sexo_n'] = tmp['sexo'].apply(_normalizar_sexo)
-    tmp = tmp[tmp['grupo'].notna() & tmp['sexo_n'].notna()]
-
-    if tmp.empty:
+    if 'sexo' not in df_ing.columns:
         return vacio
 
-    conteo = tmp.groupby(['grupo', 'sexo_n']).size().unstack(fill_value=0)
-    conteo = conteo.reindex(GRUPOS_ETARIOS, fill_value=0)
-    if 'M' not in conteo.columns:
-        conteo['M'] = 0
-    if 'F' not in conteo.columns:
-        conteo['F'] = 0
-
-    total_masculino = int(conteo['M'].sum())
-    total_femenino  = int(conteo['F'].sum())
-    total_grupo     = total_masculino + total_femenino
+    grupos = df_ing['sexo'].apply(_normalizar_sexo).value_counts()
+    n_h = int(grupos.get('H', 0))
+    n_m = int(grupos.get('M', 0))
+    n_o = int(grupos.get('Otros', 0))
+    total = n_h + n_m + n_o
+    if total == 0:
+        return vacio
 
     return {
-        'grupos':  GRUPOS_ETARIOS,
-        'mujeres': conteo['F'].tolist(),
-        'hombres': conteo['M'].tolist(),
-        'total_m': total_femenino,      # % mujeres
-        'total_h': total_masculino,     # % hombres
-        'pct_m':   (total_femenino  / total_grupo * 100) if total_grupo > 0 else 0.0,
-        'pct_h':   (total_masculino / total_grupo * 100) if total_grupo > 0 else 0.0,
+        'n_hombres':   n_h,
+        'n_mujeres':   n_m,
+        'n_otros':     n_o,
+        'total':       total,
+        'pct_hombres': round(n_h / total * 100, 1),
+        'pct_mujeres': round(n_m / total * 100, 1),
+        'pct_otros':   round(n_o / total * 100, 1),
     }
+
+
+def _figura_dona(datos):
+    """Dona de tres segmentos con % mayoritario al centro."""
+    grupos = [
+        ('Hombres', datos['n_hombres'], COLOR_HOMBRE),
+        ('Mujeres', datos['n_mujeres'], COLOR_MUJER),
+        ('Otros',   datos['n_otros'],   COLOR_OTROS),
+    ]
+    # Filtrar grupos con n > 0 para no mostrar segmentos vacíos
+    grupos_vis = [(lbl, n, c) for lbl, n, c in grupos if n > 0]
+
+    labels  = [g[0] for g in grupos_vis]
+    values  = [g[1] for g in grupos_vis]
+    colors  = [g[2] for g in grupos_vis]
+
+    fig = go.Figure(go.Pie(
+        labels=labels,
+        values=values,
+        hole=0.65,
+        marker=dict(colors=colors, line=dict(color='white', width=2)),
+        textinfo='none',
+        hovertemplate='%{label}: %{value} pacientes (%{percent})<extra></extra>',
+        sort=False,
+    ))
+
+    # Texto central: grupo mayoritario
+    grupo_max = max(grupos_vis, key=lambda g: g[1])
+    pct_max   = round(grupo_max[1] / datos['total'] * 100, 1)
+    color_max = grupo_max[2]
+
+    fig.add_annotation(
+        text=f"<b>{pct_max}%</b>",
+        x=0.5, y=0.56,
+        font=dict(size=26, color=color_max, family='Inter, sans-serif'),
+        showarrow=False,
+    )
+    fig.add_annotation(
+        text=grupo_max[0].lower(),
+        x=0.5, y=0.38,
+        font=dict(size=10, color='#777', family='Inter, sans-serif'),
+        showarrow=False,
+    )
+
+    fig.update_layout(
+        height=200,
+        margin=dict(l=10, r=10, t=10, b=10),
+        paper_bgcolor='rgba(0,0,0,0)',
+        showlegend=False,
+        font=dict(family='Inter, sans-serif', color=TEXTO_OSCURO),
+    )
+    return fig
 
 
 def render(df, pais, centro_id=None):
-    """
-    Pinta la pirámide de sexo × grupo etario al ingreso.
-
-    Args:
-        df: DataFrame del país
-        pais: nombre del país (para contexto)
-        centro_id: opcional; si viene con valor, filtra al centro antes de calcular
-    """
+    """Renderiza la dona de distribución de sexo al ingreso."""
     with st.container(border=True):
         st.markdown(
-            titulo_seccion('👥', 'Pirámide sexo por grupo etario',
-                           'perfil demográfico al ingreso'),
-            unsafe_allow_html=True
+            titulo_seccion(
+                '👥', 'Distribución por sexo',
+                'pacientes al ingreso · primera evaluación TOP'
+            ),
+            unsafe_allow_html=True,
         )
 
-        # Filtrado opcional por centro
-        if centro_id and 'centro' in df.columns:
-            df_local = df[df['centro'].astype(str).str.strip() == str(centro_id).strip()].copy()
-        else:
-            df_local = df
+        if centro_id:
+            df = df[df['centro'].astype(str).str.strip() == str(centro_id).strip()].copy()
 
-        p = _calcular_piramide(df_local)
+        datos = _calcular_sexo(df)
 
-        if sum(p['mujeres']) + sum(p['hombres']) == 0:
-            st.info('ℹ Aún no hay datos suficientes de sexo y edad al ingreso.')
+        if datos['total'] == 0:
+            st.caption('Sin datos de sexo disponibles.')
             return
 
-        # Convertir mujeres a negativos para que queden a la izquierda
-        mujeres_neg = [-v for v in p['mujeres']]
+        st.plotly_chart(_figura_dona(datos), use_container_width=True,
+                        config={'displayModeBar': False})
 
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            y=p['grupos'],
-            x=mujeres_neg,
-            orientation='h',
-            name=f'Mujeres ({p["pct_m"]:.0f}%)',
-            marker=dict(color=COLOR_MUJER, line=dict(width=0)),
-            hovertemplate='<b>%{y}</b><br>Mujeres: %{customdata}<extra></extra>',
-            customdata=p['mujeres'],
-            text=[str(v) if v > 0 else '' for v in p['mujeres']],
-            textposition='outside',
-            textfont=dict(color=TEXTO_OSCURO, size=11, family='Arial'),
-        ))
-        fig.add_trace(go.Bar(
-            y=p['grupos'],
-            x=p['hombres'],
-            orientation='h',
-            name=f'Hombres ({p["pct_h"]:.0f}%)',
-            marker=dict(color=COLOR_HOMBRE, line=dict(width=0)),
-            hovertemplate='<b>%{y}</b><br>Hombres: %{x}<extra></extra>',
-            text=[str(v) if v > 0 else '' for v in p['hombres']],
-            textposition='outside',
-            textfont=dict(color=TEXTO_OSCURO, size=11, family='Arial'),
-        ))
-
-        max_abs = max(max(p['mujeres'] or [0]), max(p['hombres'] or [0]))
-        rango = max_abs * 1.25 if max_abs > 0 else 1
-
-        fig.update_layout(
-            height=170,
-            barmode='overlay',
-            bargap=0.10,
-            margin=dict(l=8, r=8, t=2, b=25),
-            xaxis=dict(
-                visible=False,
-                range=[-rango, rango],
-                fixedrange=True,
-            ),
-            yaxis=dict(
-                tickfont=dict(size=12, color=TEXTO_OSCURO, family='Arial'),
-                automargin=True,
-                fixedrange=True,
-                categoryorder='array',
-                categoryarray=GRUPOS_ETARIOS,   # desde 15-19 abajo hasta 50+ arriba
-            ),
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            legend=dict(
-                orientation='h',
-                yanchor='top', y=-0.05,
-                xanchor='center', x=0.5,
-                font=dict(size=11, color=TEXTO_OSCURO),
-            ),
-        )
-
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        # Métricas debajo: n y % por grupo
+        grupos = [
+            ('Hombres', datos['n_hombres'], datos['pct_hombres'], COLOR_HOMBRE),
+            ('Mujeres', datos['n_mujeres'], datos['pct_mujeres'], COLOR_MUJER),
+            ('Otros',   datos['n_otros'],   datos['pct_otros'],   COLOR_OTROS),
+        ]
+        cols = st.columns(3)
+        for i, (label, n, pct, color) in enumerate(grupos):
+            with cols[i]:
+                st.markdown(
+                    f'<div style="text-align:center;padding:.2rem 0;">'
+                    f'  <div style="font-size:1rem;font-weight:700;color:{color};">{n}</div>'
+                    f'  <div style="font-size:.68rem;color:#777;line-height:1.3;">'
+                    f'    {label}<br>({pct}%)'
+                    f'  </div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
