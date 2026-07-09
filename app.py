@@ -22,7 +22,7 @@ from pipeline.panel     import semaforo    as panel_semaforo
 from pipeline.panel     import mensuales   as panel_mensuales
 from pipeline.panel     import ranking     as panel_ranking
 from pipeline.panel     import continuidad as panel_continuidad
-from pipeline.panel     import tiempo_top  as panel_tiempo_top
+from pipeline.panel     import semaforo_seguimiento as panel_semaforo_seg
 from pipeline.panel     import piramide       as panel_piramide
 from pipeline.panel     import sustancia      as panel_sustancia
 from pipeline.panel     import dias_consumo   as panel_dias_consumo
@@ -82,43 +82,46 @@ div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;
 /* ── Pestañas estilo botones pill ────────────────────────────────────────── */
 /* Contenedor de tabs: fondo gris claro, borde redondeado */
 div[data-baseweb="tab-list"] {{
-    background:#EDF1F7 !important;
+    background:#DDE6F0 !important;
     border-radius:10px !important;
     padding:5px !important;
-    gap:3px !important;
-    border:1.5px solid #D0D9E8 !important;
-    box-shadow:none !important;
+    gap:4px !important;
+    border:none !important;
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.08) !important;
 }}
-div[data-baseweb="tab-highlight"] {{ display:none !important; }}
-div[data-baseweb="tab-border"]    {{ display:none !important; }}
+div[data-baseweb="tab-highlight"],
+div[data-baseweb="tab-border"] {{
+    display:none !important;
+    height:0 !important;
+    background:transparent !important;
+}}
 button[data-baseweb="tab"] {{
     border-radius:7px !important;
-    padding:.45rem 1.2rem !important;
+    padding:.5rem 1.3rem !important;
     font-size:.88rem !important;
     font-weight:600 !important;
-    color:#5A6B82 !important;
+    color:#4A5E73 !important;
     background:transparent !important;
-    border:1.5px solid transparent !important;
-    transition:all .15s ease !important;
+    border:none !important;
+    transition:background .15s,color .15s !important;
+    min-height:36px !important;
 }}
 button[data-baseweb="tab"]:hover {{
-    background:#D8E4F2 !important;
+    background:rgba(255,255,255,.6) !important;
     color:#004AAD !important;
-    border-color:#B8CCE4 !important;
 }}
-button[data-baseweb="tab"][aria-selected="true"] {{
+button[data-baseweb="tab"][aria-selected="true"],
+button[data-baseweb="tab"][aria-selected="true"]:hover {{
     background:#004AAD !important;
-    color:white !important;
-    border-color:#004AAD !important;
-    box-shadow:0 2px 6px rgba(0,74,173,.30) !important;
-    border-radius:7px !important;
+    color:#FFFFFF !important;
+    box-shadow:0 2px 8px rgba(0,74,173,.35) !important;
 }}
-button[data-baseweb="tab"][aria-selected="true"] p {{
-    color:white !important;
-}}
-button[data-baseweb="tab"] p {{
+button[data-baseweb="tab"] p,
+button[data-baseweb="tab"] span,
+button[data-baseweb="tab"] div {{
     font-size:.88rem !important;
     font-weight:600 !important;
+    color:inherit !important;
     margin:0 !important;
 }}
 .qalat-hdr{{background:{NAVY};color:white;padding:1.2rem 2rem;border-radius:8px;margin-bottom:1.5rem;border-left:8px solid {MID};}}
@@ -900,8 +903,7 @@ with tab_panel:
 
         st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
 
-        # ── Ranking + Continuidad lado a lado ─────────────────────────────────
-        # ── Ranking (ingresos + total TOP) + Seguimiento lado a lado ──────────
+        # ── Cuadrícula 2x2: Ranking | Seguimiento / Semáforo | (espacio) ────────
         col_rk, col_cont = st.columns(2, gap='small')
         with col_rk:
             panel_ranking.render(df_panel, pais_panel, centro_id=None)
@@ -910,8 +912,11 @@ with tab_panel:
 
         st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
 
-        # ── Tiempo entre TOP1 y TOP2 (ancho completo) ─────────────────────────
-        panel_tiempo_top.render(df_panel, pais_panel, centro_id=None)
+        col_sem_seg, col_vacio = st.columns(2, gap='small')
+        with col_sem_seg:
+            panel_semaforo_seg.render(df_panel, pais_panel, centro_id=None)
+        with col_vacio:
+            pass
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
@@ -990,6 +995,11 @@ with tab_reportes:
                         padding:1rem 1.1rem 1.1rem 1.1rem;}
     .rep-card-title    {font-size:.95rem;font-weight:700;color:#1F3864;margin-bottom:.2rem;}
     .rep-card-desc     {font-size:.78rem;color:#666;min-height:2.5rem;}
+    /* Colores Office para botones de descarga de reportes */
+    [data-testid="stButton"][id*="word"] button,
+    div:has(> [data-testid="stButton"] button[kind="secondary"][data-word]) button {{
+        background:#2B579A !important;color:white !important;border-color:#2B579A !important;
+    }}
     .rep-tag           {display:inline-block;font-size:.68rem;font-weight:700;
                         padding:.15rem .5rem;border-radius:20px;margin-left:.4rem;vertical-align:middle;}
     .rep-tag-top1      {background:#E8F0FE;color:#004AAD;}
@@ -1000,22 +1010,6 @@ with tab_reportes:
                         text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;}
     </style>
     """, unsafe_allow_html=True)
-
-    # ── Banner informativo Base Wide ─────────────────────────────────────────
-    st.markdown(
-        '<div style="background:#FFF8E6;border:1.5px solid #F0A836;border-radius:8px;'
-        'padding:.7rem 1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:.8rem;">'
-        '  <span style="font-size:1.4rem;">&#9888;&#65039;</span>'
-        '  <div>'
-        '    <div style="font-size:.82rem;font-weight:700;color:#7A5000;">'
-        '      Descarga la Base Wide antes de generar reportes</div>'
-        '    <div style="font-size:.72rem;color:#9A6800;">'
-        '      La Base Wide procesa los datos brutos y es la fuente de todos los reportes. '
-        '      Si los datos cambiaron, descárgala primero para obtener resultados actualizados.</div>'
-        '  </div>'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     # ── Carga automatica desde Supabase ───────────────────────────────────────
     if 'supabase_path' not in st.session_state:
@@ -1208,9 +1202,11 @@ with tab_reportes:
     _rep_card(_ri1, 'caract_excel', '&#128215;', 'Excel',
               '11 hojas con tablas de perfil, sustancias, transgresion, homogresion')
     _rep_card(_ri2, 'word_caract',  '&#128216;', 'Word',
-              '4 secciones narrativas con graficos y tablas para informe institucional')
+              '4 secciones narrativas con graficos y tablas para informe institucional',
+              btn_color='#2B579A')
     _rep_card(_ri3, 'pptx_caract', '&#128214;', 'PowerPoint',
-              '6 diapositivas ejecutivas para presentar a autoridad institucional')
+              '6 diapositivas ejecutivas para presentar a autoridad institucional',
+              btn_color='#D24726')
 
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
@@ -1225,9 +1221,11 @@ with tab_reportes:
     _rep_card(_rs1, 'seg_excel', '&#128215;', 'Excel',
               'Tablas comparativas TOP1 vs TOP2 con cambios porcentuales por dimension')
     _rep_card(_rs2, 'word_seg',  '&#128216;', 'Word',
-              'Analisis narrativo de evolucion entre ingreso y seguimiento')
+              'Analisis narrativo de evolucion entre ingreso y seguimiento',
+              btn_color='#2B579A')
     _rep_card(_rs3, 'pptx_seg', '&#128214;', 'PowerPoint',
-              '6 diapositivas con evolucion visual entre TOP1 y TOP2')
+              '6 diapositivas con evolucion visual entre TOP1 y TOP2',
+              btn_color='#D24726')
 
     st.markdown('<div style="height:1rem"></div>', unsafe_allow_html=True)
 
