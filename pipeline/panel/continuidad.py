@@ -20,10 +20,10 @@ import plotly.graph_objects as go
 from pipeline.panel.config import continuidad_por_centro, titulo_seccion
 
 
-VERDE_BARRA  = '#1A6B9A'   # from config PALETA_PRINCIPAL
-VERDE_DESTAC = '#1A6B9A'
-FONDO        = '#EEF2F5'   # from config PALETA_FONDO_REF   # gris verdoso muy claro para barra de referencia
-TEXTO_OSCURO = '#1F3864'
+VERDE_BARRA  = '#1D9E75'   # PALETA_VERDE
+VERDE_DESTAC = '#1D9E75'
+FONDO        = '#E5E5E5'   # PALETA_SECUNDARIO
+TEXTO_OSCURO = '#004AAD'
 
 
 TOP_N_VISIBLE = 10
@@ -67,8 +67,8 @@ def _grafico(ranking, centro_id, promedio_nacional):
         marker=dict(color=colores_rev, line=dict(width=0)),
         text=textos,
         textposition='outside',
-        textfont=dict(color=TEXTO_OSCURO, size=13, family='Arial'),
-        hovertemplate='<b>%{y}</b><br>Continuidad: %{x:.1f}%<extra></extra>',
+        textfont=dict(color=TEXTO_OSCURO, size=10, family='Arial'),
+        hovertemplate='<b>%{y}</b><br>Seguimiento: %{x:.1f}%<extra></extra>',
         cliponaxis=False,
         showlegend=False,
     ))
@@ -83,7 +83,7 @@ def _grafico(ranking, centro_id, promedio_nacional):
         )
 
     n = len(ranking)
-    alto = max(100, n * 16 + 18)
+    alto = max(100, n * 14 + 18)
 
     fig.update_layout(
         height=alto,
@@ -96,7 +96,7 @@ def _grafico(ranking, centro_id, promedio_nacional):
             fixedrange=True,
         ),
         yaxis=dict(
-            tickfont=dict(size=11, color=TEXTO_OSCURO, family='Arial'),
+            tickfont=dict(size=9, color=TEXTO_OSCURO, family='Arial'),
             automargin=True,
             fixedrange=True,
         ),
@@ -129,7 +129,7 @@ def render(df, pais, centro_id=None):
 
         st.markdown(
             titulo_seccion(
-                '🔄', 'Continuidad por centro',
+                '🔄', 'Seguimiento por centro',
                 f'% con al menos un segundo registro · promedio nacional {prom_nac:.1f}%'.replace('.', ',')
             ),
             unsafe_allow_html=True
