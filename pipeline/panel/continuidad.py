@@ -26,7 +26,7 @@ FONDO        = '#E5E5E5'   # PALETA_SECUNDARIO
 TEXTO_OSCURO = '#004AAD'
 
 
-TOP_N_VISIBLE = 10
+TOP_N_VISIBLE = 8
 
 
 def _grafico(ranking, centro_id, promedio_nacional):
