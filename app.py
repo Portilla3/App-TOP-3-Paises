@@ -1135,6 +1135,13 @@ with tab_reportes:
             )
             st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
             if supabase_data is not None:
+                st.markdown(
+                    f'<style>#btn_{key}_html{{background:{btn_color};color:white;border:none;'
+                    f'border-radius:6px;padding:.55rem 1rem;font-size:.9rem;font-weight:600;'
+                    f'width:100%;cursor:pointer;margin-top:.2rem;display:block;text-align:center;}}'
+                    f'#btn_{key}_html:hover{{opacity:.88;}}</style>',
+                    unsafe_allow_html=True
+                )
                 if st.button(f'Descargar {label}', key=f'btn_{key}', use_container_width=True):
                     with st.spinner(f'Generando {label}...'):
                         try:
