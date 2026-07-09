@@ -21,10 +21,10 @@ import plotly.graph_objects as go
 from pipeline.panel.config import titulo_seccion
 
 
-COLOR_HOMBRE  = '#1A6B9A'   # from config PALETA_PRINCIPAL
+COLOR_HOMBRE  = '#004AAD'   # from config PALETA_PRINCIPAL
 COLOR_MUJER   = '#7B68EE'   # from config PALETA_MUJER
 COLOR_OTROS   = '#B4BAC2'   # from config PALETA_OTROS_SEXO
-TEXTO_OSCURO  = '#1F3864'
+TEXTO_OSCURO  = '#004AAD'
 
 
 def _normalizar_sexo(v):
