@@ -21,9 +21,9 @@ import plotly.graph_objects as go
 from pipeline.panel.config import titulo_seccion
 
 
-COLOR_HOMBRE  = '#F26E4C'   # naranja (mismo que pirámide original)
-COLOR_MUJER   = '#7B68EE'   # púrpura (mismo que pirámide original)
-COLOR_OTROS   = '#B4BAC2'   # gris neutro
+COLOR_HOMBRE  = '#1A6B9A'   # from config PALETA_PRINCIPAL
+COLOR_MUJER   = '#7B68EE'   # from config PALETA_MUJER
+COLOR_OTROS   = '#B4BAC2'   # from config PALETA_OTROS_SEXO
 TEXTO_OSCURO  = '#1F3864'
 
 
