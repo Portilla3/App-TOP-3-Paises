@@ -926,290 +926,245 @@ with tab_panel:
 # ──────────────────────────────────────────────────────────────────────────────
 with tab_reportes:
 
-    st.markdown('<div class="sec">📁 Cargar base de datos</div>', unsafe_allow_html=True)
+    # ── CSS especifico del tab Reportes ──────────────────────────────────
+    st.markdown("""
+    <style>
+    .rep-section-title {font-size:1rem;font-weight:700;color:#004AAD;margin:1.2rem 0 .15rem 0;}
+    .rep-section-sub   {font-size:.75rem;color:#888;margin-bottom:.7rem;}
+    .rep-quick-card    {background:white;border:1px solid #E5E5E5;border-radius:10px;
+                        padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;margin-bottom:.3rem;}
+    .rep-quick-icon    {font-size:2rem;flex-shrink:0;}
+    .rep-quick-title   {font-size:.95rem;font-weight:700;color:#1F3864;}
+    .rep-quick-desc    {font-size:.75rem;color:#666;}
+    .rep-card          {background:white;border:1px solid #E5E5E5;border-radius:10px;
+                        padding:1rem 1.1rem 1.1rem 1.1rem;}
+    .rep-card-title    {font-size:.95rem;font-weight:700;color:#1F3864;margin-bottom:.2rem;}
+    .rep-card-desc     {font-size:.78rem;color:#666;min-height:2.5rem;}
+    .rep-tag           {display:inline-block;font-size:.68rem;font-weight:700;
+                        padding:.15rem .5rem;border-radius:20px;margin-left:.4rem;vertical-align:middle;}
+    .rep-tag-top1      {background:#E8F0FE;color:#004AAD;}
+    .rep-tag-top12     {background:#E6F4EA;color:#1D9E75;}
+    .rep-filtros-box   {background:#F8FAFD;border:1px solid #E5E5E5;border-radius:10px;
+                        padding:.9rem 1.1rem;margin:.5rem 0 .8rem 0;}
+    .rep-filtros-label {font-size:.72rem;font-weight:600;color:#888;
+                        text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;}
+    </style>
+    """, unsafe_allow_html=True)
 
-    fuente = st.radio(
-        'Fuente de datos',
-        ['📡 Conectar Base Datos (Supabase)', '📁 Subir Excel (JotForm)'],
-        horizontal=True,
-        help='Elige si conectas directo a la base del piloto o subes un Excel exportado de JotForm'
-    )
+    # ── Carga automatica desde Supabase ───────────────────────────────────
+    if 'supabase_path' not in st.session_state:
+        try:
+            _pais_carga = pais_fijo if not es_unodc else None
+            _registros  = _cargar_supabase(_pais_carga)
+            if _registros:
+                _df_sb = pd.DataFrame(_registros)
+                _df_sb = _df_sb.rename(columns={k: v for k, v in RENAME_MAP.items() if k in _df_sb.columns})
+                _tmp = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+                _df_sb.to_excel(_tmp.name, index=False)
+                _tmp.close()
+                st.session_state['supabase_path'] = _tmp.name
+                st.session_state['supabase_df']   = _df_sb
+                st.session_state['filename']       = f'Supabase_{pais_fijo if not es_unodc else "Todos"}'
+        except Exception:
+            pass
 
-    uploaded      = None
-    supabase_data = None
-
-    # ── Fuente: Supabase ──────────────────────────────────────────────────────
-    if fuente == '📡 Conectar Base Datos (Supabase)':
-        if es_unodc:
-            st.markdown(
-                '<div style="background:#EEF4FB;border-left:4px solid #2E75B6;'
-                'padding:.8rem 1.2rem;border-radius:6px;margin-bottom:1rem;">'
-                '<b>🌐 Vista UNODC</b> — Puedes ver datos de todos los países o filtrar por uno.'
-                '</div>', unsafe_allow_html=True
-            )
-            col_pais, col_btn = st.columns([2, 1])
-            with col_pais:
-                pais_filtro = st.selectbox('Ver datos de', ['Todos'] + PAISES_ACTIVOS, key='pais_sb')
-            with col_btn:
-                st.markdown('<div style="margin-top:28px"></div>', unsafe_allow_html=True)
-                cargar_sb = st.button('📥 Descargar datos', use_container_width=True, key='btn_sb')
-        else:
-            pais_filtro = pais_fijo
-            st.markdown(
-                f'<div style="background:#EEF4FB;border-left:4px solid #2E75B6;'
-                f'padding:.8rem 1.2rem;border-radius:6px;margin-bottom:1rem;">'
-                f'<b>📡 Conexión directa a Supabase</b><br>'
-                f'Descarga los registros de <b>{flag} {pais_fijo}</b> capturados en el formulario web del piloto.'
-                f'</div>', unsafe_allow_html=True
-            )
-            cargar_sb = st.button('📥 Descargar datos', use_container_width=True, key='btn_sb')
-
-        if cargar_sb:
-            try:
-                registros = _cargar_supabase(pais_filtro)
-                if not registros:
-                    st.warning('⚠ No hay registros en Supabase para ese filtro.')
-                else:
-                    df_sb = pd.DataFrame(registros)
-                    pais_label = pais_filtro if pais_filtro else 'Todos'
-                    st.success(f'✓ {len(df_sb)} registros descargados de Supabase ({pais_label})')
-                    df_sb = df_sb.rename(columns={k: v for k, v in RENAME_MAP.items() if k in df_sb.columns})
-                    tmp = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
-                    df_sb.to_excel(tmp.name, index=False)
-                    tmp.close()
-                    st.session_state['supabase_path'] = tmp.name
-                    st.session_state['supabase_df']   = df_sb
-                    st.session_state['filename']      = f'Supabase_{pais_label}'
-                    supabase_data = df_sb
-            except KeyError:
-                st.error('⚠ Las credenciales de Supabase no están configuradas en Secrets.')
-            except Exception as e:
-                st.error(f'Error al conectar con Supabase: {e}')
-
-        elif 'supabase_path' in st.session_state:
-            supabase_data = st.session_state.get('supabase_df')
-
-    # ── Fuente: Excel ─────────────────────────────────────────────────────────
-    else:
-        uploaded = st.file_uploader(
-            'Arrastra tu Excel aquí o haz clic para buscar',
-            type=['xlsx','xls'],
-            help='Archivo bruto exportado de Jotform — instrumento TOP'
-        )
-
-    # ── Filtros y procesamiento ───────────────────────────────────────────────
+    supabase_data     = st.session_state.get('supabase_df')
     filtro_centro_val = None
     fecha_desde_val   = None
     fecha_hasta_val   = None
+
+    # ── Encabezado: fuente + boton actualizar ─────────────────────────────
+    _n_reg = len(supabase_data) if supabase_data is not None else 0
+    _hcol1, _hcol2 = st.columns([3, 1])
+    with _hcol1:
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:.8rem;padding:.3rem 0;">'
+            f'  <span style="background:#E8F0FE;color:#004AAD;font-size:.78rem;font-weight:600;'
+            f'  padding:.3rem .8rem;border-radius:20px;">&#128452; Base actual (Supabase)</span>'
+            f'  <span style="color:#888;font-size:.8rem;">carga automatica al entrar &nbsp;&middot;&nbsp;'
+            f'  <b style="color:#1F3864">{_n_reg:,}</b> registros cargados</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    with _hcol2:
+        if st.button('Actualizar datos', use_container_width=True, key='rep_refresh'):
+            for _k in ['supabase_path','supabase_df','filename','result','outputs','wide_path','work_dir']:
+                st.session_state.pop(_k, None)
+            st.rerun()
+
+    st.markdown('<div style="height:.4rem"></div>', unsafe_allow_html=True)
+
+    # ── Descargas rapidas ─────────────────────────────────────────────────
+    st.markdown(
+        '<div class="rep-section-title">Descargas rapidas</div>'
+        '<div class="rep-section-sub">archivos maestros con toda la informacion sin filtros</div>',
+        unsafe_allow_html=True
+    )
+    _q1, _q2 = st.columns(2, gap='small')
+    with _q1:
+        st.markdown(
+            '<div class="rep-quick-card">'
+            '  <div class="rep-quick-icon">&#128452;</div>'
+            '  <div>'
+            '    <div class="rep-quick-title">Base Wide completa</div>'
+            '    <div class="rep-quick-desc">Excel con 6 hojas &middot; Wide, Resumen, Alertas, Calidad, Por Centro, Pendientes</div>'
+            '  </div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
+        if supabase_data is not None:
+            if st.button('Generar y descargar', key='q_wide', use_container_width=True):
+                with st.spinner('Generando Base Wide...'):
+                    try:
+                        _rq = procesar_wide(st.session_state['supabase_path'])
+                        st.session_state['dl_quick_wide'] = _rq['excel_bytes'].getvalue()
+                    except Exception as _e:
+                        st.error(f'Error: {_e}')
+            if 'dl_quick_wide' in st.session_state:
+                st.download_button('Descargar Base Wide (.xlsx)',
+                    data=st.session_state['dl_quick_wide'],
+                    file_name=f'TOP_Base_Wide_{datetime.now().strftime("%Y-%m-%d")}.xlsx',
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    use_container_width=True, key='save_wide')
+    with _q2:
+        st.markdown(
+            '<div class="rep-quick-card">'
+            '  <div class="rep-quick-icon">&#128202;</div>'
+            '  <div>'
+            '    <div class="rep-quick-title">Reporte de avance por centro</div>'
+            '    <div class="rep-quick-desc">Excel &middot; una fila por centro con TOP1, TOP2, continuidad, actividad</div>'
+            '  </div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
+        if supabase_data is not None:
+            from pipeline.panel.avance_centros import _calcular_avance, _generar_excel as _gen_av
+            _df_av  = _calcular_avance(supabase_data)
+            _pais_av = pais_fijo if not es_unodc else 'Todos los paises'
+            st.download_button('Descargar Reporte de avance (.xlsx)',
+                data=_gen_av(_df_av, _pais_av),
+                file_name=f'Avance_centros_{datetime.now().strftime("%Y-%m-%d")}.xlsx',
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                use_container_width=True, key='dl_avance')
+
+    st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
+
+    # ── Filtros ───────────────────────────────────────────────────────────
+    st.markdown('<div class="rep-filtros-box">', unsafe_allow_html=True)
+    st.markdown(
+        '<div style="font-size:.8rem;font-weight:600;color:#555;margin-bottom:.5rem;">'
+        'Filtros para reportes analiticos</div>',
+        unsafe_allow_html=True
+    )
     centros_disponibles = []
+    if supabase_data is not None:
+        for _cc in ['Codigo del centro de tratamiento', 'Código del centro de tratamiento']:
+            if _cc in supabase_data.columns:
+                centros_disponibles = sorted(supabase_data[_cc].dropna().astype(str).str.strip().unique().tolist())
+                break
 
-    if uploaded:
-        @st.cache_data(show_spinner=False)
-        def _leer_preview(file_bytes):
-            import pandas as _pd, io, unicodedata
-            def _n(s): return unicodedata.normalize('NFD',str(s).lower()).encode('ascii','ignore').decode()
-            df = _pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=0)
-            df.columns = [str(c) for c in df.columns]
-            col_c = next((c for c in df.columns if any(k in _n(c) for k in
-                          ['codigo del centro','centro de tratamiento','servicio de tratamiento'])
-                          and 'trabajo' not in _n(c) and 'estudio' not in _n(c)), None)
-            col_f = next((c for c in df.columns if any(k in _n(c) for k in
-                          ['fecha entrevista','fecha_entrevista','fecha de entrevista'])), None)
-            centros = sorted(df[col_c].dropna().astype(str).str.strip().unique().tolist()) if col_c else []
-            fechas  = _pd.to_datetime(df[col_f], errors='coerce').dropna() if col_f else _pd.Series([], dtype='datetime64[ns]')
-            return centros, fechas
+    MESES     = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
+    _hoy_rep  = datetime.now()
+    _anio_act = _hoy_rep.year
+    _mes_idx  = _hoy_rep.month - 1
+    _anios    = list(range(_anio_act - 4, _anio_act + 1))
+    _idx_a    = len(_anios) - 1
 
-        file_bytes = uploaded.getvalue()
-        centros_disponibles, fechas_serie = _leer_preview(file_bytes)
+    _fc1, _fc2 = st.columns([1.2, 2.5])
+    with _fc1:
+        st.markdown('<div class="rep-filtros-label">Centro</div>', unsafe_allow_html=True)
+        _opts = ['Todos los centros'] + centros_disponibles
+        _sel  = st.selectbox('Centro', _opts, label_visibility='collapsed', key='rep_centro')
+        if _sel != 'Todos los centros':
+            filtro_centro_val = _sel
+    with _fc2:
+        _fd1, _fd2 = st.columns(2)
+        with _fd1:
+            st.markdown('<div class="rep-filtros-label">Desde</div>', unsafe_allow_html=True)
+            _cc1, _cc2 = st.columns(2)
+            with _cc1: mes_d  = st.selectbox('M',  MESES, index=0,       label_visibility='collapsed', key='rep_mes_d')
+            with _cc2: anio_d = st.selectbox('A',  _anios, index=0,      label_visibility='collapsed', key='rep_anio_d')
+        with _fd2:
+            st.markdown('<div class="rep-filtros-label">Hasta</div>', unsafe_allow_html=True)
+            _cc3, _cc4 = st.columns(2)
+            with _cc3: mes_h  = st.selectbox('M2', MESES,  index=_mes_idx, label_visibility='collapsed', key='rep_mes_h')
+            with _cc4: anio_h = st.selectbox('A2', _anios, index=_idx_a,   label_visibility='collapsed', key='rep_anio_h')
+    _usar_per = st.checkbox('Aplicar filtro de periodo', value=False, key='rep_periodo')
+    if _usar_per:
+        fecha_desde_val = f'{anio_d}-{MESES.index(mes_d)+1:02d}'
+        fecha_hasta_val = f'{anio_h}-{MESES.index(mes_h)+1:02d}'
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="sec">🔍 Filtros (opcional — por defecto procesa todo)</div>', unsafe_allow_html=True)
-        fc1, fc2, fc3 = st.columns([1.5, 1.5, 1])
-
-        with fc1:
-            st.markdown('<div class="filter-box"><h4>🏥 Filtrar por centro</h4>', unsafe_allow_html=True)
-            opciones_centro = ['Todos los centros'] + centros_disponibles
-            sel_centro = st.selectbox('Centro / Servicio', opciones_centro, label_visibility='collapsed')
-            if sel_centro != 'Todos los centros':
-                filtro_centro_val = sel_centro
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with fc2:
-            st.markdown('<div class="filter-box"><h4>📅 Filtrar por período</h4>', unsafe_allow_html=True)
-            MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
-            anio_actual = datetime.now().year
-            if len(fechas_serie):
-                anio_min = max(fechas_serie.dt.year.min(), anio_actual - 10)
-                anio_max = min(fechas_serie.dt.year.max(), anio_actual + 1)
+    # ── Helper para cards de reporte ──────────────────────────────────────
+    def _rep_card(col, key, icono, label, desc):
+        with col:
+            st.markdown(
+                f'<div class="rep-card">'
+                f'  <div style="font-size:1.6rem;margin-bottom:.3rem;">{icono}</div>'
+                f'  <div class="rep-card-title">{label}</div>'
+                f'  <div class="rep-card-desc">{desc}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
+            if supabase_data is not None:
+                if st.button(f'Descargar {label}', key=f'btn_{key}', use_container_width=True):
+                    with st.spinner(f'Generando {label}...'):
+                        try:
+                            _wr = procesar_wide(st.session_state['supabase_path'],
+                                               filtro_centro=filtro_centro_val,
+                                               fecha_desde=fecha_desde_val,
+                                               fecha_hasta=fecha_hasta_val)
+                            _wd = tempfile.mkdtemp(prefix='qalat_')
+                            _wp = os.path.join(_wd, 'TOP_Base_Wide.xlsx')
+                            with open(_wp, 'wb') as _f: _f.write(_wr['excel_bytes'].getvalue())
+                            _buf, _fn, _mi = run_script(key, _wp, filtro_centro=filtro_centro_val)
+                            st.session_state[f'dl_{key}'] = (_buf, _fn, _mi)
+                        except Exception as _e:
+                            st.error(f'Error: {_e}')
+                if f'dl_{key}' in st.session_state:
+                    _b, _f2, _m = st.session_state[f'dl_{key}']
+                    st.download_button(f'Guardar {label} (.xlsx/.docx/.pptx)',
+                        data=_b.getvalue(), file_name=_f2, mime=_m,
+                        use_container_width=True, key=f'save_{key}')
             else:
-                anio_min, anio_max = anio_actual - 3, anio_actual
-            anios = list(range(int(anio_min), int(anio_max)+1))
-            p1, p2 = st.columns(2)
-            with p1:
-                st.caption('Desde')
-                mes_d  = st.selectbox('Mes inicio', MESES, index=0,  key='mes_d',  label_visibility='collapsed')
-                anio_d = st.selectbox('Año inicio', anios, index=0,  key='anio_d', label_visibility='collapsed')
-            with p2:
-                st.caption('Hasta')
-                mes_h  = st.selectbox('Mes fin',  MESES, index=11,              key='mes_h',  label_visibility='collapsed')
-                anio_h = st.selectbox('Año fin',  anios, index=len(anios)-1,    key='anio_h', label_visibility='collapsed')
-            usar_periodo = st.checkbox('Aplicar filtro de período', value=False)
-            if usar_periodo:
-                fecha_desde_val = f'{anio_d}-{MESES.index(mes_d)+1:02d}'
-                fecha_hasta_val = f'{anio_h}-{MESES.index(mes_h)+1:02d}'
-            st.markdown('</div>', unsafe_allow_html=True)
+                st.caption('Sin datos cargados')
 
-        with fc3:
-            st.markdown('<div class="filter-box"><h4>📄 Reportes a generar</h4>', unsafe_allow_html=True)
-            cb_ce  = st.checkbox('Tablas caracterización', value=False, key='cb_ce')
-            cb_se  = st.checkbox('Tablas seguimiento',     value=False, key='cb_se')
-            cb_pc  = st.checkbox('Word caracterización',   value=False, key='cb_pc')
-            cb_ps  = st.checkbox('Word seguimiento',       value=False, key='cb_ps')
-            cb_ppc = st.checkbox('PPT caracterización',    value=False, key='cb_ppc')
-            cb_pps = st.checkbox('PPT seguimiento',        value=False, key='cb_pps')
-            st.markdown('</div>', unsafe_allow_html=True)
+    # ── Reportes de ingreso ───────────────────────────────────────────────
+    st.markdown(
+        '<div class="rep-section-title">Reportes de ingreso '
+        '<span class="rep-tag rep-tag-top1">TOP1</span></div>'
+        '<div class="rep-section-sub">caracterizacion de los pacientes al momento del ingreso</div>',
+        unsafe_allow_html=True
+    )
+    _ri1, _ri2, _ri3 = st.columns(3, gap='small')
+    _rep_card(_ri1, 'caract_excel', '&#128215;', 'Excel',
+              '11 hojas con tablas de perfil, sustancias, transgresion, homogresion')
+    _rep_card(_ri2, 'word_caract',  '&#128216;', 'Word',
+              '4 secciones narrativas con graficos y tablas para informe institucional')
+    _rep_card(_ri3, 'pptx_caract', '&#128214;', 'PowerPoint',
+              '6 diapositivas ejecutivas para presentar a autoridad institucional')
 
-        SELECCION = {
-            'caract_excel': cb_ce, 'seg_excel': cb_se,
-            'pdf_caract':   cb_pc, 'pdf_seg':   cb_ps,
-            'pptx_caract':  cb_ppc,'pptx_seg':  cb_pps,
-        }
+    st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
-        badges = ''
-        if filtro_centro_val:
-            badges += f'<span class="badge badge-centro">🏥 Centro: {filtro_centro_val}</span>'
-        if fecha_desde_val:
-            badges += f'<span class="badge badge-periodo">📅 {fecha_desde_val} → {fecha_hasta_val}</span>'
-        if not badges:
-            badges = '<span style="color:#888;font-size:.85rem">Sin filtros — procesa toda la base</span>'
-        st.markdown(f'**Archivo:** `{uploaded.name}` &nbsp;|&nbsp; {badges}', unsafe_allow_html=True)
+    # ── Reportes de seguimiento ───────────────────────────────────────────
+    st.markdown(
+        '<div class="rep-section-title">Reportes de seguimiento '
+        '<span class="rep-tag rep-tag-top12">TOP1 vs TOP2</span></div>'
+        '<div class="rep-section-sub">analisis comparativo entre ingreso y segunda evaluacion</div>',
+        unsafe_allow_html=True
+    )
+    _rs1, _rs2, _rs3 = st.columns(3, gap='small')
+    _rep_card(_rs1, 'seg_excel', '&#128215;', 'Excel',
+              'Tablas comparativas TOP1 vs TOP2 con cambios porcentuales por dimension')
+    _rep_card(_rs2, 'word_seg',  '&#128216;', 'Word',
+              'Analisis narrativo de evolucion entre ingreso y seguimiento')
+    _rep_card(_rs3, 'pptx_seg', '&#128214;', 'PowerPoint',
+              '6 diapositivas con evolucion visual entre TOP1 y TOP2')
 
-        if st.button('⚡ Procesar y generar reportes', use_container_width=True):
-            with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
-                tmp.write(uploaded.read()); tmp_raw = tmp.name
-            work_dir = tempfile.mkdtemp(prefix='qalat_')
-            try:
-                with st.spinner('Paso 1/7 — Procesando base Wide...'):
-                    result = procesar_wide(tmp_raw, filtro_centro=filtro_centro_val,
-                                           fecha_desde=fecha_desde_val, fecha_hasta=fecha_hasta_val)
-                    st.session_state['result']    = result
-                    st.session_state['filename']  = uploaded.name
-                    st.session_state['seleccion'] = SELECCION
-                    wide_path = os.path.join(work_dir, 'TOP_Base_Wide.xlsx')
-                    with open(wide_path,'wb') as f:
-                        f.write(result['excel_bytes'].getvalue())
-                    st.session_state['wide_path'] = wide_path
-                    st.session_state['work_dir']  = work_dir
-                st.success(f"✅ Base Wide — {result['stats']['N_total']} pacientes · {result['periodo']}")
-                outputs  = {}
-                keys_sel = [k for k,v in SELECCION.items() if v]
-                prog = st.progress(0, text='Generando reportes...')
-                for i, key in enumerate(keys_sel):
-                    prog.progress(i/len(keys_sel), text=f"Generando {LABELS[key][0]}...")
-                    try:
-                        buf, fname, mime = run_script(key, wide_path, filtro_centro=filtro_centro_val)
-                        outputs[key] = {'ok':True,'buf':buf,'fname':fname,'mime':mime}
-                    except Exception as e:
-                        outputs[key] = {'ok':False,'error':str(e)}
-                prog.progress(1.0, text='✅ Listo')
-                st.session_state['outputs'] = outputs
-            except Exception as e:
-                st.error(f'❌ Error: {e}')
-            finally:
-                st.session_state['raw_path'] = tmp_raw
+    st.markdown('<div style="height:1rem"></div>', unsafe_allow_html=True)
 
-    elif supabase_data is not None:
-        col_centro_sb = 'Código del centro de tratamiento'
-        centros_disponibles = []
-        if col_centro_sb in supabase_data.columns:
-            centros_disponibles = sorted(supabase_data[col_centro_sb].dropna().astype(str).str.strip().unique().tolist())
-
-        st.markdown('<div class="sec">🔍 Filtros (opcional)</div>', unsafe_allow_html=True)
-        fc1, fc2, fc3 = st.columns([1.5, 1.5, 1])
-
-        with fc1:
-            st.markdown('<div class="filter-box"><h4>🏥 Filtrar por centro</h4>', unsafe_allow_html=True)
-            opciones_centro = ['Todos los centros'] + centros_disponibles
-            sel_centro = st.selectbox('Centro / Servicio', opciones_centro, label_visibility='collapsed', key='sb_centro')
-            if sel_centro != 'Todos los centros':
-                filtro_centro_val = sel_centro
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with fc2:
-            st.markdown('<div class="filter-box"><h4>📅 Filtrar por período</h4>', unsafe_allow_html=True)
-            MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
-            anio_actual = datetime.now().year
-            anios = list(range(anio_actual - 3, anio_actual + 1))
-            p1, p2 = st.columns(2)
-            with p1:
-                st.caption('Desde')
-                mes_d  = st.selectbox('Mes inicio', MESES, index=0,  key='sb_mes_d',  label_visibility='collapsed')
-                anio_d = st.selectbox('Año inicio', anios, index=0,  key='sb_anio_d', label_visibility='collapsed')
-            with p2:
-                st.caption('Hasta')
-                mes_h  = st.selectbox('Mes fin',  MESES, index=11,           key='sb_mes_h',  label_visibility='collapsed')
-                anio_h = st.selectbox('Año fin',  anios, index=len(anios)-1, key='sb_anio_h', label_visibility='collapsed')
-            usar_periodo_sb = st.checkbox('Aplicar filtro de período', value=False, key='sb_periodo')
-            if usar_periodo_sb:
-                fecha_desde_val = f'{anio_d}-{MESES.index(mes_d)+1:02d}'
-                fecha_hasta_val = f'{anio_h}-{MESES.index(mes_h)+1:02d}'
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with fc3:
-            st.markdown('<div class="filter-box"><h4>📄 Reportes a generar</h4>', unsafe_allow_html=True)
-            cb_ce  = st.checkbox('Tablas caracterización', value=False, key='sb_cb_ce')
-            cb_se  = st.checkbox('Tablas seguimiento',     value=False, key='sb_cb_se')
-            cb_pc  = st.checkbox('Word caracterización',   value=False, key='sb_cb_pc')
-            cb_ps  = st.checkbox('Word seguimiento',       value=False, key='sb_cb_ps')
-            cb_ppc = st.checkbox('PPT caracterización',    value=False, key='sb_cb_ppc')
-            cb_pps = st.checkbox('PPT seguimiento',        value=False, key='sb_cb_pps')
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        SELECCION = {
-            'caract_excel': cb_ce, 'seg_excel': cb_se,
-            'pdf_caract':   cb_pc, 'pdf_seg':   cb_ps,
-            'pptx_caract':  cb_ppc,'pptx_seg':  cb_pps,
-        }
-
-        st.markdown(f'**Fuente:** Supabase · `{len(supabase_data)}` registros descargados', unsafe_allow_html=True)
-
-        if st.button('⚡ Procesar y generar reportes', use_container_width=True, key='btn_proc_sb'):
-            tmp_raw  = st.session_state.get('supabase_path')
-            work_dir = tempfile.mkdtemp(prefix='qalat_')
-            try:
-                with st.spinner('Paso 1/7 — Procesando base Wide desde Supabase...'):
-                    result = procesar_wide(tmp_raw, filtro_centro=filtro_centro_val,
-                                           fecha_desde=fecha_desde_val, fecha_hasta=fecha_hasta_val)
-                    st.session_state['result']    = result
-                    st.session_state['seleccion'] = SELECCION
-                    wide_path = os.path.join(work_dir, 'TOP_Base_Wide.xlsx')
-                    with open(wide_path,'wb') as f:
-                        f.write(result['excel_bytes'].getvalue())
-                    st.session_state['wide_path'] = wide_path
-                    st.session_state['work_dir']  = work_dir
-                st.success(f"✅ Base Wide — {result['stats']['N_total']} pacientes · {result['periodo']}")
-                outputs  = {}
-                keys_sel = [k for k,v in SELECCION.items() if v]
-                prog = st.progress(0, text='Generando reportes...')
-                for i, key in enumerate(keys_sel):
-                    prog.progress(i/len(keys_sel), text=f"Generando {LABELS[key][0]}...")
-                    try:
-                        buf, fname, mime = run_script(key, wide_path, filtro_centro=filtro_centro_val)
-                        outputs[key] = {'ok':True,'buf':buf,'fname':fname,'mime':mime}
-                    except Exception as e:
-                        outputs[key] = {'ok':False,'error':str(e)}
-                prog.progress(1.0, text='✅ Listo')
-                st.session_state['outputs'] = outputs
-            except Exception as e:
-                st.error(f'❌ Error al procesar datos Supabase: {e}')
-
-    else:
-        st.markdown("""<div style="text-align:center;padding:3rem;color:#888;">
-            <div style="font-size:3rem;">📤</div>
-            <div style="font-size:1.1rem;margin-top:1rem;">Sube tu Excel o conecta con Supabase para comenzar</div>
-            <div style="font-size:.85rem;margin-top:.5rem;color:#aaa;">Base bruta exportada de Jotform · instrumento TOP</div>
-        </div>""", unsafe_allow_html=True)
-
-    # ── Resultados ────────────────────────────────────────────────────────────
     if 'result' in st.session_state:
         R    = st.session_state['result']
         s    = R['stats']; wide = R['wide']
