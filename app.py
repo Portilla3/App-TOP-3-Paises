@@ -45,6 +45,25 @@ html,body,[class*="css"]{{font-family:'Calibri',sans-serif;}}
 .main .block-container{{padding-left:1.6rem;padding-right:1.6rem;padding-top:1rem;max-width:none;}}
 /* Container border compacto (para st.container(border=True)) */
 div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;}}
+/* ── Altura uniforme de cards por fila de perfil ── */
+.panel-fila-1 div[data-testid="stVerticalBlockBorderWrapper"] > div {{min-height:290px;}}
+.panel-fila-2 div[data-testid="stVerticalBlockBorderWrapper"] > div {{min-height:340px;}}
+.panel-fila-3 div[data-testid="stVerticalBlockBorderWrapper"] > div {{min-height:370px;}}
+/* ── Separador de sección ── */
+.seccion-panel {{
+    display:flex;align-items:center;gap:.6rem;
+    margin:.4rem 0 .5rem 0;
+}}
+.seccion-panel-titulo {{
+    font-size:.92rem;font-weight:700;color:#1F3864;
+    white-space:nowrap;
+}}
+.seccion-panel-linea {{
+    flex:1;height:1px;background:#D0DAE8;
+}}
+.seccion-panel-sub {{
+    font-size:.7rem;color:#9AA5B4;white-space:nowrap;
+}}
 .qalat-hdr{{background:{NAVY};color:white;padding:1.2rem 2rem;border-radius:8px;margin-bottom:1.5rem;border-left:8px solid {MID};}}
 .qalat-hdr h1{{color:white;font-size:1.6rem;margin:0;}}
 .qalat-hdr h1 .instrumento{{font-size:2.2rem;font-weight:900;color:#9DC3E6;margin-left:.2rem;}}
@@ -835,37 +854,44 @@ with tab_panel:
 
         # ── Perfil de pacientes al ingreso ────────────────────────────────────
         st.markdown(
-            '<div style="font-size:1rem;font-weight:700;color:#1F1F1F;'
-            'margin:.1rem 0 .02rem 0;">Perfil de pacientes al ingreso</div>'
-            '<div style="font-size:.72rem;color:#777;margin-bottom:.3rem;">'
-            'información de la primera evaluación TOP · no incluye seguimientos</div>',
+            '<div class="seccion-panel">'
+            '  <span class="seccion-panel-titulo">Perfil de pacientes al ingreso</span>'
+            '  <span class="seccion-panel-linea"></span>'
+            '  <span class="seccion-panel-sub">primera evaluación TOP · no incluye seguimientos</span>'
+            '</div>',
             unsafe_allow_html=True
         )
 
         # ── Fila 1: Dona de sexo + Rango de edad ─────────────────────────────
+        st.markdown('<div class="panel-fila-1">', unsafe_allow_html=True)
         col_sexo, col_edad = st.columns(2, gap='small')
         with col_sexo:
             panel_piramide.render(df_panel, pais_panel, centro_id=None)
         with col_edad:
             panel_edad.render(df_panel, pais_panel, centro_id=None)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
         # ── Fila 2: Sustancia principal + Días de consumo ─────────────────────
+        st.markdown('<div class="panel-fila-2">', unsafe_allow_html=True)
         col_sust, col_dias = st.columns(2, gap='small')
         with col_sust:
             panel_sustancia.render(df_panel, pais_panel, centro_id=None)
         with col_dias:
             panel_dias_consumo.render(df_panel, pais_panel, centro_id=None)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
         # ── Fila 3: Transgresión + Salud y Calidad de Vida ───────────────────
+        st.markdown('<div class="panel-fila-3">', unsafe_allow_html=True)
         col_trans, col_salud = st.columns(2, gap='small')
         with col_trans:
             panel_transgresion.render(df_panel, pais_panel, centro_id=None)
         with col_salud:
             panel_salud.render(df_panel, pais_panel, centro_id=None)
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
