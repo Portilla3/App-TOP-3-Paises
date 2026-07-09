@@ -31,8 +31,8 @@ TIPOS_TRANSGRESION = [
     ('rina_pelea',  'Riña / Pelea',   '👊'),
 ]
 
-COLOR_CON    = '#E15D5D'   # rojo del panel
-COLOR_SIN    = '#E8EDF2'   # gris claro
+COLOR_CON    = '#D95F5F'   # from config PALETA_ROJO
+COLOR_SIN    = '#EEF2F5'   # from config PALETA_FONDO_REF
 TEXTO_OSCURO = '#1F3864'
 
 
@@ -155,7 +155,7 @@ def render(df, pais, centro_id=None):
         st.plotly_chart(_figura_dona(datos), use_container_width=True,
                         config={'displayModeBar': False})
 
-        # Desglose por tipo: % arriba destacado, N abajo en gris
+        # Desglose por tipo: solo % arriba en rojo y label abajo
         if datos['por_tipo']:
             cols = st.columns(len(datos['por_tipo']))
             for i, tipo in enumerate(datos['por_tipo']):
@@ -168,9 +168,6 @@ def render(df, pais, centro_id=None):
                         f'  </div>'
                         f'  <div style="font-size:.68rem;color:#777;line-height:1.3;">'
                         f'    {tipo["label"]}'
-                        f'  </div>'
-                        f'  <div style="font-size:.65rem;color:#AAAAAA;line-height:1.2;">'
-                        f'    n={tipo["n"]}'
                         f'  </div>'
                         f'</div>',
                         unsafe_allow_html=True,
