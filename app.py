@@ -82,43 +82,40 @@ div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;
 /* ── Pestañas estilo botones pill ────────────────────────────────────────── */
 /* Contenedor de tabs: fondo gris claro, borde redondeado */
 div[data-baseweb="tab-list"] {{
-    background:#F0F4F8 !important;
+    background:#EDF1F7 !important;
     border-radius:10px !important;
-    padding:4px !important;
-    gap:4px !important;
-    border:none !important;
+    padding:5px !important;
+    gap:3px !important;
+    border:1.5px solid #D0D9E8 !important;
     box-shadow:none !important;
 }}
-/* Línea inferior del tab-list (quitarla) */
-div[data-baseweb="tab-highlight"] {{
-    display:none !important;
-}}
-div[data-baseweb="tab-border"] {{
-    display:none !important;
-}}
-/* Cada pestaña inactiva */
+div[data-baseweb="tab-highlight"] {{ display:none !important; }}
+div[data-baseweb="tab-border"]    {{ display:none !important; }}
 button[data-baseweb="tab"] {{
-    border-radius:8px !important;
-    padding:.4rem 1.1rem !important;
+    border-radius:7px !important;
+    padding:.45rem 1.2rem !important;
     font-size:.88rem !important;
     font-weight:600 !important;
-    color:#6B7A90 !important;
+    color:#5A6B82 !important;
     background:transparent !important;
-    border:none !important;
+    border:1.5px solid transparent !important;
     transition:all .15s ease !important;
 }}
 button[data-baseweb="tab"]:hover {{
-    background:#E0E8F4 !important;
+    background:#D8E4F2 !important;
     color:#004AAD !important;
+    border-color:#B8CCE4 !important;
 }}
-/* Pestaña activa */
 button[data-baseweb="tab"][aria-selected="true"] {{
-    background:white !important;
-    color:#004AAD !important;
-    box-shadow:0 1px 4px rgba(0,74,173,.15) !important;
-    border-radius:8px !important;
+    background:#004AAD !important;
+    color:white !important;
+    border-color:#004AAD !important;
+    box-shadow:0 2px 6px rgba(0,74,173,.30) !important;
+    border-radius:7px !important;
 }}
-/* Icono/emoji dentro de la pestaña */
+button[data-baseweb="tab"][aria-selected="true"] p {{
+    color:white !important;
+}}
 button[data-baseweb="tab"] p {{
     font-size:.88rem !important;
     font-weight:600 !important;
@@ -1004,7 +1001,23 @@ with tab_reportes:
     </style>
     """, unsafe_allow_html=True)
 
-    # ── Carga automatica desde Supabase ───────────────────────────────────
+    # ── Banner informativo Base Wide ─────────────────────────────────────────
+    st.markdown(
+        '<div style="background:#FFF8E6;border:1.5px solid #F0A836;border-radius:8px;'
+        'padding:.7rem 1rem;margin-bottom:.8rem;display:flex;align-items:center;gap:.8rem;">'
+        '  <span style="font-size:1.4rem;">&#9888;&#65039;</span>'
+        '  <div>'
+        '    <div style="font-size:.82rem;font-weight:700;color:#7A5000;">'
+        '      Descarga la Base Wide antes de generar reportes</div>'
+        '    <div style="font-size:.72rem;color:#9A6800;">'
+        '      La Base Wide procesa los datos brutos y es la fuente de todos los reportes. '
+        '      Si los datos cambiaron, descárgala primero para obtener resultados actualizados.</div>'
+        '  </div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    # ── Carga automatica desde Supabase ───────────────────────────────────────
     if 'supabase_path' not in st.session_state:
         try:
             _pais_carga = pais_fijo if not es_unodc else None
