@@ -152,19 +152,19 @@ def render(df, pais, centro_id=None):
             st.info('ℹ Aún no hay ingresos registrados.')
             return
 
-        # Sección 1: ingresos
+        # Sección 1: total TOP (primero — da visión global)
         _render_seccion(
-            '🔵 Por ingresos', 'pacientes con primera evaluación TOP',
-            ranking_ing, 'n_ingresos', 'Ingresos',
-            _grafico_ingresos, centro_id, 'rk_ing'
+            '🟣 Por total de registros TOP', 'todas las fases · ingreso + en tratamiento + egreso + seguimiento',
+            ranking_tot, 'n_total', 'Total TOP',
+            _grafico_total, centro_id, 'rk_tot'
         )
 
         st.markdown('<div style="height:.4rem;border-top:.5px solid #eee;margin:.5rem 0;"></div>',
                     unsafe_allow_html=True)
 
-        # Sección 2: total TOP
+        # Sección 2: ingresos
         _render_seccion(
-            '🟣 Por total de registros TOP', 'todas las fases · ingreso + en tratamiento + egreso + seguimiento',
-            ranking_tot, 'n_total', 'Total TOP',
-            _grafico_total, centro_id, 'rk_tot'
+            '🔵 Por ingresos', 'pacientes con primera evaluación TOP',
+            ranking_ing, 'n_ingresos', 'Ingresos',
+            _grafico_ingresos, centro_id, 'rk_ing'
         )
