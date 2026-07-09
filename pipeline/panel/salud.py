@@ -21,9 +21,9 @@ import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
 
-COLOR_DESTAC = '#1F3864'
-COLOR_BASE   = '#A8C4E0'
-COLOR_REF    = '#E57373'   # línea de referencia en 10 (umbral deficiente)
+COLOR_DESTAC = '#1A6B9A'   # from config PALETA_PRINCIPAL
+COLOR_BASE   = '#A8C4E0'   # from config PALETA_SECUNDARIO
+COLOR_REF    = '#D95F5F'   # from config PALETA_ROJO (umbral deficiente)
 TEXTO_OSCURO = '#1F3864'
 
 ESCALAS = [
