@@ -49,9 +49,9 @@ _CAT_A_COL = {
     'Sedantes':        'sedantes_total',
 }
 
-COLOR_BARRA   = '#1A6B9A'   # from config PALETA_PRINCIPAL
+COLOR_BARRA   = '#004AAD'   # from config PALETA_PRINCIPAL
 COLOR_REF     = '#B0B8C1'   # from config PALETA_REF_LINE
-TEXTO_OSCURO  = '#1F3864'
+TEXTO_OSCURO  = '#004AAD'
 ALTO_BARRA_PX = 32
 
 
