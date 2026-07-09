@@ -979,7 +979,11 @@ with tab_reportes:
     .rep-quick-title   {font-size:.95rem;font-weight:700;color:#1F3864;}
     .rep-quick-desc    {font-size:.75rem;color:#666;}
     .rep-card          {background:white;border:1px solid #E5E5E5;border-radius:10px;
-                        padding:1rem 1.1rem 1.1rem 1.1rem;}
+                        padding:0 1.1rem 1.1rem 1.1rem;overflow:hidden;position:relative;}
+    .rep-card-accent   {height:4px;margin:0 -1.1rem 1rem -1.1rem;}
+    .rep-card-icon     {width:36px;height:36px;border-radius:8px;display:flex;
+                        align-items:center;justify-content:center;margin-bottom:.6rem;
+                        font-size:1.1rem;}
     .rep-card-title    {font-size:.95rem;font-weight:700;color:#1F3864;margin-bottom:.2rem;}
     .rep-card-desc     {font-size:.78rem;color:#666;min-height:2.5rem;}
     .rep-tag           {display:inline-block;font-size:.68rem;font-weight:700;
@@ -1118,11 +1122,47 @@ with tab_reportes:
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
     # ── Helper para cards de reporte ──────────────────────────────────────
+    # Mapa de íconos SVG inline por tipo de reporte
+    _ICONOS_SVG = {
+        'excel': (
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D7C3F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            '<rect x="3" y="3" width="18" height="18" rx="2"/>'
+            '<line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/>'
+            '<line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/>'
+            '</svg>'
+        ),
+        'word': (
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2B579A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>'
+            '<polyline points="14 2 14 8 20 8"/>'
+            '<line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>'
+            '<line x1="8" y1="9" x2="10" y2="9"/>'
+            '</svg>'
+        ),
+        'pptx': (
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C43E1C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            '<rect x="2" y="3" width="20" height="14" rx="2"/>'
+            '<line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'
+            '<polyline points="7 10 10 7 13 10 17 7"/>'
+            '</svg>'
+        ),
+    }
+    _ICON_BG = {'excel': '#E6F4EC', 'word': '#E8EEF8', 'pptx': '#FAEAE6'}
+
+    def _tipo_card(key):
+        if 'excel' in key or 'wide' in key: return 'excel'
+        if 'word'  in key: return 'word'
+        return 'pptx'
+
     def _rep_card(col, key, icono, label, desc, btn_color='#1D9E75'):
+        _tipo  = _tipo_card(key)
+        _svg   = _ICONOS_SVG[_tipo]
+        _ibg   = _ICON_BG[_tipo]
         with col:
             st.markdown(
                 f'<div class="rep-card">'
-                f'  <div style="font-size:1.6rem;margin-bottom:.3rem;">{icono}</div>'
+                f'  <div class="rep-card-accent" style="background:{btn_color};"></div>'
+                f'  <div class="rep-card-icon" style="background:{_ibg};">{_svg}</div>'
                 f'  <div class="rep-card-title">{label}</div>'
                 f'  <div class="rep-card-desc">{desc}</div>'
                 f'</div>',
