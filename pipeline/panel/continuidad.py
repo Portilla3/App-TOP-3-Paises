@@ -83,13 +83,13 @@ def _grafico(ranking, centro_id, promedio_nacional):
         )
 
     n = len(ranking)
-    alto = max(100, n * 14 + 18)
+    alto = max(100, n * 26 + 20)
 
     fig.update_layout(
         height=alto,
         margin=dict(l=8, r=50, t=2, b=2),
         barmode='overlay',
-        bargap=0.10,
+        bargap=0.40,
         xaxis=dict(
             visible=False,
             range=[0, escala_max],
