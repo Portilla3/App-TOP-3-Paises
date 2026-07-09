@@ -1151,7 +1151,7 @@ with tab_reportes:
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
     # ── Helper para cards de reporte ──────────────────────────────────────
-    def _rep_card(col, key, icono, label, desc):
+    def _rep_card(col, key, icono, label, desc, btn_color='#1D9E75'):
         with col:
             st.markdown(
                 f'<div class="rep-card">'
