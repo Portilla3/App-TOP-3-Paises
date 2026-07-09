@@ -18,9 +18,9 @@ import plotly.graph_objects as go
 from pipeline.panel.config import ingresos_por_centro, titulo_seccion
 
 
-NAVY   = '#1A6B9A'   # from config PALETA_PRINCIPAL
-MID    = '#A8C4E0'   # from config PALETA_SECUNDARIO
-FONDO  = '#EEF2F5'   # from config PALETA_FONDO_REF   # gris azulado muy claro para barra de referencia
+NAVY   = '#004AAD'   # PALETA_PRINCIPAL
+MID    = '#004AAD'   # barra real mismo azul principal
+FONDO  = '#E5E5E5'   # PALETA_SECUNDARIO gris claro
 DESTAC = '#00B0F0'   # cyan para centro destacado
 
 
@@ -63,7 +63,7 @@ def _grafico(ranking, centro_id):
         marker=dict(color=colores_rev, line=dict(width=0)),
         text=ranking_rev['n_ingresos'],
         textposition='outside',
-        textfont=dict(color=NAVY, size=15, family='Arial'),
+        textfont=dict(color=NAVY, size=10, family='Arial'),
         hovertemplate='<b>%{y}</b><br>Ingresos: %{x}<extra></extra>',
         cliponaxis=False,
         showlegend=False,
@@ -71,7 +71,7 @@ def _grafico(ranking, centro_id):
 
     # Altura ultra compacta
     n = len(ranking)
-    alto = max(100, n * 16 + 18)
+    alto = max(100, n * 14 + 18)
 
     fig.update_layout(
         height=alto,
@@ -84,7 +84,7 @@ def _grafico(ranking, centro_id):
             fixedrange=True,
         ),
         yaxis=dict(
-            tickfont=dict(size=11, color=NAVY, family='Arial'),
+            tickfont=dict(size=9, color=NAVY, family='Arial'),
             automargin=True,
             fixedrange=True,
         ),
