@@ -32,8 +32,8 @@ TIPOS_TRANSGRESION = [
 ]
 
 COLOR_CON    = '#D95F5F'   # from config PALETA_ROJO
-COLOR_SIN    = '#EEF2F5'   # from config PALETA_FONDO_REF
-TEXTO_OSCURO = '#1F3864'
+COLOR_SIN    = '#F2F4F7'   # from config PALETA_FONDO_REF
+TEXTO_OSCURO = '#004AAD'
 
 
 def _calcular_transgresion(df):
