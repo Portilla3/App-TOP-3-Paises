@@ -27,6 +27,8 @@ from pipeline.panel     import sustancia      as panel_sustancia
 from pipeline.panel     import dias_consumo   as panel_dias_consumo
 from pipeline.panel     import transgresion   as panel_transgresion
 from pipeline.panel     import avance_centros as panel_avance_centros
+from pipeline.panel     import edad           as panel_edad
+from pipeline.panel     import salud          as panel_salud
 
 NAVY='#1F3864'; MID='#2E75B6'; ACCENT='#00B0F0'
 ORANGE='#C8590A'; RED='#C00000'; GREEN='#538135'; WHITE='#FFFFFF'
@@ -831,7 +833,7 @@ with tab_panel:
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
-        # ── Perfil de pacientes al ingreso: Pirámide + Sustancia (2 col) ──────
+        # ── Perfil de pacientes al ingreso ────────────────────────────────────
         st.markdown(
             '<div style="font-size:1rem;font-weight:700;color:#1F1F1F;'
             'margin:.1rem 0 .02rem 0;">Perfil de pacientes al ingreso</div>'
@@ -839,20 +841,31 @@ with tab_panel:
             'información de la primera evaluación TOP · no incluye seguimientos</div>',
             unsafe_allow_html=True
         )
-        col_pir, col_sust = st.columns(2, gap='small')
-        with col_pir:
+
+        # ── Fila 1: Dona de sexo + Rango de edad ─────────────────────────────
+        col_sexo, col_edad = st.columns(2, gap='small')
+        with col_sexo:
             panel_piramide.render(df_panel, pais_panel, centro_id=None)
-        with col_sust:
-            panel_sustancia.render(df_panel, pais_panel, centro_id=None)
+        with col_edad:
+            panel_edad.render(df_panel, pais_panel, centro_id=None)
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
-        # ── Días de consumo + Transgresión a la ley (2 col) ──────────────────
-        col_dias, col_trans = st.columns(2, gap='small')
+        # ── Fila 2: Sustancia principal + Días de consumo ─────────────────────
+        col_sust, col_dias = st.columns(2, gap='small')
+        with col_sust:
+            panel_sustancia.render(df_panel, pais_panel, centro_id=None)
         with col_dias:
             panel_dias_consumo.render(df_panel, pais_panel, centro_id=None)
+
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+
+        # ── Fila 3: Transgresión + Salud y Calidad de Vida ───────────────────
+        col_trans, col_salud = st.columns(2, gap='small')
         with col_trans:
             panel_transgresion.render(df_panel, pais_panel, centro_id=None)
+        with col_salud:
+            panel_salud.render(df_panel, pais_panel, centro_id=None)
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
