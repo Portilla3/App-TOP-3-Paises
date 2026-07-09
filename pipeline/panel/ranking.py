@@ -24,7 +24,7 @@ FONDO  = '#E5E5E5'   # PALETA_SECUNDARIO gris claro
 DESTAC = '#00B0F0'   # cyan para centro destacado
 
 
-TOP_N_VISIBLE = 10
+TOP_N_VISIBLE = 6
 
 
 def _grafico(ranking, centro_id):
