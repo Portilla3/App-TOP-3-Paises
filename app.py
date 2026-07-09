@@ -22,6 +22,7 @@ from pipeline.panel     import semaforo    as panel_semaforo
 from pipeline.panel     import mensuales   as panel_mensuales
 from pipeline.panel     import ranking     as panel_ranking
 from pipeline.panel     import continuidad as panel_continuidad
+from pipeline.panel     import tiempo_top  as panel_tiempo_top
 from pipeline.panel     import piramide       as panel_piramide
 from pipeline.panel     import sustancia      as panel_sustancia
 from pipeline.panel     import dias_consumo   as panel_dias_consumo
@@ -903,11 +904,17 @@ with tab_panel:
         st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
 
         # ── Ranking + Continuidad lado a lado ─────────────────────────────────
+        # ── Ranking (ingresos + total TOP) + Seguimiento lado a lado ──────────
         col_rk, col_cont = st.columns(2, gap='small')
         with col_rk:
             panel_ranking.render(df_panel, pais_panel, centro_id=None)
         with col_cont:
             panel_continuidad.render(df_panel, pais_panel, centro_id=None)
+
+        st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
+
+        # ── Tiempo entre TOP1 y TOP2 (ancho completo) ─────────────────────────
+        panel_tiempo_top.render(df_panel, pais_panel, centro_id=None)
 
         st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
