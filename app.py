@@ -982,11 +982,6 @@ with tab_reportes:
                         padding:1rem 1.1rem 1.1rem 1.1rem;}
     .rep-card-title    {font-size:.95rem;font-weight:700;color:#1F3864;margin-bottom:.2rem;}
     .rep-card-desc     {font-size:.78rem;color:#666;min-height:2.5rem;}
-    /* Colores Office para botones de descarga de reportes */
-    [data-testid="stButton"][id*="word"] button,
-    div:has(> [data-testid="stButton"] button[kind="secondary"][data-word]) button {{
-        background:#2B579A !important;color:white !important;border-color:#2B579A !important;
-    }}
     .rep-tag           {display:inline-block;font-size:.68rem;font-weight:700;
                         padding:.15rem .5rem;border-radius:20px;margin-left:.4rem;vertical-align:middle;}
     .rep-tag-top1      {background:#E8F0FE;color:#004AAD;}
@@ -1136,10 +1131,14 @@ with tab_reportes:
             st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
             if supabase_data is not None:
                 st.markdown(
-                    f'<style>#btn_{key}_html{{background:{btn_color};color:white;border:none;'
-                    f'border-radius:6px;padding:.55rem 1rem;font-size:.9rem;font-weight:600;'
-                    f'width:100%;cursor:pointer;margin-top:.2rem;display:block;text-align:center;}}'
-                    f'#btn_{key}_html:hover{{opacity:.88;}}</style>',
+                    f'<style>'
+                    f'.btn-wrap-{key} button{{'
+                    f'background:{btn_color} !important;color:white !important;'
+                    f'border:none !important;font-weight:600 !important;}}'
+                    f'.btn-wrap-{key} button:hover{{opacity:.88 !important;'
+                    f'background:{btn_color} !important;}}'
+                    f'</style>'
+                    f'<div class="btn-wrap-{key}">',
                     unsafe_allow_html=True
                 )
                 if st.button(f'Descargar {label}', key=f'btn_{key}', use_container_width=True):
@@ -1156,6 +1155,7 @@ with tab_reportes:
                             st.session_state[f'dl_{key}'] = (_buf, _fn, _mi)
                         except Exception as _e:
                             st.error(f'Error: {_e}')
+                st.markdown('</div>', unsafe_allow_html=True)
                 if f'dl_{key}' in st.session_state:
                     _b, _f2, _m = st.session_state[f'dl_{key}']
                     st.download_button(f'Guardar {label} (.xlsx/.docx/.pptx)',
