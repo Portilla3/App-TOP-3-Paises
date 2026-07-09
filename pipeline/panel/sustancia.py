@@ -176,7 +176,11 @@ def _calcular_sustancias(df):
     sin_reconocer_detalle = {}
     if 'sin_reconocer' in otras_desglose:
         sr = otras[otras['subclase'] == 'sin_reconocer']
-        sr_norm = sr['sustancia_principal'].apply(_normalizar)
+        def _norm_local(v):
+            if v is None or (isinstance(v, float) and pd.isna(v)):
+                return ''
+            return unicodedata.normalize('NFD', str(v).strip().lower()).encode('ascii','ignore').decode()
+        sr_norm = sr['sustancia_principal'].apply(_norm_local)
         for v in sr_norm.value_counts().items():
             sin_reconocer_detalle[v[0]] = int(v[1])
 
