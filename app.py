@@ -81,48 +81,41 @@ div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;
 
 /* ── Pestañas estilo botones pill ────────────────────────────────────────── */
 /* Contenedor de tabs: fondo gris claro, borde redondeado */
-div[data-baseweb="tab-list"] {{
-    background:#DDE6F0 !important;
+.stTabs [data-baseweb="tab-list"] {{
+    background:#E4ECF7 !important;
     border-radius:10px !important;
-    padding:5px !important;
+    padding:6px !important;
     gap:4px !important;
-    border:none !important;
-    box-shadow:inset 0 1px 3px rgba(0,0,0,.08) !important;
+    border:2px solid #C5D5EA !important;
+    box-shadow:none !important;
 }}
-div[data-baseweb="tab-highlight"],
-div[data-baseweb="tab-border"] {{
+.stTabs [data-baseweb="tab-highlight"],
+.stTabs [data-baseweb="tab-border"] {{
     display:none !important;
-    height:0 !important;
-    background:transparent !important;
 }}
-button[data-baseweb="tab"] {{
-    border-radius:7px !important;
-    padding:.5rem 1.3rem !important;
-    font-size:.88rem !important;
-    font-weight:600 !important;
-    color:#4A5E73 !important;
+.stTabs [data-baseweb="tab"] {{
+    border-radius:8px !important;
+    padding:8px 20px !important;
+    font-weight:700 !important;
+    font-size:14px !important;
+    color:#556677 !important;
     background:transparent !important;
-    border:none !important;
-    transition:background .15s,color .15s !important;
-    min-height:36px !important;
+    border:2px solid transparent !important;
+    min-height:40px !important;
 }}
-button[data-baseweb="tab"]:hover {{
-    background:rgba(255,255,255,.6) !important;
+.stTabs [data-baseweb="tab"]:hover {{
+    background:#FFFFFF !important;
     color:#004AAD !important;
+    border-color:#B0C8E8 !important;
 }}
-button[data-baseweb="tab"][aria-selected="true"],
-button[data-baseweb="tab"][aria-selected="true"]:hover {{
+.stTabs [data-baseweb="tab"][aria-selected="true"] {{
     background:#004AAD !important;
     color:#FFFFFF !important;
-    box-shadow:0 2px 8px rgba(0,74,173,.35) !important;
+    border-color:#004AAD !important;
+    box-shadow:0 3px 10px rgba(0,74,173,.4) !important;
 }}
-button[data-baseweb="tab"] p,
-button[data-baseweb="tab"] span,
-button[data-baseweb="tab"] div {{
-    font-size:.88rem !important;
-    font-weight:600 !important;
-    color:inherit !important;
-    margin:0 !important;
+.stTabs [data-baseweb="tab"][aria-selected="true"] * {{
+    color:#FFFFFF !important;
 }}
 .qalat-hdr{{background:{NAVY};color:white;padding:1.2rem 2rem;border-radius:8px;margin-bottom:1.5rem;border-left:8px solid {MID};}}
 .qalat-hdr h1{{color:white;font-size:1.6rem;margin:0;}}
@@ -1054,52 +1047,31 @@ with tab_reportes:
         '<div class="rep-section-sub">archivos maestros con toda la informacion sin filtros</div>',
         unsafe_allow_html=True
     )
-    _q1, _q2 = st.columns(2, gap='small')
-    with _q1:
-        st.markdown(
-            '<div class="rep-quick-card">'
-            '  <div class="rep-quick-icon">&#128452;</div>'
-            '  <div>'
-            '    <div class="rep-quick-title">Base Wide completa</div>'
-            '    <div class="rep-quick-desc">Excel con 6 hojas &middot; Wide, Resumen, Alertas, Calidad, Por Centro, Pendientes</div>'
-            '  </div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-        if supabase_data is not None:
-            if st.button('Generar y descargar', key='q_wide', use_container_width=True):
-                with st.spinner('Generando Base Wide...'):
-                    try:
-                        _rq = procesar_wide(st.session_state['supabase_path'])
-                        st.session_state['dl_quick_wide'] = _rq['excel_bytes'].getvalue()
-                    except Exception as _e:
-                        st.error(f'Error: {_e}')
-            if 'dl_quick_wide' in st.session_state:
-                st.download_button('Descargar Base Wide (.xlsx)',
-                    data=st.session_state['dl_quick_wide'],
-                    file_name=f'TOP_Base_Wide_{datetime.now().strftime("%Y-%m-%d")}.xlsx',
-                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    use_container_width=True, key='save_wide')
-    with _q2:
-        st.markdown(
-            '<div class="rep-quick-card">'
-            '  <div class="rep-quick-icon">&#128202;</div>'
-            '  <div>'
-            '    <div class="rep-quick-title">Reporte de avance por centro</div>'
-            '    <div class="rep-quick-desc">Excel &middot; una fila por centro con TOP1, TOP2, continuidad, actividad</div>'
-            '  </div>'
-            '</div>',
-            unsafe_allow_html=True
-        )
-        if supabase_data is not None:
-            from pipeline.panel.avance_centros import _calcular_avance, _generar_excel as _gen_av
-            _df_av  = _calcular_avance(supabase_data)
-            _pais_av = pais_fijo if not es_unodc else 'Todos los paises'
-            st.download_button('Descargar Reporte de avance (.xlsx)',
-                data=_gen_av(_df_av, _pais_av),
-                file_name=f'Avance_centros_{datetime.now().strftime("%Y-%m-%d")}.xlsx',
+    st.markdown(
+        '<div class="rep-quick-card">'
+        '  <div class="rep-quick-icon">&#128452;</div>'
+        '  <div>'
+        '    <div class="rep-quick-title">Base Wide completa</div>'
+        '    <div class="rep-quick-desc">Excel con 6 hojas &middot; Wide, Resumen, Alertas, Calidad, Por Centro, Pendientes &middot; '
+        'descarga antes de generar reportes si los datos cambiaron</div>'
+        '  </div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+    if supabase_data is not None:
+        if st.button('Generar y descargar Base Wide', key='q_wide', use_container_width=True):
+            with st.spinner('Generando Base Wide...'):
+                try:
+                    _rq = procesar_wide(st.session_state['supabase_path'])
+                    st.session_state['dl_quick_wide'] = _rq['excel_bytes'].getvalue()
+                except Exception as _e:
+                    st.error(f'Error: {_e}')
+        if 'dl_quick_wide' in st.session_state:
+            st.download_button('Descargar Base Wide (.xlsx)',
+                data=st.session_state['dl_quick_wide'],
+                file_name=f'TOP_Base_Wide_{datetime.now().strftime("%Y-%m-%d")}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                use_container_width=True, key='dl_avance')
+                use_container_width=True, key='save_wide')
 
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
@@ -1151,7 +1123,7 @@ with tab_reportes:
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
     # ── Helper para cards de reporte ──────────────────────────────────────
-    def _rep_card(col, key, icono, label, desc, btn_color='#1D9E75'):
+    def _rep_card(col, key, icono, label, desc):
         with col:
             st.markdown(
                 f'<div class="rep-card">'
