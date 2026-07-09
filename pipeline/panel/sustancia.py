@@ -31,8 +31,8 @@ import plotly.graph_objects as go
 from pipeline.panel.config import titulo_seccion
 
 
-COLOR_BARRA  = '#2E9B6C'   # verde consistente con continuidad
-COLOR_OTRAS  = '#8FA9B9'   # gris azulado para "Otras"
+COLOR_BARRA  = '#1A6B9A'   # from config PALETA_PRINCIPAL
+COLOR_OTRAS  = '#8FA9B9'   # from config PALETA_NEUTRO
 TEXTO_OSCURO = '#1F3864'
 
 
