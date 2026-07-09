@@ -20,9 +20,9 @@ import plotly.graph_objects as go
 from pipeline.panel.config import continuidad_por_centro, titulo_seccion
 
 
-VERDE_BARRA  = '#2E9B6C'   # verde consistente con paleta continuidad
-VERDE_DESTAC = '#12B47A'
-FONDO        = '#EEF4EF'   # gris verdoso muy claro para barra de referencia
+VERDE_BARRA  = '#1A6B9A'   # from config PALETA_PRINCIPAL
+VERDE_DESTAC = '#1A6B9A'
+FONDO        = '#EEF2F5'   # from config PALETA_FONDO_REF   # gris verdoso muy claro para barra de referencia
 TEXTO_OSCURO = '#1F3864'
 
 
