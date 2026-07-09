@@ -31,9 +31,9 @@ import plotly.graph_objects as go
 from pipeline.panel.config import titulo_seccion
 
 
-COLOR_BARRA  = '#1A6B9A'   # from config PALETA_PRINCIPAL
-COLOR_OTRAS  = '#8FA9B9'   # from config PALETA_NEUTRO
-TEXTO_OSCURO = '#1F3864'
+COLOR_BARRA  = '#004AAD'   # from config PALETA_PRINCIPAL
+COLOR_OTRAS  = '#A0B4C8'   # from config PALETA_NEUTRO
+TEXTO_OSCURO = '#004AAD'
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
