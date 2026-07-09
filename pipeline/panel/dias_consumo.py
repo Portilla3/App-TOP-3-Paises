@@ -49,9 +49,9 @@ _CAT_A_COL = {
     'Sedantes':        'sedantes_total',
 }
 
-COLOR_BARRA   = '#004AAD'   # from config PALETA_PRINCIPAL
+COLOR_BARRA   = '#1A6B9A'   # from config PALETA_PRINCIPAL
 COLOR_REF     = '#B0B8C1'   # from config PALETA_REF_LINE
-TEXTO_OSCURO  = '#004AAD'
+TEXTO_OSCURO  = '#1F3864'
 ALTO_BARRA_PX = 32
 
 
@@ -84,6 +84,9 @@ def _calcular_dias(df):
         if not mask.any():
             continue
         serie = pd.to_numeric(df_ing.loc[mask, col], errors='coerce')
+        # Descartar valores fuera del rango válido del TOP (0-28 días)
+        # Valores > 28 o < 0 vienen de errores de migración JotForm
+        serie = serie.where((serie >= 0) & (serie <= 28))
         con_valor = serie[serie > 0]
         if con_valor.empty:
             continue
