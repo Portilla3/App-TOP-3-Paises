@@ -18,9 +18,9 @@ import plotly.graph_objects as go
 from pipeline.panel.config import ingresos_por_centro, titulo_seccion
 
 
-NAVY   = '#1F3864'
-MID    = '#2E75B6'
-FONDO  = '#E8EEF7'   # gris azulado muy claro para barra de referencia
+NAVY   = '#1A6B9A'   # from config PALETA_PRINCIPAL
+MID    = '#A8C4E0'   # from config PALETA_SECUNDARIO
+FONDO  = '#EEF2F5'   # from config PALETA_FONDO_REF   # gris azulado muy claro para barra de referencia
 DESTAC = '#00B0F0'   # cyan para centro destacado
 
 
