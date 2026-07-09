@@ -1,54 +1,68 @@
 """
-pipeline.panel.dias_consumo — Días de consumo por sustancia al ingreso.
+pipeline.panel.dias_consumo — Días de consumo por sustancia principal al ingreso.
 
-Muestra el promedio de días consumidos en las últimas 4 semanas (escala 0-28)
-para cada sustancia registrada, solo en registros con etapa='ingreso'.
+Para cada categoría de sustancia principal declarada calcula el promedio de días
+consumidos en las últimas 4 semanas (columna _total de Supabase, escala 0-28),
+usando SOLO los pacientes que declararon esa sustancia como principal.
 
-Columnas Supabase usadas: alcohol_total, marihuana_total, pastabase_total,
-cocaina_total, sedantes_total. Se excluyen sustancias sin ningún registro > 0.
+Lógica:
+  1. Filtrar etapa=ingreso
+  2. Clasificar sustancia_principal con la misma taxonomía de panel/sustancia.py
+  3. Para cada categoría canónica, tomar la columna _total correspondiente
+     y calcular el promedio entre quienes tienen valor > 0
+  4. Excluir categorías sin columna _total disponible (Tusi, Ketamina, etc.)
+
+Mapeo categoría → columna Supabase:
+  Alcohol          → alcohol_total
+  Marihuana        → marihuana_total
+  Cocaína          → cocaina_total
+  Pasta base       → pastabase_total
+  Sedantes         → sedantes_total
+  (resto: sin columna _total → no se muestran)
 
 Diseño:
-  - Barras horizontales ordenadas descendente por promedio
-  - Escala fija 0-28 (eje X)
-  - Línea de referencia vertical en 14 días (mitad del período)
+  - Barras horizontales ordenadas desc por promedio
+  - Escala fija 0-28, línea de referencia en 14 días
   - Valor del promedio anotado al final de cada barra
-  - N pacientes con > 0 días en hover
+  - N pacientes en hover
 
 Función expuesta:
   render(df, pais, centro_id=None)
 """
-import streamlit as st
+import re as _re
+import unicodedata
+
 import pandas as pd
 import plotly.graph_objects as go
+import streamlit as st
 
 from pipeline.panel.config import titulo_seccion
+from pipeline.panel.sustancia import _clasificar_sustancia   # reutiliza la misma taxonomía
 
 
-# Columnas Supabase → etiqueta visible
-SUSTANCIAS_COLS = [
-    ('alcohol_total',    'Alcohol'),
-    ('marihuana_total',  'Marihuana'),
-    ('cocaina_total',    'Cocaína'),
-    ('pastabase_total',  'Pasta base'),
-    ('sedantes_total',   'Sedantes'),
-]
+# Mapeo categoría canónica → columna _total en Supabase
+_CAT_A_COL = {
+    'Alcohol':         'alcohol_total',
+    'Cannabis/Marihuana': 'marihuana_total',
+    'Cocaína':         'cocaina_total',
+    'Pasta base':      'pastabase_total',
+    'Sedantes':        'sedantes_total',
+}
 
-COLOR_BARRA    = '#4A90D9'
-COLOR_REF      = '#B0B8C1'
-TEXTO_OSCURO   = '#1F3864'
-ALTO_BARRA_PX  = 32   # altura por barra en px
+COLOR_BARRA   = '#4A90D9'
+COLOR_REF     = '#B0B8C1'
+TEXTO_OSCURO  = '#1F3864'
+ALTO_BARRA_PX = 32
 
 
 def _calcular_dias(df):
     """
-    Filtra etapa=ingreso y calcula, para cada sustancia:
-      - promedio de días (solo entre quienes registraron > 0)
-      - n pacientes con > 0 días
+    Filtra etapa=ingreso, clasifica sustancia_principal y calcula el promedio
+    de días de consumo para cada categoría canónica con columna _total disponible.
 
-    Excluye sustancias sin ningún paciente con > 0 días.
     Retorna lista de dicts ordenados desc por promedio.
     """
-    cols_req = {'etapa'}
+    cols_req = {'etapa', 'sustancia_principal'}
     if df is None or df.empty or not cols_req.issubset(df.columns):
         return []
 
@@ -56,19 +70,28 @@ def _calcular_dias(df):
     if df_ing.empty:
         return []
 
+    # Clasificar sustancia principal (reutiliza taxonomía de sustancia.py)
+    df_ing['_cat'] = df_ing['sustancia_principal'].apply(
+        lambda v: _clasificar_sustancia(v)[0]
+    )
+
     resultado = []
-    for col, label in SUSTANCIAS_COLS:
+    for cat, col in _CAT_A_COL.items():
         if col not in df_ing.columns:
             continue
-        serie = pd.to_numeric(df_ing[col], errors='coerce')
+        # Solo pacientes que declararon esta categoría como principal
+        mask = df_ing['_cat'] == cat
+        if not mask.any():
+            continue
+        serie = pd.to_numeric(df_ing.loc[mask, col], errors='coerce')
         con_valor = serie[serie > 0]
         if con_valor.empty:
             continue
         resultado.append({
-            'sustancia': label,
+            'sustancia': cat,
             'promedio':  round(con_valor.mean(), 1),
             'n':         len(con_valor),
-            'n_total':   len(df_ing),
+            'n_cat':     int(mask.sum()),   # total que declararon esta como principal
         })
 
     resultado.sort(key=lambda x: x['promedio'], reverse=True)
@@ -76,14 +99,13 @@ def _calcular_dias(df):
 
 
 def _figura(datos):
-    """Construye el gráfico Plotly de barras horizontales."""
-    labels   = [d['sustancia'] for d in datos]
-    valores  = [d['promedio']  for d in datos]
-    textos   = [f"<b>{d['promedio']}</b> días" for d in datos]
-    hovers   = [
+    labels  = [d['sustancia'] for d in datos]
+    valores = [d['promedio']  for d in datos]
+    textos  = [f"<b>{d['promedio']}</b> días" for d in datos]
+    hovers  = [
         f"<b>{d['sustancia']}</b><br>"
-        f"Promedio: {d['promedio']} días<br>"
-        f"Pacientes con consumo: {d['n']} de {d['n_total']}"
+        f"Promedio días consumidos: {d['promedio']}<br>"
+        f"Pacientes con consumo registrado: {d['n']} de {d['n_cat']} que la declararon principal"
         for d in datos
     ]
 
@@ -91,7 +113,6 @@ def _figura(datos):
 
     fig = go.Figure()
 
-    # Barras
     fig.add_trace(go.Bar(
         y=labels,
         x=valores,
@@ -122,7 +143,7 @@ def _figura(datos):
 
     fig.update_layout(
         height=alto,
-        margin=dict(l=0, r=50, t=4, b=20),
+        margin=dict(l=0, r=60, t=4, b=20),
         xaxis=dict(
             range=[0, 31],
             tickvals=[0, 7, 14, 21, 28],
@@ -146,11 +167,10 @@ def _figura(datos):
 
 
 def render(df, pais, centro_id=None):
-    """Renderiza el componente de días de consumo por sustancia."""
     with st.container(border=True):
         st.markdown(
             titulo_seccion(
-                '📅', 'Días de consumo por sustancia',
+                '📅', 'Días de consumo · sustancia principal',
                 'promedio de días en las últimas 4 semanas · solo pacientes al ingreso'
             ),
             unsafe_allow_html=True,
@@ -165,4 +185,5 @@ def render(df, pais, centro_id=None):
             st.caption('Sin datos de consumo disponibles para este país.')
             return
 
-        st.plotly_chart(_figura(datos), use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(_figura(datos), use_container_width=True,
+                        config={'displayModeBar': False})
