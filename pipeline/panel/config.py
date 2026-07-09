@@ -31,29 +31,19 @@ COLOR_GRIS     = '#B4BAC2'   # centros sin registros
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PALETA CENTRALIZADA DEL PANEL
-# Todos los módulos deben importar desde aquí para mantener consistencia visual.
+# Paleta oficial QALAT aprobada por Rodrigo.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-# Azul UNODC principal
-PALETA_PRINCIPAL   = '#1A6B9A'   # barras principales, dona sexo hombres, destacado
-# Azul medio (barra secundaria o no-destacada)
-PALETA_SECUNDARIO  = '#A8C4E0'   # barras base / rangos no-destacados
-# Verde continuidad
-PALETA_VERDE       = '#2E9B6C'   # continuidad, sustancias
-# Rojo alerta
-PALETA_ROJO        = '#D95F5F'   # transgresión, alertas
-# Gris neutro (Otras, sin dato)
-PALETA_NEUTRO      = '#8FA9B9'   # barras "Otras", grupos sin dato
-# Gris muy claro para fondos de referencia
-PALETA_FONDO_REF   = '#EEF2F5'
-# Referencia (línea punteada)
-PALETA_REF_LINE    = '#B0B8C1'
-# Texto oscuro estándar
-PALETA_TEXTO       = '#1F3864'
-# Mujer (dona)
-PALETA_MUJER       = '#7B68EE'
-# Otros / no binario (dona)
-PALETA_OTROS_SEXO  = '#B4BAC2'
+PALETA_PRINCIPAL   = '#004AAD'   # Azul Royal (RGB 0,74,173) — barras principales
+PALETA_SECUNDARIO  = '#E5E5E5'   # Gris claro (RGB 229,229,229) — fondos / no-destacado
+PALETA_VERDE       = '#1D9E75'   # Verde (RGB 29,158,117) — continuidad, positivo
+PALETA_ROJO        = '#D95F5F'   # Rojo suave — transgresión, alertas, umbral salud
+PALETA_NEUTRO      = '#A0B4C8'   # Gris azulado neutro — "Otras", sin dato
+PALETA_FONDO_REF   = '#F2F4F7'   # Gris muy claro — fondo de barra referencia
+PALETA_REF_LINE    = '#B0B8C1'   # Gris medio — línea punteada de referencia
+PALETA_TEXTO       = '#1F3864'   # Azul oscuro — texto general
+PALETA_MUJER       = '#7B68EE'   # Púrpura suave — dona sexo mujeres
+PALETA_OTROS_SEXO  = '#B4BAC2'   # Gris — dona sexo otros
 
 
 def _es_vacio(dias):
