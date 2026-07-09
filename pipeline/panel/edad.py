@@ -19,9 +19,9 @@ import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
 
-COLOR_DESTAC = '#1A6B9A'   # from config PALETA_PRINCIPAL
-COLOR_BASE   = '#A8C4E0'   # from config PALETA_SECUNDARIO
-TEXTO_OSCURO = '#1F3864'
+COLOR_DESTAC = '#004AAD'   # from config PALETA_PRINCIPAL
+COLOR_BASE   = '#E5E5E5'   # from config PALETA_SECUNDARIO
+TEXTO_OSCURO = '#004AAD'
 
 RANGOS = ['Menos de 18', '18 a 30', '31 a 40', '41 a 50', '51 a 60', '61 o más']
 
