@@ -155,7 +155,7 @@ def render(df, pais, centro_id=None):
         st.plotly_chart(_figura_dona(datos), use_container_width=True,
                         config={'displayModeBar': False})
 
-        # Desglose por tipo en 4 columnas
+        # Desglose por tipo en 4 columnas (sin íconos)
         if datos['por_tipo']:
             cols = st.columns(len(datos['por_tipo']))
             for i, tipo in enumerate(datos['por_tipo']):
@@ -163,7 +163,6 @@ def render(df, pais, centro_id=None):
                 with cols[i]:
                     st.markdown(
                         f'<div style="text-align:center;padding:.3rem 0;">'
-                        f'  <div style="font-size:1.3rem;">{tipo["icono"]}</div>'
                         f'  <div style="font-size:1rem;font-weight:700;color:{COLOR_CON};">'
                         f'    {tipo["n"]}'
                         f'  </div>'
@@ -174,11 +173,12 @@ def render(df, pais, centro_id=None):
                         unsafe_allow_html=True,
                     )
 
-        # Nota al pie
+        # Nota al pie con aclaración de porcentajes
         st.markdown(
             f'<div style="font-size:.68rem;color:#999;margin-top:.3rem;">'
             f'  N total: {datos["n_total"]} pacientes al ingreso · '
-            f'  {datos["n_con"]} con al menos una transgresión declarada'
+            f'  {datos["n_con"]} con al menos una transgresión declarada · '
+            f'  los % por tipo no suman el total porque un paciente puede declarar más de un acto'
             f'</div>',
             unsafe_allow_html=True,
         )
