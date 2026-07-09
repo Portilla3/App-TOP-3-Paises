@@ -22,8 +22,11 @@ from pipeline.panel     import semaforo    as panel_semaforo
 from pipeline.panel     import mensuales   as panel_mensuales
 from pipeline.panel     import ranking     as panel_ranking
 from pipeline.panel     import continuidad as panel_continuidad
-from pipeline.panel     import piramide    as panel_piramide
-from pipeline.panel     import sustancia   as panel_sustancia
+from pipeline.panel     import piramide       as panel_piramide
+from pipeline.panel     import sustancia      as panel_sustancia
+from pipeline.panel     import dias_consumo   as panel_dias_consumo
+from pipeline.panel     import transgresion   as panel_transgresion
+from pipeline.panel     import avance_centros as panel_avance_centros
 
 NAVY='#1F3864'; MID='#2E75B6'; ACCENT='#00B0F0'
 ORANGE='#C8590A'; RED='#C00000'; GREEN='#538135'; WHITE='#FFFFFF'
@@ -842,11 +845,28 @@ with tab_panel:
         with col_sust:
             panel_sustancia.render(df_panel, pais_panel, centro_id=None)
 
-        st.markdown('---')
-        st.caption(
-            '🚧 Próximos componentes: Días de consumo por sustancia · '
-            'Transgresión a la ley · Reporte de avance por centro.'
-        )
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+
+        # ── Días de consumo + Transgresión a la ley (2 col) ──────────────────
+        col_dias, col_trans = st.columns(2, gap='small')
+        with col_dias:
+            panel_dias_consumo.render(df_panel, pais_panel, centro_id=None)
+        with col_trans:
+            panel_transgresion.render(df_panel, pais_panel, centro_id=None)
+
+        st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+
+        # ── Reporte de avance por centro ──────────────────────────────────────
+        with st.container(border=True):
+            st.markdown(
+                '<div style="font-size:.92rem;font-weight:600;color:#1F1F1F;'
+                'padding:.02rem .1rem .18rem .1rem;">📊&nbsp;&nbsp;Reporte de avance por centro</div>'
+                '<div style="font-size:.72rem;color:#777;padding:0 .1rem .3rem .1rem;">'
+                'Excel consolidado · una fila por centro con ingresos, continuidad y actividad'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+            panel_avance_centros.boton_descarga(df_panel, pais_panel)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
