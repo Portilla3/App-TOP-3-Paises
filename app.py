@@ -89,38 +89,43 @@ div[data-baseweb="tab-list"] {{
     border:none !important;
     box-shadow:inset 0 1px 3px rgba(0,0,0,.08) !important;
 }}
-div[data-baseweb="tab-highlight"],
-div[data-baseweb="tab-border"] {{
+div[data-baseweb="tab-highlight"] {{
     display:none !important;
     height:0 !important;
     background:transparent !important;
+}}
+div[data-baseweb="tab-border"] {{
+    display:none !important;
+    height:0 !important;
 }}
 button[data-baseweb="tab"] {{
     border-radius:7px !important;
     padding:.5rem 1.3rem !important;
     font-size:.88rem !important;
-    font-weight:600 !important;
+    font-weight:700 !important;
     color:#4A5E73 !important;
     background:transparent !important;
-    border:none !important;
-    transition:background .15s,color .15s !important;
-    min-height:36px !important;
+    border:2px solid transparent !important;
+    min-height:38px !important;
 }}
 button[data-baseweb="tab"]:hover {{
-    background:rgba(255,255,255,.6) !important;
+    background:rgba(255,255,255,.7) !important;
     color:#004AAD !important;
+    border-color:#B8CCE4 !important;
 }}
-button[data-baseweb="tab"][aria-selected="true"],
-button[data-baseweb="tab"][aria-selected="true"]:hover {{
+button[data-baseweb="tab"][aria-selected="true"] {{
     background:#004AAD !important;
-    color:#FFFFFF !important;
+    border-color:#004AAD !important;
     box-shadow:0 2px 8px rgba(0,74,173,.35) !important;
 }}
+button[data-baseweb="tab"][aria-selected="true"] p,
+button[data-baseweb="tab"][aria-selected="true"] span {{
+    color:#FFFFFF !important;
+}}
 button[data-baseweb="tab"] p,
-button[data-baseweb="tab"] span,
-button[data-baseweb="tab"] div {{
+button[data-baseweb="tab"] span {{
     font-size:.88rem !important;
-    font-weight:600 !important;
+    font-weight:700 !important;
     color:inherit !important;
     margin:0 !important;
 }}
@@ -1157,7 +1162,7 @@ with tab_reportes:
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
     # ── Helper para cards de reporte ──────────────────────────────────────
-    def _rep_card(col, key, icono, label, desc):
+    def _rep_card(col, key, icono, label, desc, btn_color='#1D9E75'):
         with col:
             st.markdown(
                 f'<div class="rep-card">'
@@ -1165,6 +1170,13 @@ with tab_reportes:
                 f'  <div class="rep-card-title">{label}</div>'
                 f'  <div class="rep-card-desc">{desc}</div>'
                 f'</div>',
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                f'<style>div[data-testid="stButton"]:has(button[kind="secondary"]#btn_{key}) button,'
+                f'button[kind="secondary"]#btn_{key} {{'
+                f'background:{btn_color} !important;color:white !important;'
+                f'border-color:{btn_color} !important;}}</style>',
                 unsafe_allow_html=True
             )
             st.markdown('<div style="height:.3rem"></div>', unsafe_allow_html=True)
