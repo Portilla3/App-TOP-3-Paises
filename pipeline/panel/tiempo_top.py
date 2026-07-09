@@ -208,11 +208,23 @@ def render(df, pais, centro_id=None):
                 f'</div>', unsafe_allow_html=True
             )
 
-        # Nota al pie
+        # Nota al pie con explicación de cálculo
         n_total = int(resultado['n_pacientes'].sum())
+        with st.expander('ℹ Cómo se calcula este indicador', expanded=False):
+            st.markdown(
+                '<div style="font-size:.75rem;color:#555;line-height:1.6;">'
+                '<b>TOP1</b> = fecha de la primera evaluación al ingreso del paciente.<br>'
+                '<b>TOP2</b> = fecha de la siguiente evaluación en cualquier fase posterior '
+                '(en tratamiento, egreso o seguimiento).<br>'
+                'Se calcula la diferencia en días entre ambas fechas y se promedia por centro.<br>'
+                '<b>Reingresos:</b> si un paciente tiene un segundo ingreso antes de su TOP2, '
+                'ese episodio se cierra sin contabilizar (el reingreso inicia un nuevo cálculo).<br>'
+                'Los centros sin ningún TOP2 registrado aparecen listados al pie, no en el gráfico.'
+                '</div>',
+                unsafe_allow_html=True
+            )
         st.markdown(
             f'<div style="font-size:.68rem;color:#999;margin-top:.2rem;">'
-            f'N = {n_total} pacientes con TOP1 y TOP2 · ordenado de menor a mayor tiempo · '
-            f'reingresos tratados como episodios independientes'
+            f'N = {n_total} pacientes con TOP1 y TOP2 · ordenado de menor a mayor días'
             f'</div>', unsafe_allow_html=True
         )
