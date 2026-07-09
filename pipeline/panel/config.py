@@ -29,6 +29,32 @@ COLOR_AMARILLO = '#F0A836'
 COLOR_ROJO     = '#E15D5D'
 COLOR_GRIS     = '#B4BAC2'   # centros sin registros
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# PALETA CENTRALIZADA DEL PANEL
+# Todos los módulos deben importar desde aquí para mantener consistencia visual.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Azul UNODC principal
+PALETA_PRINCIPAL   = '#1A6B9A'   # barras principales, dona sexo hombres, destacado
+# Azul medio (barra secundaria o no-destacada)
+PALETA_SECUNDARIO  = '#A8C4E0'   # barras base / rangos no-destacados
+# Verde continuidad
+PALETA_VERDE       = '#2E9B6C'   # continuidad, sustancias
+# Rojo alerta
+PALETA_ROJO        = '#D95F5F'   # transgresión, alertas
+# Gris neutro (Otras, sin dato)
+PALETA_NEUTRO      = '#8FA9B9'   # barras "Otras", grupos sin dato
+# Gris muy claro para fondos de referencia
+PALETA_FONDO_REF   = '#EEF2F5'
+# Referencia (línea punteada)
+PALETA_REF_LINE    = '#B0B8C1'
+# Texto oscuro estándar
+PALETA_TEXTO       = '#1F3864'
+# Mujer (dona)
+PALETA_MUJER       = '#7B68EE'
+# Otros / no binario (dona)
+PALETA_OTROS_SEXO  = '#B4BAC2'
+
 
 def _es_vacio(dias):
     """True si el valor representa 'sin dato' (None, NaN, o negativo)."""
