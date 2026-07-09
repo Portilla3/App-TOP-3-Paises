@@ -101,22 +101,23 @@ def _calcular_dias(df):
 def _figura(datos):
     labels  = [d['sustancia'] for d in datos]
     valores = [d['promedio']  for d in datos]
-    textos  = [f"<b>{d['promedio']}</b> días" for d in datos]
+    textos  = [f"<b>{d['promedio']}</b>" for d in datos]
     hovers  = [
         f"<b>{d['sustancia']}</b><br>"
-        f"Promedio días consumidos: {d['promedio']}<br>"
-        f"Pacientes con consumo registrado: {d['n']} de {d['n_cat']} que la declararon principal"
+        f"Promedio: {d['promedio']} días<br>"
+        f"Pacientes con consumo: {d['n']} de {d['n_cat']} que la declararon principal"
         for d in datos
     ]
 
-    alto = max(180, len(datos) * ALTO_BARRA_PX + 60)
+    ancho_barra = 80   # px por barra en modo vertical
+    alto = 220
 
     fig = go.Figure()
 
     fig.add_trace(go.Bar(
-        y=labels,
-        x=valores,
-        orientation='h',
+        x=labels,
+        y=valores,
+        orientation='v',
         marker_color=COLOR_BARRA,
         text=textos,
         textposition='outside',
@@ -128,23 +129,23 @@ def _figura(datos):
     # Línea de referencia en 14 días
     fig.add_shape(
         type='line',
-        x0=14, x1=14, y0=-0.5, y1=len(datos) - 0.5,
+        x0=-0.5, x1=len(datos) - 0.5, y0=14, y1=14,
         line=dict(color=COLOR_REF, width=1.5, dash='dot'),
         layer='below',
     )
     fig.add_annotation(
-        x=14, y=len(datos) - 0.5,
+        x=len(datos) - 0.5, y=14,
         text='14 días',
         showarrow=False,
         font=dict(size=9, color=COLOR_REF),
         yanchor='bottom',
-        xanchor='center',
+        xanchor='right',
     )
 
     fig.update_layout(
         height=alto,
-        margin=dict(l=0, r=60, t=4, b=20),
-        xaxis=dict(
+        margin=dict(l=10, r=10, t=24, b=8),
+        yaxis=dict(
             range=[0, 31],
             tickvals=[0, 7, 14, 21, 28],
             ticktext=['0', '7', '14', '21', '28'],
@@ -152,10 +153,10 @@ def _figura(datos):
             gridcolor='#F0F0F0',
             zeroline=False,
         ),
-        yaxis=dict(
-            autorange='reversed',
+        xaxis=dict(
             title=None,
-            tickfont=dict(size=11),
+            tickfont=dict(size=10),
+            fixedrange=True,
         ),
         bargap=0.35,
         plot_bgcolor='white',
