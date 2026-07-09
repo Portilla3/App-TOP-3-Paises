@@ -186,7 +186,7 @@ def _calcular_sustancias(df):
 
     otras_desglose['_sin_reconocer_detalle'] = sin_reconocer_detalle
 
-    # Ranking: categorías principales ordenadas por conteo desc, luego "Otras" al final
+    # Ranking: categorías principales ordenadas por conteo desc
     principales = []
     for cat in ORDEN_CATEGORIAS:
         n = int(conteos.get(cat, 0))
@@ -194,8 +194,18 @@ def _calcular_sustancias(df):
             principales.append({'categoria': cat, 'n': n})
     principales.sort(key=lambda d: -d['n'])
 
-    filas = list(principales)
-    n_otras = int(conteos.get('Otras', 0))
+    # Corte top 5: las que queden fuera se suman a "Otras"
+    TOP_N = 5
+    if len(principales) > TOP_N:
+        top     = principales[:TOP_N]
+        fuera   = principales[TOP_N:]
+        n_fuera = sum(d['n'] for d in fuera)
+    else:
+        top     = principales
+        n_fuera = 0
+
+    filas = list(top)
+    n_otras = int(conteos.get('Otras', 0)) + n_fuera
     if n_otras > 0:
         filas.append({'categoria': 'Otras', 'n': n_otras})
 
