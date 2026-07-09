@@ -77,6 +77,52 @@ div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;
 .seccion-panel-sub {{
     font-size:.7rem;color:#9AA5B4;white-space:nowrap;
 }}
+
+/* ── Pestañas estilo botones pill ────────────────────────────────────────── */
+/* Contenedor de tabs: fondo gris claro, borde redondeado */
+div[data-baseweb="tab-list"] {{
+    background:#F0F4F8 !important;
+    border-radius:10px !important;
+    padding:4px !important;
+    gap:4px !important;
+    border:none !important;
+    box-shadow:none !important;
+}}
+/* Línea inferior del tab-list (quitarla) */
+div[data-baseweb="tab-highlight"] {{
+    display:none !important;
+}}
+div[data-baseweb="tab-border"] {{
+    display:none !important;
+}}
+/* Cada pestaña inactiva */
+button[data-baseweb="tab"] {{
+    border-radius:8px !important;
+    padding:.4rem 1.1rem !important;
+    font-size:.88rem !important;
+    font-weight:600 !important;
+    color:#6B7A90 !important;
+    background:transparent !important;
+    border:none !important;
+    transition:all .15s ease !important;
+}}
+button[data-baseweb="tab"]:hover {{
+    background:#E0E8F4 !important;
+    color:#004AAD !important;
+}}
+/* Pestaña activa */
+button[data-baseweb="tab"][aria-selected="true"] {{
+    background:white !important;
+    color:#004AAD !important;
+    box-shadow:0 1px 4px rgba(0,74,173,.15) !important;
+    border-radius:8px !important;
+}}
+/* Icono/emoji dentro de la pestaña */
+button[data-baseweb="tab"] p {{
+    font-size:.88rem !important;
+    font-weight:600 !important;
+    margin:0 !important;
+}}
 .qalat-hdr{{background:{NAVY};color:white;padding:1.2rem 2rem;border-radius:8px;margin-bottom:1.5rem;border-left:8px solid {MID};}}
 .qalat-hdr h1{{color:white;font-size:1.6rem;margin:0;}}
 .qalat-hdr h1 .instrumento{{font-size:2.2rem;font-weight:900;color:#9DC3E6;margin-left:.2rem;}}
