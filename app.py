@@ -46,20 +46,33 @@ html,body,[class*="css"]{{font-family:'Calibri',sans-serif;}}
 /* Container border compacto (para st.container(border=True)) */
 div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;}}
 /* ── Altura uniforme de cards por fila de perfil ── */
-.panel-fila-1 div[data-testid="stVerticalBlockBorderWrapper"] > div {{min-height:290px;}}
-.panel-fila-2 div[data-testid="stVerticalBlockBorderWrapper"] > div {{min-height:340px;}}
-.panel-fila-3 div[data-testid="stVerticalBlockBorderWrapper"] > div {{min-height:370px;}}
+/* Altura uniforme por fila: fuerza el wrapper a altura fija */
+.panel-fila-1 div[data-testid="stVerticalBlockBorderWrapper"] {{
+    min-height:300px !important;
+    display:flex !important;
+    flex-direction:column !important;
+}}
+.panel-fila-2 div[data-testid="stVerticalBlockBorderWrapper"] {{
+    min-height:360px !important;
+    display:flex !important;
+    flex-direction:column !important;
+}}
+.panel-fila-3 div[data-testid="stVerticalBlockBorderWrapper"] {{
+    min-height:390px !important;
+    display:flex !important;
+    flex-direction:column !important;
+}}
 /* ── Separador de sección ── */
 .seccion-panel {{
     display:flex;align-items:center;gap:.6rem;
     margin:.4rem 0 .5rem 0;
 }}
 .seccion-panel-titulo {{
-    font-size:.92rem;font-weight:700;color:#1F3864;
-    white-space:nowrap;
+    font-size:1rem;font-weight:700;color:#004AAD;
+    white-space:nowrap;letter-spacing:.01em;
 }}
 .seccion-panel-linea {{
-    flex:1;height:1px;background:#D0DAE8;
+    flex:1;height:1px;background:#004AAD;opacity:.2;
 }}
 .seccion-panel-sub {{
     font-size:.7rem;color:#9AA5B4;white-space:nowrap;
