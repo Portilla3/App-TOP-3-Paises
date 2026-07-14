@@ -1,6 +1,6 @@
 """
 app.py — QALAT · Sistema de Monitoreo de Resultados de Tratamiento
-v5.2 — login por país · Perú / Ecuador / México / México CIJ / El Salvador / UNODC
+v5.3 — login por país · Perú / Ecuador / México / México CIJ / El Salvador / México Monte Fénix / UNODC
        + pestaña Corrección de registros (editar / eliminar en Supabase)
 """
 import streamlit as st
@@ -156,18 +156,20 @@ PAISES_CONFIG = {
     'Perú':         {'flag': '🇵🇪', 'color': MID},
     'Ecuador':      {'flag': '🇪🇨', 'color': '#007A5E'},
     'México':       {'flag': '🇲🇽', 'color': '#006847'},
-    'México CIJ':   {'flag': '🇲🇽', 'color': '#004A97'},
-    'El Salvador':  {'flag': '🇸🇻', 'color': '#0F47AF'},
+    'México CIJ':         {'flag': '🇲🇽', 'color': '#004A97'},
+    'México Monte Fénix': {'flag': '🇲🇽', 'color': '#8B1A1A'},
+    'El Salvador':        {'flag': '🇸🇻', 'color': '#0F47AF'},
     'UNODC':        {'flag': '🌐', 'color': NAVY},
 }
-PAISES_ACTIVOS = ['Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador']   # ← agregar aquí para sumar países
+PAISES_ACTIVOS = ['Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador', 'México Monte Fénix']   # ← agregar aquí para sumar países
 
 SECRET_KEY_MAP = {
     'Perú':        'PASSWORD_PERU',
     'Ecuador':     'PASSWORD_ECUADOR',
     'México':      'PASSWORD_MEXICO',
-    'México CIJ':  'PASSWORD_MEXICOCIJ',
-    'El Salvador': 'PASSWORD_ELSALVADOR',
+    'México CIJ':         'PASSWORD_MEXICOCIJ',
+    'México Monte Fénix': 'PASSWORD_MEXICO_MONTEFENIX',
+    'El Salvador':        'PASSWORD_ELSALVADOR',
     'UNODC':       'PASSWORD_UNODC',
 }
 
@@ -2634,19 +2636,20 @@ CORRECCION_URLS = {
     'Perú':        'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_peru.html',
     'Ecuador':     'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_ecuador.html',
     'México':      'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mexico.html',
-    'México CIJ':  'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mexicocij.html',
-    'El Salvador': 'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_elsalvador.html',
+    'México CIJ':         'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mexicocij.html',
+    'México Monte Fénix': 'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_montefenix.html',
+    'El Salvador':        'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_elsalvador.html',
 }
-CORRECCION_FLAGS = {'Perú': '🇵🇪', 'Ecuador': '🇪🇨', 'México': '🇲🇽', 'México CIJ': '🇲🇽', 'El Salvador': '🇸🇻'}
+CORRECCION_FLAGS = {'Perú': '🇵🇪', 'Ecuador': '🇪🇨', 'México': '🇲🇽', 'México CIJ': '🇲🇽', 'México Monte Fénix': '🇲🇽', 'El Salvador': '🇸🇻'}
 
 with tab_correccion:
-    if rol not in ('Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador', 'UNODC'):
+    if rol not in ('Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador', 'México Monte Fénix', 'UNODC'):
         st.info(f'El formulario de corrección para {flag} {rol} estará disponible próximamente.')
     else:
         if es_unodc:
             pais_corr = st.selectbox(
                 'Corregir registros de:',
-                ['Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador'],
+                ['Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador', 'México Monte Fénix'],
                 key='corr_pais_sel'
             )
         else:
@@ -2930,3 +2933,4 @@ if es_unodc and tab_respaldos is not None:
             '</div>',
             unsafe_allow_html=True
         )
+
