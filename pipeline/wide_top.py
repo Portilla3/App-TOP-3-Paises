@@ -24,6 +24,8 @@ _MES_ES = {'ene':'Jan','feb':'Feb','mar':'Mar','abr':'Apr','may':'May','jun':'Ju
            'nov':'Nov','dic':'Dec'}
 _EXCEL_ORIGEN = pd.Timestamp('1899-12-30')
 
+from pipeline.validacion_top import fecha_nacimiento_valida, dias_validos_semana, dias_validos_mes
+
 _SUST_KEYS_NORM = [_norm_str(x) for x in [
     'sustancia principal', 'cual considera', 'cuál considera',
     'genera mas problemas', 'genera más problemas'
@@ -190,38 +192,41 @@ def procesar_wide(input_path: str,
 
     if COL_FN:
         df[COL_FN] = _parse_fecha(df[COL_FN])
-        for idx, row in df.iterrows():
-            fn = row[COL_FN]; cod = row[COL_CODIGO]
-            if pd.isna(fn): continue
-            if fn > hoy:
-                alertas.append({'Código':cod,'Centro':get_centro(cod),'Columna':COL_FN,
-                                 'Valor':str(fn.date()),'Regla':'Fecha de nacimiento futura'})
-                df.at[idx, COL_FN] = np.nan; continue
-            edad = (hoy - fn).days / 365.25
-            if edad < 10 or edad > 100:
-                alertas.append({'Código':cod,'Centro':get_centro(cod),'Columna':COL_FN,
-                                 'Valor':str(fn.date()),'Regla':f'Edad calculada = {edad:.1f} años (rango 10–100)'})
-                df.at[idx, COL_FN] = np.nan
+        fn_original = df[COL_FN].copy()
+        df[COL_FN] = fecha_nacimiento_valida(df[COL_FN])
+        for idx in df.index:
+            fn_antes = fn_original.at[idx]
+            fn_despues = df.at[idx, COL_FN]
+            if pd.notna(fn_antes) and pd.isna(fn_despues):
+                cod = df.at[idx, COL_CODIGO]
+                edad_calc = (hoy - fn_antes).days / 365.25
+                alertas.append({'Código': cod, 'Centro': get_centro(cod), 'Columna': COL_FN,
+                                 'Valor': str(fn_antes.date()), 'Regla': f'Fecha de nacimiento inválida (edad calculada = {edad_calc:.1f} años)'})
 
     cols_sem = [c for c in df.columns if '(0-7)' in c and 'Promedio' not in c]
     n_sem = 0
     for c in cols_sem:
-        num = pd.to_numeric(df[c], errors='coerce')
-        mask = num > 7
+        original = pd.to_numeric(df[c], errors='coerce')
+        validado = dias_validos_semana(df[c])
+        mask = original.notna() & validado.isna()
         for idx in df[mask].index:
             alertas.append({'Código':df.at[idx,COL_CODIGO],'Centro':get_centro(df.at[idx,COL_CODIGO]),
                              'Columna':c,'Valor':df.at[idx,c],'Regla':f'Días semanales > 7'})
-            df.at[idx, c] = np.nan; n_sem += 1
+            n_sem += 1
+        df[c] = validado
 
     cols_mes = [c for c in df.columns if 'Total (0-28)' in c and 'Promedio' not in c]
     n_mes = 0
     for c in cols_mes:
-        num = pd.to_numeric(df[c], errors='coerce')
-        for idx in df[(num > 28) | (num < 0)].index:
+        original = pd.to_numeric(df[c], errors='coerce')
+        validado = dias_validos_mes(df[c])
+        mask = original.notna() & validado.isna()
+        for idx in df[mask].index:
             val = df.at[idx, c]
             alertas.append({'Código':df.at[idx,COL_CODIGO],'Centro':get_centro(df.at[idx,COL_CODIGO]),
                              'Columna':c,'Valor':val,'Regla':'Días mensuales fuera de 0–28'})
-            df.at[idx, c] = np.nan; n_mes += 1
+            n_mes += 1
+        df[c] = validado
 
     logs.append(f"✓ Validación: {len(alertas)} valores corregidos "
                 f"({n_sem} semanales, {n_mes} mensuales)")
