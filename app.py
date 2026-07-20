@@ -288,6 +288,25 @@ def _eliminar_registro(registro_id):
     with urllib.request.urlopen(req) as r:
         return r.status
 
+def _verificar_login_centro(correo, clave):
+    """
+    Invoca la función RPC validar_login_centro() vía PostgREST.
+    Nunca ve ni transporta el password_hash, solo envía el texto plano por
+    HTTPS (mismo canal que el resto de la app) y recibe valido/centro/pais.
+    """
+    import urllib.request, json
+    url = f"{st.secrets['SUPABASE_URL']}/rest/v1/rpc/validar_login_centro"
+    data = json.dumps({'p_correo': correo, 'p_password': clave}).encode('utf-8')
+    req = urllib.request.Request(url, data=data, method='POST', headers=_sb_headers())
+    try:
+        with urllib.request.urlopen(req) as r:
+            resultado = json.loads(r.read().decode('utf-8'))
+        if resultado and resultado[0].get('valido'):
+            return resultado[0]['centro'], resultado[0]['pais']
+        return None, None
+    except Exception:
+        return None, None
+
 def _insertar_lote_supabase(registros):
     import urllib.request, urllib.error, json
     url  = _sb_url()
@@ -755,23 +774,46 @@ def _mostrar_login():
     col_l, col_c, col_r = st.columns([1, 1.05, 1])
     with col_c:
         st.markdown('<div style="margin-top:-170px;padding:0 36px;">', unsafe_allow_html=True)
-        pais_sel = st.selectbox(
-            'País / institución',
-            [''] + PAISES_ACTIVOS + ['UNODC'],
-            format_func=lambda p: '— País / institución —' if p == '' else f"{PAISES_CONFIG[p]['flag']}  {p}",
-            key='login_pais'
-        )
-        clave = st.text_input('Contraseña', type='password', key='login_clave',
-                              placeholder='Ingresa tu contraseña')
-        if st.button('Ingresar →', use_container_width=True, key='btn_login'):
-            if pais_sel == '':
-                st.error('❌ Selecciona un país o institución.')
-            elif _verificar_login(pais_sel, clave):
-                st.session_state['autenticado'] = True
-                st.session_state['rol_pais']    = pais_sel
-                st.rerun()
-            else:
-                st.error('❌ Contraseña incorrecta. Intenta nuevamente.')
+
+        tab_pais, tab_centro = st.tabs(['País / institución', 'Centro'])
+
+        with tab_pais:
+            pais_sel = st.selectbox(
+                'País / institución',
+                [''] + PAISES_ACTIVOS + ['UNODC'],
+                format_func=lambda p: '— País / institución —' if p == '' else f"{PAISES_CONFIG[p]['flag']}  {p}",
+                key='login_pais', label_visibility='collapsed'
+            )
+            clave = st.text_input('Contraseña', type='password', key='login_clave',
+                                  placeholder='Ingresa tu contraseña')
+            if st.button('Ingresar →', use_container_width=True, key='btn_login'):
+                if pais_sel == '':
+                    st.error('❌ Selecciona un país o institución.')
+                elif _verificar_login(pais_sel, clave):
+                    st.session_state['autenticado'] = True
+                    st.session_state['rol_pais']    = pais_sel
+                    st.rerun()
+                else:
+                    st.error('❌ Contraseña incorrecta. Intenta nuevamente.')
+
+        with tab_centro:
+            correo_centro = st.text_input('Correo institucional', key='login_correo_centro',
+                                          placeholder='centro@institucion.gob')
+            clave_centro  = st.text_input('Contraseña', type='password', key='login_clave_centro',
+                                          placeholder='Ingresa tu contraseña')
+            if st.button('Ingresar →', use_container_width=True, key='btn_login_centro'):
+                if not correo_centro or not clave_centro:
+                    st.error('❌ Completa correo y contraseña.')
+                else:
+                    centro_val, pais_val = _verificar_login_centro(correo_centro, clave_centro)
+                    if centro_val:
+                        st.session_state['autenticado']  = True
+                        st.session_state['rol_centro']   = centro_val
+                        st.session_state['rol_pais']     = pais_val
+                        st.rerun()
+                    else:
+                        st.error('❌ Correo o contraseña incorrectos.')
+
         st.markdown('</div>', unsafe_allow_html=True)
 
 if not st.session_state.get('autenticado', False):
@@ -782,6 +824,37 @@ if not st.session_state.get('autenticado', False):
 # ══════════════════════════════════════════════════════════════════════════════
 # USUARIO AUTENTICADO
 # ══════════════════════════════════════════════════════════════════════════════
+
+# ── Sesión de CENTRO: vista mínima de solo lectura, nunca llega a Corrección ──
+if st.session_state.get('rol_centro'):
+    centro_actual = st.session_state['rol_centro']
+    pais_actual   = st.session_state['rol_pais']
+
+    with st.sidebar:
+        st.markdown(f'**Centro:** {centro_actual}')
+        st.markdown(f'**País:** {pais_actual}')
+        if st.button('🚪 Cerrar sesión', use_container_width=True, key='btn_logout_centro'):
+            for k in ['autenticado', 'rol_centro', 'rol_pais']:
+                st.session_state.pop(k, None)
+            st.rerun()
+
+    st.markdown(f"""<div class="qalat-hdr">
+      <h1>📊 QALAT · Panel del Centro</h1>
+      <p style="margin-top:.4rem;font-size:.8rem;color:#9DC3E6;">Sesión activa: <b>{centro_actual}</b> · {pais_actual}</p>
+    </div>""", unsafe_allow_html=True)
+
+    df_centro = _cargar_supabase(pais=pais_actual)
+    import pandas as _pd
+    df_centro = _pd.DataFrame(df_centro)
+    if not df_centro.empty and 'centro' in df_centro.columns:
+        df_centro = df_centro[df_centro['centro'].astype(str).str.strip() == str(centro_actual).strip()]
+
+    st.info('🚧 Panel de KPIs y semáforo de seguimientos en construcción. '
+            'Por ahora, datos filtrados y validados con los mismos criterios que los reportes oficiales.')
+    st.caption(f'Registros encontrados para este centro: {len(df_centro)}')
+
+    st.stop()
+
 rol       = st.session_state['rol_pais']
 es_unodc  = (rol == 'UNODC')
 pais_fijo = None if es_unodc else rol
