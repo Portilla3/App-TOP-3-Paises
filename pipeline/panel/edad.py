@@ -18,6 +18,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
+from pipeline.validacion_top import edad_valida   # criterio compartido con wide_top.py
 
 COLOR_DESTAC = '#004AAD'   # from config PALETA_PRINCIPAL
 COLOR_BASE   = '#E5E5E5'   # from config PALETA_SECUNDARIO
@@ -49,16 +50,11 @@ def _calcular_edad(df):
     if df_ing.empty:
         return vacio
 
-    # Calcular edad
+    # Calcular edad (descarta fecha_nacimiento imposible: antes de 1920 o edad < 10 años)
     if 'fecha_nacimiento' in df_ing.columns and 'fecha_entrevista' in df_ing.columns:
-        fn  = pd.to_datetime(df_ing['fecha_nacimiento'],  errors='coerce')
-        fe  = pd.to_datetime(df_ing['fecha_entrevista'],  errors='coerce')
-        fe  = fe.fillna(pd.Timestamp.now())
-        edad = ((fe - fn).dt.days / 365.25).where(fn.notna())
+        edad = edad_valida(df_ing['fecha_nacimiento'], df_ing['fecha_entrevista'])
     elif 'fecha_nacimiento' in df_ing.columns:
-        fn   = pd.to_datetime(df_ing['fecha_nacimiento'], errors='coerce')
-        hoy  = pd.Timestamp.now()
-        edad = ((hoy - fn).dt.days / 365.25).where(fn.notna())
+        edad = edad_valida(df_ing['fecha_nacimiento'])
     else:
         return vacio
 
