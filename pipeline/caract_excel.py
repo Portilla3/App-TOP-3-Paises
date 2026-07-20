@@ -309,6 +309,9 @@ def cargar_ingreso():
         OUTPUT_FILE = f'/home/claude/TOP_Caracterizacion_{FILTRO_CENTRO}.xlsx'
     N  = len(df)
     print(f'  Pacientes (ingreso TOP1): {N}')
+    if N == 0:
+        centro_msg = f' para el centro "{FILTRO_CENTRO}"' if FILTRO_CENTRO else ''
+        raise ValueError(f'No hay registros de ingreso (TOP1){centro_msg}. Verifica el filtro o el período seleccionado.')
     return df, N
 
 # ══════════════════════════════════════════════════════════════════════════════
