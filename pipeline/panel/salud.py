@@ -20,6 +20,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
+from pipeline.validacion_top import escala_salud_valida   # criterio compartido con wide_top.py
 
 COLOR_DESTAC = '#004AAD'   # from config PALETA_PRINCIPAL
 COLOR_BASE   = '#E5E5E5'   # from config PALETA_SECUNDARIO
@@ -48,7 +49,7 @@ def _calcular_salud(df):
     for col, label in ESCALAS:
         if col not in df_ing.columns:
             continue
-        serie = pd.to_numeric(df_ing[col], errors='coerce').dropna()
+        serie = escala_salud_valida(df_ing[col]).dropna()
         if serie.empty:
             continue
         promedio = round(serie.mean(), 1)
