@@ -38,6 +38,7 @@ import streamlit as st
 
 from pipeline.panel.config import titulo_seccion
 from pipeline.panel.sustancia import _clasificar_sustancia   # reutiliza la misma taxonomía
+from pipeline.validacion_top import dias_validos_mes          # criterio compartido con wide_top.py
 
 
 # Mapeo categoría canónica → columna _total en Supabase
@@ -83,10 +84,7 @@ def _calcular_dias(df):
         mask = df_ing['_cat'] == cat
         if not mask.any():
             continue
-        serie = pd.to_numeric(df_ing.loc[mask, col], errors='coerce')
-        # Descartar valores fuera del rango válido del TOP (0-28 días)
-        # Valores > 28 o < 0 vienen de errores de migración JotForm
-        serie = serie.where((serie >= 0) & (serie <= 28))
+        serie = dias_validos_mes(df_ing.loc[mask, col])
         con_valor = serie[serie > 0]
         if con_valor.empty:
             continue
