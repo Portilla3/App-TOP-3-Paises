@@ -302,7 +302,11 @@ def cargar_datos():
         print(f'  ⚑ Filtro: {FILTRO_CENTRO} ({n_antes}→{len(df)} pacientes)')
         _pl=_detectar_pais(INPUT_FILE)
         NOMBRE_SERVICIO=f'{_pl}  —  Centro {FILTRO_CENTRO}' if _pl else f'Centro {FILTRO_CENTRO}'
-    N=len(df); DC=detectar_columnas(df.columns.tolist()); R={'N':N,'d':df,'DC':DC}
+    N=len(df)
+    if N == 0:
+        centro_msg = f' para el centro "{FILTRO_CENTRO}"' if FILTRO_CENTRO else ''
+        raise ValueError(f'No hay registros de ingreso (TOP1){centro_msg}. Verifica el filtro o el período seleccionado.')
+    DC=detectar_columnas(df.columns.tolist()); R={'N':N,'d':df,'DC':DC}
 
     # Sexo
     if DC['sexo']:
