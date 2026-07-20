@@ -1155,7 +1155,7 @@ with tab_reportes:
 
     def _tipo_card(key):
         if 'excel' in key or 'wide' in key: return 'excel'
-        if 'word'  in key: return 'word'
+        if 'word'  in key or 'pdf' in key:  return 'word'
         return 'pptx'
 
     def _rep_card(col, key, icono, label, desc, btn_color='#1D9E75'):
