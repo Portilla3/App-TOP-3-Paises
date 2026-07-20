@@ -152,10 +152,13 @@ def actividad_por_centro(df, hoy=None):
 
     tmp['fecha_entrevista'] = pd.to_datetime(tmp['fecha_entrevista'], errors='coerce')
 
-    agg = tmp.groupby('centro').agg(
+    # Ignorar fechas futuras para el semáforo (n_registros cuenta todos)
+    tmp_validas = tmp[tmp['fecha_entrevista'] <= hoy]
+    n_por_centro = tmp.groupby('centro').size().reset_index(name='n_registros')
+    ultima_por_centro = tmp_validas.groupby('centro').agg(
         ultima_fecha=('fecha_entrevista', 'max'),
-        n_registros =('fecha_entrevista', 'size'),
     ).reset_index()
+    agg = n_por_centro.merge(ultima_por_centro, on='centro', how='left')
 
     agg['dias'] = agg['ultima_fecha'].apply(
         lambda f: int((hoy - f.normalize()).days) if pd.notna(f) else None
