@@ -1218,7 +1218,7 @@ with tab_reportes:
     _ri1, _ri2, _ri3 = st.columns(3, gap='small')
     _rep_card(_ri1, 'caract_excel', '&#128215;', 'Excel',
               '11 hojas con tablas de perfil, sustancias, transgresion, homogresion')
-    _rep_card(_ri2, 'word_caract',  '&#128216;', 'Word',
+    _rep_card(_ri2, 'pdf_caract',  '&#128216;', 'Word',
               '4 secciones narrativas con graficos y tablas para informe institucional',
               btn_color='#2B579A')
     _rep_card(_ri3, 'pptx_caract', '&#128214;', 'PowerPoint',
@@ -1237,7 +1237,7 @@ with tab_reportes:
     _rs1, _rs2, _rs3 = st.columns(3, gap='small')
     _rep_card(_rs1, 'seg_excel', '&#128215;', 'Excel',
               'Tablas comparativas TOP1 vs TOP2 con cambios porcentuales por dimension')
-    _rep_card(_rs2, 'word_seg',  '&#128216;', 'Word',
+    _rep_card(_rs2, 'pdf_seg',  '&#128216;', 'Word',
               'Analisis narrativo de evolucion entre ingreso y seguimiento',
               btn_color='#2B579A')
     _rep_card(_rs3, 'pptx_seg', '&#128214;', 'PowerPoint',
