@@ -108,8 +108,20 @@ def render(df, centro, pais=None):
                     f'seguimiento registrado ({tasa:.1f}%). Revisa la pestaña de Seguimientos para ver el detalle.')
 
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
+    panel_mensuales.render(d, centro, centro_id=None)
 
-    # ── Perfil del centro, misma estética que el panel de país ──────────────
+    st.markdown('<div style="height:.6rem"></div>', unsafe_allow_html=True)
+
+    # ── Perfil de pacientes al ingreso (mismo título que el panel de país) ──
+    st.markdown(
+        '<div class="seccion-panel">'
+        '  <span class="seccion-panel-titulo">Perfil de pacientes al ingreso</span>'
+        '  <span class="seccion-panel-linea"></span>'
+        '  <span class="seccion-panel-sub">primera evaluación TOP · no incluye seguimientos</span>'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
     st.markdown('<div class="panel-fila-1">', unsafe_allow_html=True)
     col_sexo, col_edad = st.columns(2, gap='small')
     with col_sexo:
@@ -117,9 +129,6 @@ def render(df, centro, pais=None):
     with col_edad:
         panel_edad.render(d, centro, centro_id=None)
     st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
-    panel_mensuales.render(d, centro, centro_id=None)
 
     st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
