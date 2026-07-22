@@ -64,7 +64,7 @@ def render(df, centro):
             'etapa', 'fecha_entrevista')
         centro: nombre del centro, usado en el título
     """
-    titulo_seccion(f'🚦 Seguimientos — {centro}')
+    st.markdown(titulo_seccion('🚦', f'Seguimientos — {centro}'), unsafe_allow_html=True)
 
     tabla = _tabla_seguimientos(df, centro)
 
