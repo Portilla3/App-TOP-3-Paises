@@ -143,6 +143,10 @@ div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;
 div.stButton>button{{background:#1E7E34;color:white;border:none;
     padding:.6rem 2rem;border-radius:6px;font-size:1rem;font-weight:600;width:100%;
     box-shadow:0 2px 6px rgba(30,126,52,.35);letter-spacing:.3px;}}
+div.stDownloadButton>button{{background:#1E7E34;color:white;border:none;
+    padding:.6rem 2rem;border-radius:6px;font-size:1rem;font-weight:600;width:100%;
+    box-shadow:0 2px 6px rgba(30,126,52,.35);letter-spacing:.3px;}}
+div.stDownloadButton>button:hover{{background:#145222;box-shadow:0 3px 10px rgba(30,126,52,.5);}}
 div.stButton>button:hover{{background:#145222;box-shadow:0 3px 10px rgba(30,126,52,.5);}}
 #MainMenu,footer,header{{visibility:hidden;}}
 </style>""", unsafe_allow_html=True)
@@ -846,6 +850,7 @@ if st.session_state.get('rol_centro'):
     df_centro = _cargar_supabase(pais=pais_actual)
     import pandas as _pd
     df_centro = _pd.DataFrame(df_centro)
+    df_pais_raw = df_centro.copy()  # sin filtrar, para el motor de reportes (procesar_wide filtra internamente)
     if not df_centro.empty and 'centro' in df_centro.columns:
         df_centro = df_centro[df_centro['centro'].astype(str).str.strip() == str(centro_actual).strip()]
 
@@ -859,7 +864,7 @@ if st.session_state.get('rol_centro'):
     with tab_segu:
         _render_semaforo_centro(df_centro, centro_actual)
     with tab_rep_centro:
-        _render_reportes_centro(df_centro, centro_actual)
+        _render_reportes_centro(df_pais_raw, centro_actual, RENAME_MAP)
 
     st.stop()
 
