@@ -18,7 +18,7 @@ from pipeline.validacion_top import dias_validos_mes
 
 
 def render(df, centro):
-    titulo_seccion(f'🏠 Resumen — {centro}')
+    st.markdown(titulo_seccion('🏠', f'Resumen — {centro}'), unsafe_allow_html=True)
 
     if df is None or df.empty:
         st.info('Sin registros todavía para este centro.')
