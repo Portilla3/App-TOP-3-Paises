@@ -56,15 +56,8 @@ def _tabla_seguimientos(df, centro, hoy=None):
 
 
 def render(df, centro):
-    """
-    Pinta la tabla de seguimientos pendientes para un centro específico.
-
-    Args:
-        df: DataFrame ya filtrado al centro (columnas 'codigo_paciente',
-            'etapa', 'fecha_entrevista')
-        centro: nombre del centro, usado en el título
-    """
-    st.markdown(titulo_seccion('🚦', f'Seguimientos — {centro}'), unsafe_allow_html=True)
+    st.markdown(titulo_seccion('🚦', f'Seguimientos — {centro}',
+                                'días desde la última medición de cada paciente'), unsafe_allow_html=True)
 
     tabla = _tabla_seguimientos(df, centro)
 
@@ -76,24 +69,32 @@ def render(df, centro):
     tabla['prioridad'] = tabla['dias'].apply(prioridad_semaforo)
     tabla = tabla.sort_values(['prioridad', 'dias'], ascending=[False, False])
 
-    n_rojo = (tabla['Semáforo'] == '🔴').sum()
-    n_amarillo = (tabla['Semáforo'] == '🟡').sum()
-    n_verde = (tabla['Semáforo'] == '🟢').sum()
+    n_rojo = int((tabla['Semáforo'] == '🔴').sum())
+    n_amarillo = int((tabla['Semáforo'] == '🟡').sum())
+    n_verde = int((tabla['Semáforo'] == '🟢').sum())
 
     c1, c2, c3 = st.columns(3)
-    c1.metric('🔴 Muy atrasados (+90 días)', int(n_rojo))
-    c2.metric('🟡 Atrasados (45-89 días)', int(n_amarillo))
-    c3.metric('🟢 Al día (<45 días)', int(n_verde))
+    c1.markdown(f'<div class="kpi red"><div class="kpi-lbl">🔴 Muy atrasados</div>'
+                f'<div class="kpi-val">{n_rojo}</div><div class="kpi-sub">+90 días</div></div>',
+                unsafe_allow_html=True)
+    c2.markdown(f'<div class="kpi orange"><div class="kpi-lbl">🟡 Atrasados</div>'
+                f'<div class="kpi-val">{n_amarillo}</div><div class="kpi-sub">45-89 días</div></div>',
+                unsafe_allow_html=True)
+    c3.markdown(f'<div class="kpi green"><div class="kpi-lbl">🟢 Al día</div>'
+                f'<div class="kpi-val">{n_verde}</div><div class="kpi-sub">&lt;45 días</div></div>',
+                unsafe_allow_html=True)
 
-    st.dataframe(
-        tabla[['codigo_paciente', 'ultima_etapa', 'ultima_fecha', 'dias', 'n_mediciones', 'Semáforo']]
-        .rename(columns={
-            'codigo_paciente': 'Paciente', 'ultima_etapa': 'Última etapa',
-            'ultima_fecha': 'Última medición', 'dias': 'Días desde entonces',
-            'n_mediciones': 'N° mediciones totales'
-        }),
-        use_container_width=True, hide_index=True,
-    )
+    st.markdown('<div style="height:.6rem"></div>', unsafe_allow_html=True)
 
-    st.caption('Umbrales: 🟢 0-44 días · 🟡 45-89 días · 🔴 90+ días desde la última medición. '
-               'Mismos umbrales base que el semáforo de actividad por centro.')
+    with st.container(border=True):
+        st.dataframe(
+            tabla[['codigo_paciente', 'ultima_etapa', 'ultima_fecha', 'dias', 'n_mediciones', 'Semáforo']]
+            .rename(columns={
+                'codigo_paciente': 'Paciente', 'ultima_etapa': 'Última etapa',
+                'ultima_fecha': 'Última medición', 'dias': 'Días desde entonces',
+                'n_mediciones': 'N° mediciones totales'
+            }),
+            use_container_width=True, hide_index=True,
+        )
+        st.caption('Ordenado por urgencia: más atrasados primero. '
+                   'Umbrales: 🟢 0-44 días · 🟡 45-89 días · 🔴 90+ días.')
