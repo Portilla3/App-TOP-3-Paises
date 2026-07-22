@@ -11,8 +11,9 @@ Función expuesta: render(df, centro, pais)
 import streamlit as st
 import pandas as pd
 
-from pipeline.panel.config import titulo_seccion, continuidad_por_centro
+from pipeline.panel.config import titulo_seccion, continuidad_por_centro, actividad_por_centro, color_semaforo
 from pipeline.panel import piramide as panel_piramide
+from pipeline.panel import mensuales as panel_mensuales
 from pipeline.panel import edad as panel_edad
 from pipeline.panel import sustancia as panel_sustancia
 from pipeline.panel import dias_consumo as panel_dias_consumo
@@ -85,12 +86,22 @@ def render(df, centro, pais=None):
 
     tono = 'green' if tasa >= 50 else ('orange' if tasa >= 20 else 'red')
 
-    c1, c2, c3, c4 = st.columns(4)
+    act = actividad_por_centro(d)
+    if not act.empty:
+        dias_ultimo = act.iloc[0]['dias']
+        dias_lbl = '—' if pd.isna(dias_ultimo) else int(dias_ultimo)
+        color_hex = color_semaforo(dias_ultimo)
+        tono_dias = 'red' if color_hex == '#E15D5D' else ('orange' if color_hex == '#F0A836' else 'green')
+    else:
+        dias_lbl, tono_dias = '—', ''
+
+    c1, c2, c3, c4, c5 = st.columns(5)
     _kpi_card(c1, 'Total de registros', total_registros)
     _kpi_card(c2, 'Pacientes ingresados', pacientes_unicos)
     _kpi_card(c3, 'TOP de ingreso (este mes)', ingresos_mes)
     _kpi_card(c4, 'Con al menos un seguimiento', f'{tasa:.1f}%',
                sub=f'{con_seguimiento} de {base_ingresos} con TOP de ingreso', tono=tono)
+    _kpi_card(c5, 'Días desde el último registro', dias_lbl, tono=tono_dias)
 
     if tasa < 20 and base_ingresos > 0:
         st.warning(f'⚠️ Solo {con_seguimiento} de {base_ingresos} pacientes con TOP de ingreso tienen '
@@ -106,6 +117,9 @@ def render(df, centro, pais=None):
     with col_edad:
         panel_edad.render(d, centro, centro_id=None)
     st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
+    panel_mensuales.render(d, centro, centro_id=None)
 
     st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
 
