@@ -854,7 +854,7 @@ if st.session_state.get('rol_centro'):
 
     tab_inicio, tab_segu = st.tabs(['🏠 Inicio', '🚦 Seguimientos'])
     with tab_inicio:
-        _render_kpis(df_centro, centro_actual)
+        _render_kpis(df_centro, centro_actual, pais_actual)
     with tab_segu:
         _render_semaforo_centro(df_centro, centro_actual)
 
