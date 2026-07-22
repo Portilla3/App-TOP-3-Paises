@@ -11,7 +11,7 @@ Función expuesta: render(df, centro, pais)
 import streamlit as st
 import pandas as pd
 
-from pipeline.panel.config import titulo_seccion
+from pipeline.panel.config import titulo_seccion, continuidad_por_centro
 from pipeline.panel import piramide as panel_piramide
 from pipeline.panel import edad as panel_edad
 from pipeline.panel import sustancia as panel_sustancia
@@ -49,9 +49,19 @@ def render(df, centro, pais=None):
 
     hoy = pd.Timestamp.now()
     total_registros = len(d)
-    pacientes_unicos = d['codigo_paciente'].nunique() if 'codigo_paciente' in d.columns else 0
+    if 'etapa' in d.columns and 'codigo_paciente' in d.columns:
+        pacientes_unicos = d.loc[d['etapa'] == 'ingreso', 'codigo_paciente'].nunique()
+    else:
+        pacientes_unicos = d['codigo_paciente'].nunique() if 'codigo_paciente' in d.columns else 0
 
-    if 'codigo_paciente' in d.columns and 'fecha_entrevista' in d.columns:
+    if 'codigo_paciente' in d.columns and 'fecha_entrevista' in d.columns and 'etapa' in d.columns:
+        ingresos_df = d[d['etapa'] == 'ingreso'].dropna(subset=['fecha_entrevista'])
+        ingresos_mes = ingresos_df[
+            (ingresos_df['fecha_entrevista'].dt.month == hoy.month) &
+            (ingresos_df['fecha_entrevista'].dt.year == hoy.year)
+        ].shape[0]
+    elif 'codigo_paciente' in d.columns and 'fecha_entrevista' in d.columns:
+        # Fallback si no hay columna 'etapa': usar la primera fila cronológica por paciente
         primeras = d.dropna(subset=['fecha_entrevista']).sort_values('fecha_entrevista') \
                      .groupby('codigo_paciente').first().reset_index()
         ingresos_mes = primeras[
@@ -61,12 +71,17 @@ def render(df, centro, pais=None):
     else:
         ingresos_mes = 0
 
-    if 'codigo_paciente' in d.columns:
-        conteo = d.groupby('codigo_paciente').size()
-        con_seguimiento = int((conteo > 1).sum())
-        tasa = (con_seguimiento / len(conteo) * 100) if len(conteo) else 0
+    if 'codigo_paciente' in d.columns and 'etapa' in d.columns and 'centro' in d.columns:
+        cont = continuidad_por_centro(d)
+        if not cont.empty:
+            fila = cont.iloc[0]  # ya viene filtrado a un solo centro
+            con_seguimiento = int(fila['n_con_continuidad'])
+            base_ingresos   = int(fila['n_ingresos'])
+            tasa            = float(fila['pct_continuidad'])
+        else:
+            con_seguimiento, base_ingresos, tasa = 0, 0, 0.0
     else:
-        con_seguimiento, tasa = 0, 0
+        con_seguimiento, base_ingresos, tasa = 0, 0, 0.0
 
     tono = 'green' if tasa >= 50 else ('orange' if tasa >= 20 else 'red')
 
@@ -75,11 +90,11 @@ def render(df, centro, pais=None):
     _kpi_card(c2, 'Pacientes ingresados', pacientes_unicos)
     _kpi_card(c3, 'TOP de ingreso (este mes)', ingresos_mes)
     _kpi_card(c4, 'Con al menos un seguimiento', f'{tasa:.1f}%',
-               sub=f'{con_seguimiento} de {pacientes_unicos} pacientes', tono=tono)
+               sub=f'{con_seguimiento} de {base_ingresos} con TOP de ingreso', tono=tono)
 
-    if tasa < 20 and pacientes_unicos > 0:
-        st.warning(f'⚠️ Solo {con_seguimiento} de {pacientes_unicos} pacientes tienen seguimiento '
-                    f'registrado ({tasa:.1f}%). Revisa la pestaña de Seguimientos para ver el detalle.')
+    if tasa < 20 and base_ingresos > 0:
+        st.warning(f'⚠️ Solo {con_seguimiento} de {base_ingresos} pacientes con TOP de ingreso tienen '
+                    f'seguimiento registrado ({tasa:.1f}%). Revisa la pestaña de Seguimientos para ver el detalle.')
 
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
