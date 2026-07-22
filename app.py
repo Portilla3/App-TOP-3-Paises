@@ -849,9 +849,14 @@ if st.session_state.get('rol_centro'):
     if not df_centro.empty and 'centro' in df_centro.columns:
         df_centro = df_centro[df_centro['centro'].astype(str).str.strip() == str(centro_actual).strip()]
 
-    st.info('🚧 Panel de KPIs y semáforo de seguimientos en construcción. '
-            'Por ahora, datos filtrados y validados con los mismos criterios que los reportes oficiales.')
-    st.caption(f'Registros encontrados para este centro: {len(df_centro)}')
+    from pipeline.panel.kpis_centro import render as _render_kpis
+    from pipeline.panel.semaforo_centro import render as _render_semaforo_centro
+
+    tab_inicio, tab_segu = st.tabs(['🏠 Inicio', '🚦 Seguimientos'])
+    with tab_inicio:
+        _render_kpis(df_centro, centro_actual)
+    with tab_segu:
+        _render_semaforo_centro(df_centro, centro_actual)
 
     st.stop()
 
