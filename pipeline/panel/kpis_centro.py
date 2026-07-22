@@ -32,7 +32,7 @@ def _kpi_card(col, label, valor, sub=None, tono=''):
     )
 
 
-def render(df, centro, pais=None):
+def render(df, centro, pais=None, df_pais=None):
     st.markdown(
         f'<span class="badge badge-centro">🏥 {centro}</span>'
         + (f'<span class="badge badge-periodo">{pais}</span>' if pais else ''),
@@ -106,6 +106,26 @@ def render(df, centro, pais=None):
     if tasa < 20 and base_ingresos > 0:
         st.warning(f'⚠️ Solo {con_seguimiento} de {base_ingresos} pacientes con TOP de ingreso tienen '
                     f'seguimiento registrado ({tasa:.1f}%). Revisa la pestaña de Seguimientos para ver el detalle.')
+
+    # ── Comparación con promedio nacional (sin exponer otros centros) ───────
+    if df_pais is not None and not df_pais.empty:
+        cont_nac = continuidad_por_centro(df_pais)
+        if not cont_nac.empty:
+            total_ing_nac  = int(cont_nac['n_ingresos'].sum())
+            total_cont_nac = int(cont_nac['n_con_continuidad'].sum())
+            prom_nac = (total_cont_nac / total_ing_nac * 100) if total_ing_nac > 0 else 0.0
+            diff = tasa - prom_nac
+            comp_txt = 'por encima' if diff > 0 else ('por debajo' if diff < 0 else 'igual')
+            comp_color = '#1D9E75' if diff >= 0 else '#D95F5F'
+            st.markdown(
+                f'<div style="background:#F8FAFD;border:1px solid #E5E5E5;border-radius:8px;'
+                f'padding:.7rem 1rem;margin:.4rem 0 .8rem 0;font-size:.85rem;">'
+                f'📍 Tu centro: <b>{tasa:.1f}%</b> de continuidad &nbsp;·&nbsp; '
+                f'Promedio nacional ({pais}): <b>{prom_nac:.1f}%</b> &nbsp;·&nbsp; '
+                f'<span style="color:{comp_color};font-weight:600;">{abs(diff):.1f} puntos {comp_txt}</span>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
     panel_mensuales.render(d, centro, centro_id=None)
