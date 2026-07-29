@@ -801,13 +801,13 @@ def _mostrar_login():
                     st.error('❌ Contraseña incorrecta. Intenta nuevamente.')
 
         with tab_centro:
-            correo_centro = st.text_input('Correo institucional', key='login_correo_centro',
-                                          placeholder='centro@institucion.gob')
+            correo_centro = st.text_input('Código de centro', key='login_correo_centro',
+                                          placeholder='CET039598')
             clave_centro  = st.text_input('Contraseña', type='password', key='login_clave_centro',
                                           placeholder='Ingresa tu contraseña')
             if st.button('Ingresar →', use_container_width=True, key='btn_login_centro'):
                 if not correo_centro or not clave_centro:
-                    st.error('❌ Completa correo y contraseña.')
+                    st.error('❌ Completa el código de centro y la contraseña.')
                 else:
                     centro_val, pais_val = _verificar_login_centro(correo_centro, clave_centro)
                     if centro_val:
@@ -3022,4 +3022,5 @@ if es_unodc and tab_respaldos is not None:
             '</div>',
             unsafe_allow_html=True
         )
+
 
