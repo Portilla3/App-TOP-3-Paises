@@ -98,8 +98,8 @@ div[data-testid="stVerticalBlockBorderWrapper"]{{padding:.5rem .7rem !important;
     padding:8px 20px !important;
     font-weight:700 !important;
     font-size:14px !important;
-    color:#556677 !important;
-    background:transparent !important;
+    color:#1A3355 !important;
+    background:#D6E2F0 !important;
     border:2px solid transparent !important;
     min-height:40px !important;
 }}
