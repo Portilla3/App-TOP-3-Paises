@@ -779,6 +779,21 @@ def _mostrar_login():
     with col_c:
         st.markdown('<div style="margin-top:-170px;padding:0 36px;">', unsafe_allow_html=True)
 
+        st.markdown('''<style>
+        div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+            background: #FFFFFF !important;
+            border: 2px solid #C5D5EA !important;
+        }
+        div[data-testid="stTabs"] [data-baseweb="tab"] {
+            color: #1A3355 !important;
+            background: #EEF3FA !important;
+            font-weight: 700 !important;
+        }
+        div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+            background: #004AAD !important;
+            color: #FFFFFF !important;
+        }
+        </style>''', unsafe_allow_html=True)
         tab_pais, tab_centro = st.tabs(['País / institución', 'Centro'])
 
         with tab_pais:
