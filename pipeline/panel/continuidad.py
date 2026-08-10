@@ -1,15 +1,20 @@
 """
-pipeline.panel.continuidad — % de continuidad por centro.
+pipeline.panel.continuidad — % de seguimiento por centro (HOMOLOGADO).
 
-Para cada centro muestra el porcentaje de pacientes con ingreso que tienen
-además al menos un segundo registro TOP (cualquier etapa distinta de ingreso:
-en_tratamiento, egreso o seguimiento).
+Muestra, por centro, el porcentaje de pacientes ELEGIBLES (con 90 o más días
+desde su primer TOP) que ya cuentan con un segundo TOP (TOP2).
 
-Diseño según mockup aprobado:
+IMPORTANTE — definición homologada:
+  Este gráfico usa la MISMA fuente única que las métricas y los reportes:
+  pipeline.panel.seguimiento_core.calcular_seguimiento(). No se recalcula aquí
+  para evitar que las cifras se desincronicen entre pantallas.
+
+Diseño:
   - Barras horizontales verdes
   - Línea vertical del promedio nacional del país (referencia)
-  - Barra de fondo clara al 100% (referencia visual del máximo)
-  - Top 10 visible por defecto, expander con el resto
+  - Barra de fondo clara (referencia visual del máximo)
+  - Top N visible por defecto, expander con el resto
+  - Etiqueta fija que explica sobre qué base se calcula
 
 Función expuesta:
   render(df, pais, centro_id=None)
@@ -17,7 +22,8 @@ Función expuesta:
 import streamlit as st
 import plotly.graph_objects as go
 
-from pipeline.panel.config import continuidad_por_centro, titulo_seccion
+from pipeline.panel.config import titulo_seccion
+from pipeline.panel.seguimiento_core import calcular_seguimiento
 
 
 VERDE_BARRA  = '#1D9E75'   # PALETA_VERDE
@@ -106,49 +112,57 @@ def _grafico(ranking, centro_id, promedio_nacional):
     return fig
 
 
+def _etiqueta_nota(texto):
+    st.markdown(
+        f'<div style="font-size:.78rem;color:#888;margin:.4rem 0 .1rem;">&#8505; {texto}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render(df, pais, centro_id=None):
     """
-    Pinta el gráfico de continuidad por centro.
+    Pinta el gráfico de seguimiento por centro, homologado a la base de 90 días.
 
     Args:
-        df: DataFrame del país (columnas 'centro', 'etapa', 'codigo_paciente')
-        pais: nombre del país (para el subtítulo)
+        df: DataFrame del país (columnas 'centro', 'codigo_paciente',
+            'fecha_entrevista', 'etapa').
+        pais: nombre del país (para el subtítulo).
         centro_id: si viene con valor, resalta ese centro.
     """
     with st.container(border=True):
-        cont = continuidad_por_centro(df)
-
-        # Promedio nacional: pct de pacientes ingresados del país con
-        # continuidad (no promedio de pcts por centro, sino global país).
-        if not cont.empty:
-            total_ing  = int(cont['n_ingresos'].sum())
-            total_cont = int(cont['n_con_continuidad'].sum())
-            prom_nac   = (total_cont / total_ing * 100) if total_ing > 0 else 0.0
-        else:
-            prom_nac = 0.0
+        seg      = calcular_seguimiento(df)
+        prom_nac = seg['pct_cobertura']
+        pc       = seg['por_centro']
 
         st.markdown(
             titulo_seccion(
                 '🔄', 'Seguimiento por centro',
-                f'% con al menos un segundo registro · promedio nacional {prom_nac:.1f}%'.replace('.', ',')
+                f'% de elegibles (90+ días) con segundo TOP · promedio nacional {prom_nac:.1f}%'.replace('.', ',')
             ),
             unsafe_allow_html=True
         )
 
-        if cont.empty:
-            st.info('ℹ Aún no hay datos suficientes para calcular la continuidad.')
+        if seg['n_elegibles'] == 0 or pc is None or pc.empty:
+            st.info('ℹ Aún no hay pacientes con 90 o más días desde su primer TOP para calcular el seguimiento.')
+            _etiqueta_nota(seg['nota'])
             return
 
-        total = len(cont)
+        ranking = (
+            pc.rename(columns={'pct': 'pct_continuidad'})[['centro', 'pct_continuidad']]
+              .sort_values('pct_continuidad', ascending=False)
+              .reset_index(drop=True)
+        )
+
+        total = len(ranking)
         if total <= TOP_N_VISIBLE:
             st.plotly_chart(
-                _grafico(cont, centro_id, prom_nac),
+                _grafico(ranking, centro_id, prom_nac),
                 use_container_width=True,
                 config={'displayModeBar': False}
             )
         else:
-            top   = cont.head(TOP_N_VISIBLE).reset_index(drop=True)
-            resto = cont.iloc[TOP_N_VISIBLE:].reset_index(drop=True)
+            top   = ranking.head(TOP_N_VISIBLE).reset_index(drop=True)
+            resto = ranking.iloc[TOP_N_VISIBLE:].reset_index(drop=True)
             st.plotly_chart(
                 _grafico(top, centro_id, prom_nac),
                 use_container_width=True,
@@ -160,3 +174,6 @@ def render(df, pais, centro_id=None):
                     use_container_width=True,
                     config={'displayModeBar': False}
                 )
+
+        # Etiqueta homologada: deja explícita la base de cálculo
+        _etiqueta_nota(seg['nota'])
