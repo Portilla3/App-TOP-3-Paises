@@ -18,6 +18,8 @@ Notas de diseño:
 import streamlit as st
 import pandas as pd
 
+from pipeline.panel.seguimiento_core import calcular_seguimiento, NOTA_SEGUIMIENTO
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # CÁLCULOS PUROS (testeables sin Streamlit)
@@ -44,7 +46,9 @@ def _calcular_metricas(df):
             'n_seguimientos':           0,
             'pacientes_ingresados':     0,
             'pacientes_con_seguimiento': 0,
+            'seg_elegibles':            0,
             'pct_con_seguimiento':      0.0,
+            'seg_nota':                 NOTA_SEGUIMIENTO,
             'centros_activos':          0,
             'centros_totales':          0,
         }
@@ -69,12 +73,17 @@ def _calcular_metricas(df):
         pac_ingresados  = set()
         pac_seguimiento = set()
 
-    pacientes_ingresados     = len(pac_ingresados)
-    pacientes_con_seguimiento = len(pac_ingresados & pac_seguimiento)
-    pct_con_seguimiento = (
-        (pacientes_con_seguimiento / pacientes_ingresados * 100)
-        if pacientes_ingresados > 0 else 0.0
-    )
+    pacientes_ingresados = len(pac_ingresados)
+
+    # ── Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA (fuente única) ──────────
+    # NO se cuenta por etiqueta de etapa. Un paciente "tiene seguimiento" si tiene
+    # un 2º TOP (fecha distinta), y el denominador son los pacientes con 90+ días
+    # desde su primer TOP. Ver pipeline/panel/seguimiento_core.py
+    seg = calcular_seguimiento(df)
+    pacientes_con_seguimiento = seg['n_con_top2']
+    seg_elegibles             = seg['n_elegibles']
+    pct_con_seguimiento       = seg['pct_cobertura']
+    seg_nota                  = seg['nota']
 
     # Centros activos: distintos códigos de centro con al menos 1 registro
     if 'centro' in df.columns:
@@ -95,7 +104,9 @@ def _calcular_metricas(df):
         'n_seguimientos':           n_seguimientos,
         'pacientes_ingresados':     pacientes_ingresados,
         'pacientes_con_seguimiento': pacientes_con_seguimiento,
+        'seg_elegibles':            seg_elegibles,
         'pct_con_seguimiento':      pct_con_seguimiento,
+        'seg_nota':                 seg_nota,
         'centros_activos':          centros_activos,
         'centros_totales':          centros_totales,
     }
@@ -156,7 +167,7 @@ def render(df, pais, centro_id=None):
             f'''<div class="kpi {color_class}">
                 <div style="{S_LBL}">Con seguimiento</div>
                 <div style="{S_VAL}">{m["pct_con_seguimiento"]:.1f}%</div>
-                <div style="{S_SUB}">{m["pacientes_con_seguimiento"]:,} de {m["pacientes_ingresados"]:,} pacientes</div>
+                <div style="{S_SUB}">{m["pacientes_con_seguimiento"]:,} de {m["seg_elegibles"]:,} elegibles</div>
             </div>'''.replace(',', '.'),
             unsafe_allow_html=True
         )
@@ -170,3 +181,9 @@ def render(df, pais, centro_id=None):
             </div>''',
             unsafe_allow_html=True
         )
+
+    # Nota obligatoria: base del denominador de seguimiento (definición homologada)
+    st.markdown(
+        f'<div style="font-size:.78rem;color:#888;margin-top:.4rem;">ℹ {m["seg_nota"]}</div>',
+        unsafe_allow_html=True
+    )

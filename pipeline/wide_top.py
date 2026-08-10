@@ -10,6 +10,8 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
+from pipeline.panel.seguimiento_core import calcular_seguimiento
+
 warnings.filterwarnings('ignore')
 
 # ── Colores Excel ─────────────────────────────────────────────────────────────
@@ -250,13 +252,19 @@ def procesar_wide(input_path: str,
 
     # ── Construir Wide ─────────────────────────────────────────────────────────
     df = df.sort_values([COL_CODIGO, COL_FECHA]).reset_index(drop=True)
-    conteo    = df[COL_CODIGO].value_counts()
+
+    # Homologación: para construir TOP1/TOP2 se deduplican los registros del mismo
+    # paciente con la MISMA fecha (duplicados de carga). El df original se conserva
+    # intacto para el reporte de duplicados más abajo.
+    df_wide = df.drop_duplicates(subset=[COL_CODIGO, COL_FECHA], keep='first').reset_index(drop=True)
+
+    conteo    = df_wide[COL_CODIGO].value_counts()
     N_total   = int(conteo.shape[0])
     N_top2    = int((conteo >= 2).sum())
     N_solo1   = N_total - N_top2
 
     top1_rows, top2_rows = [], []
-    for cod, grp in df.groupby(COL_CODIGO, sort=False):
+    for cod, grp in df_wide.groupby(COL_CODIGO, sort=False):
         grp = grp.reset_index(drop=True)
         top1_rows.append(grp.loc[0])
         if len(grp) >= 2: top2_rows.append(grp.loc[1])
@@ -338,6 +346,18 @@ def procesar_wide(input_path: str,
     N_dupes = len(dupes_data)
     logs.append(f"✓ Duplicados: {N_dupes} pacientes con fecha duplicada")
 
+    # ── Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA (fuente única) ──────────
+    # Sustituye el N_top2/pct por conteo simple. Ahora: 2º TOP por paciente (sin
+    # duplicados) y denominador = pacientes con 90+ días desde su primer TOP.
+    # Ver pipeline/panel/seguimiento_core.py
+    _seg     = calcular_seguimiento(df, hoy=_HOY, col_cod=COL_CODIGO,
+                                    col_fecha=COL_FECHA, col_centro=COL_CENTRO)
+    N_top2   = _seg['n_con_top2']     # elegibles (90+ días) con 2º TOP
+    N_solo1  = _seg['n_sin_top2']     # elegibles pendientes de TOP2
+    N_elig   = _seg['n_elegibles']    # denominador homologado
+    pct_top2 = _seg['pct_cobertura']
+    seg_nota = _seg['nota']
+
     # ── Generar Excel ─────────────────────────────────────────────────────────
     excel_bytes = _generar_excel(
         wide=wide, alertas=alertas, dupes=dupes_data,
@@ -363,17 +383,23 @@ def procesar_wide(input_path: str,
     if COL_CENTRO:
         col_centro_wide = f'{COL_CENTRO}_TOP1'
         if col_centro_wide in wide.columns:
-            # Aplicaciones = filas en el df original por centro
-            apps_por_centro = (df.groupby(COL_CENTRO)
+            # Aplicaciones = registros (deduplicados) por centro
+            apps_por_centro = (df_wide.groupby(COL_CENTRO)
                                  .size().reset_index(name='Aplicaciones')
                                  .rename(columns={COL_CENTRO: 'Centro'}))
 
-            # Pacientes únicos, Con TOP2, Sin TOP2
-            resumen = wide.groupby(col_centro_wide).agg(
-                Pacientes=(COL_CODIGO, 'count'),
-                Con_TOP2=('Tiene_TOP2', lambda x: (x=='Sí').sum())
-            ).reset_index().rename(columns={col_centro_wide: 'Centro'})
-            resumen['Sin_TOP2'] = resumen['Pacientes'] - resumen['Con_TOP2']
+            # Cobertura por centro: DEFINICIÓN HOMOLOGADA (elegibles 90+ días).
+            # Con_TOP2 y Sin_TOP2 se cuentan SOLO sobre pacientes elegibles, para
+            # que sumen igual que el titular. Ver seguimiento_core.py
+            pc = (_seg['por_centro']
+                  .rename(columns={'centro': 'Centro', 'elegibles': 'Elegibles',
+                                   'con_top2': 'Con_TOP2', 'sin_top2': 'Sin_TOP2'})
+                  [['Centro', 'Elegibles', 'Con_TOP2', 'Sin_TOP2']])
+
+            # Base: todos los centros con datos, aunque no tengan elegibles aún
+            resumen = apps_por_centro.merge(pc, on='Centro', how='left')
+            for _c in ['Elegibles', 'Con_TOP2', 'Sin_TOP2']:
+                resumen[_c] = resumen[_c].fillna(0).astype(int)
 
             # Valores corregidos por centro
             if alertas:
@@ -386,23 +412,19 @@ def procesar_wide(input_path: str,
                 resumen['Vals_corregidos'] = 0
             resumen['Vals_corregidos'] = resumen['Vals_corregidos'].fillna(0).astype(int)
 
-            # Merge aplicaciones
-            resumen = resumen.merge(apps_por_centro, on='Centro', how='left')
-            resumen['Aplicaciones'] = resumen['Aplicaciones'].fillna(0).astype(int)
-
             # Ordenar por Aplicaciones desc
             resumen = resumen.sort_values('Aplicaciones', ascending=False)
 
-            # Totales
+            # Totales (Con_TOP2 y Sin_TOP2 suman igual que el titular homologado)
             totales = {
                 'Centro': 'TOTAL',
                 'Aplicaciones': int(resumen['Aplicaciones'].sum()),
-                'Pacientes': int(resumen['Pacientes'].sum()),
+                'Elegibles': int(resumen['Elegibles'].sum()),
                 'Con_TOP2': int(resumen['Con_TOP2'].sum()),
                 'Sin_TOP2': int(resumen['Sin_TOP2'].sum()),
                 'Vals_corregidos': int(resumen['Vals_corregidos'].sum()),
             }
-            centros = resumen[['Centro','Aplicaciones','Pacientes',
+            centros = resumen[['Centro','Aplicaciones','Elegibles',
                                 'Con_TOP2','Sin_TOP2','Vals_corregidos']
                               ].to_dict('records')
             centros.append(totales)
@@ -416,7 +438,9 @@ def procesar_wide(input_path: str,
             'N_total':   N_total,
             'N_top2':    N_top2,
             'N_solo1':   N_solo1,
-            'pct_top2':  round(N_top2/N_total*100,1) if N_total else 0,
+            'N_elig':    N_elig,
+            'pct_top2':  pct_top2,
+            'seg_nota':  seg_nota,
             'N_alertas': len(alertas),
             'N_dupes':   N_dupes,
             'n_rojo':    _n_rojo,

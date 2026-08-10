@@ -1359,8 +1359,8 @@ with tab_reportes:
         k1,k2,k3,k4,k5,k6 = st.columns(6)
         for col,lbl,val,sub,cls in [
             (k1,'Pacientes únicos',       s['N_total'],   '',                           ''),
-            (k2,'Con seguimiento TOP2',   s['N_top2'],    f"{s['pct_top2']}% del total", ''),
-            (k3,'Solo TOP1 (pendientes)', s['N_solo1'],   '',                           ''),
+            (k2,'Con seguimiento TOP2',   s['N_top2'],    f"{s['pct_top2']}% de {s.get('N_elig',0)} elegibles", ''),
+            (k3,'Elegibles sin TOP2',     s['N_solo1'],   'pendientes de seguimiento',  ''),
             (k4,'Valores corregidos',     s['N_alertas'], '', 'red' if s['N_alertas'] else 'green'),
             (k5,'🔴 Urgentes (90+ días)', s['n_rojo'],    '',                           'red'),
             (k6,'🟠 Próximos (60–89d)',   s['n_naranja'], '',                           'orange'),
@@ -1371,11 +1371,15 @@ with tab_reportes:
                             f'{"<div class=kpi-sub>"+sub+"</div>" if sub else ""}</div>',
                             unsafe_allow_html=True)
 
+        if s.get('seg_nota'):
+            st.markdown(f'<div style="font-size:.78rem;color:#888;margin:.25rem 0 .1rem;">ℹ {s["seg_nota"]}</div>',
+                        unsafe_allow_html=True)
+
         centros = R.get('centros', [])
         if centros and not fc:
             st.markdown('<div class="sec">🏥 Resumen por Centro / Servicio de Tratamiento</div>', unsafe_allow_html=True)
             df_c = pd.DataFrame(centros)
-            df_c.columns = ['Centro','Aplicaciones','Pacientes únicos','Con TOP2','Sin TOP2 (pendientes)','Valores corregidos']
+            df_c.columns = ['Centro','Aplicaciones','Elegibles (90+d)','Con TOP2','Sin TOP2 (pendientes)','Valores corregidos']
             rows_html = ''
             for i, row in df_c.iterrows():
                 is_total = str(row.iloc[0]) == 'TOTAL'
@@ -1408,7 +1412,7 @@ with tab_reportes:
 
         with gc1:
             fig,ax=plt.subplots(figsize=(4.5,3.2))
-            bars=ax.bar(['Con TOP2','Solo TOP1'],[s['N_top2'],s['N_solo1']],color=[MID,'#CCC'],width=.5)
+            bars=ax.bar(['Con TOP2','Sin TOP2'],[s['N_top2'],s['N_solo1']],color=[MID,'#CCC'],width=.5)
             for b,v in zip(bars,[s['N_top2'],s['N_solo1']]):
                 ax.text(b.get_x()+b.get_width()/2.,b.get_height()+.5,str(v),
                         ha='center',va='bottom',fontsize=11,fontweight='bold',color=NAVY)

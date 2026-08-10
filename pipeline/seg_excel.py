@@ -277,8 +277,13 @@ def cargar_datos():
     N_total = len(df)
     seg = df[df['Tiene_TOP2'] == 'Sí'].copy().reset_index(drop=True)
     N_seg = len(seg)
+
+    # Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA (fuente única, corre en proceso)
+    from pipeline.panel.seguimiento_core import cobertura_desde_wide
+    _cob = cobertura_desde_wide(df)
     print(f'  Total pacientes:      {N_total}')
-    print(f'  Con TOP2 (seguimiento): {N_seg}  ({round(N_seg/N_total*100,1)}%)')
+    print(f'  Con TOP2: {N_seg}  |  Cobertura homologada: {_cob["pct_cobertura"]}% '
+          f'({_cob["n_con_top2"]} de {_cob["n_elegibles"]} elegibles)')
 
     # ── Tiempo de seguimiento ────────────────────────────────────────────────
     _fc1 = next((c for c in seg.columns if 'fecha entrevista' in c.lower() and c.endswith('_TOP1')), None)
@@ -299,6 +304,9 @@ def cargar_datos():
                 'n_total': int(_dias.notna().sum())
             }
 
+    seg_tiempo['pct_cob']  = _cob['pct_cobertura']
+    seg_tiempo['n_elig']   = _cob['n_elegibles']
+    seg_tiempo['nota_cob'] = _cob['nota']
     return seg, N_total, N_seg, seg_tiempo
 
 # Helpers para leer columna con sufijo correcto
@@ -332,7 +340,7 @@ def build_seguimiento(wb, seg, N_total, N_seg, DC, seg_tiempo=None):
     for r, txt, bg, sz, bold, tc in [
         (1, 'INFORME DE SEGUIMIENTO  ·  TOP',                                       C_DARK, 16, True,  C_WHITE),
         (2, f'Comparación TOP 1 (Ingreso) vs TOP 2 (Seguimiento)  ·  {N_seg} pacientes con ambas evaluaciones', C_MID, 10, False, C_WHITE),
-        (3, f'Total pacientes en base: {N_total}  ·  Con seguimiento: {N_seg} ({round(N_seg/N_total*100,1)}%)  ·  % calculados sobre N válido', C_LIGHT, 9, False, C_DARK),
+        (3, f'Total en base: {N_total}  ·  Cobertura seguimiento: {seg_tiempo.get("pct_cob",0)}% ({seg_tiempo.get("n_elig",0)} elegibles)  ·  {seg_tiempo.get("nota_cob","")}', C_LIGHT, 9, False, C_DARK),
         (4, txt_tiempo, 'E2EFDA', 9, False, '375623'),
     ]:
         ws.merge_cells(f'B{r}:G{r}')

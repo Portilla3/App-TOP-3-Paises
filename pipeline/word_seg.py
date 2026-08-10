@@ -272,7 +272,19 @@ def cargar_datos():
     N_total=len(df)
     seg=df[df['Tiene_TOP2']=='Sí'].copy().reset_index(drop=True)
     N_seg=len(seg)
-    print(f'  Total: {N_total} | Con TOP2: {N_seg} ({round(N_seg/N_total*100,1) if N_total>0 else 0}%)')
+
+    # Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA (subproceso: se replica.
+    # MANTENER SINCRONIZADO con pipeline/panel/seguimiento_core.py)
+    _um=int(os.environ.get('QALAT_DIAS_UMBRAL','90'))
+    _c1=next((c for c in df.columns if 'fecha entrevista' in c.lower() and c.endswith('_TOP1')),None)
+    if _c1 is not None:
+        _dd=(pd.Timestamp.now().normalize()-pd.to_datetime(df[_c1],errors='coerce')).dt.days
+        _el=_dd>=_um; _ti=df['Tiene_TOP2'].astype(str).str.strip().isin(['Sí','Si'])
+        _nel=int(_el.sum()); _nco=int((_el&_ti).sum()); pct_cob=round(100*_nco/_nel,1) if _nel else 0.0
+    else:
+        _nel=_nco=0; pct_cob=0.0
+    nota_cob=f'Calculado sobre pacientes con {_um} o más días desde su primer TOP.'
+    print(f'  Total: {N_total} | Con TOP2: {N_seg} | Cobertura homologada: {pct_cob}% ({_nco} de {_nel} elegibles)')
 
     _fc1=next((c for c in seg.columns if 'fecha entrevista' in c.lower() and c.endswith('_TOP1')),None)
     _fc2=next((c for c in seg.columns if 'fecha entrevista' in c.lower() and c.endswith('_TOP2')),None)
@@ -286,7 +298,8 @@ def cargar_datos():
                         'max':round(float(_m.max()),1),'n':len(_dias_ok),'n_total':int(_dias.notna().sum())}
 
     DC=detectar_columnas(seg.columns.tolist())
-    R={'N_total':N_total,'N_seg':N_seg,'DC':DC,'seg_tiempo':seg_tiempo}
+    R={'N_total':N_total,'N_seg':N_seg,'DC':DC,'seg_tiempo':seg_tiempo,
+       'pct_cob':pct_cob,'n_elig':_nel,'nota_cob':nota_cob}
 
     # Sexo
     if DC['sexo']:
@@ -593,7 +606,7 @@ def build_word(R):
         sec.top_margin=Cm(2); sec.bottom_margin=Cm(2)
         sec.left_margin=Cm(2.5); sec.right_margin=Cm(2.5)
 
-    N=R['N_seg']; pct_seg=round(N/R['N_total']*100,1) if R['N_total']>0 else 0
+    N=R['N_seg']; pct_seg=R.get('pct_cob',0)   # cobertura homologada (elegibles 90+ días)
 
     # ── Portada ───────────────────────────────────────────────────────────────
     tbl=doc.add_table(rows=1,cols=1); tbl.alignment=WD_TABLE_ALIGNMENT.CENTER
@@ -624,7 +637,7 @@ def build_word(R):
     add_body(doc,
         f'Este informe compara los resultados de {N} personas en {NOMBRE_SERVICIO} ({PERIODO}), '
         f'entre el ingreso (TOP 1) y el seguimiento (TOP 2). '
-        f'Del total de {R["N_total"]} que ingresaron, {N} ({pct_seg}%) cuentan con ambas evaluaciones. '
+        f'De los {R.get("n_elig",0)} pacientes con 90 o más días desde el ingreso, {N} ({pct_seg}%) cuentan con seguimiento (TOP2). '
         f'La sustancia principal al ingreso fue {R["sust_top1"]} ({R["sust_top1_pct"]}%).')
     if _st.get('mediana'):
         add_body(doc,

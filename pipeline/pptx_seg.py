@@ -260,6 +260,21 @@ def cargar_datos():
     N = len(seg)
     DC = detectar_columnas(seg.columns.tolist())
 
+    # Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA. Este script corre como
+    # subproceso desde /tmp y no puede importar seguimiento_core, así que se
+    # replica la lógica. MANTENER SINCRONIZADO con pipeline/panel/seguimiento_core.py
+    _um  = int(os.environ.get('QALAT_DIAS_UMBRAL', '90'))
+    _cf1 = next((c for c in df.columns if 'fecha entrevista' in c.lower() and c.endswith('_TOP1')), None)
+    if _cf1 is not None:
+        _dd    = (pd.Timestamp.now().normalize() - pd.to_datetime(df[_cf1], errors='coerce')).dt.days
+        _eleg  = _dd >= _um
+        _tie   = df['Tiene_TOP2'].astype(str).str.strip().isin(['Sí','Si'])
+        _nelig = int(_eleg.sum()); _ncon = int((_eleg & _tie).sum())
+        pct_cob = round(100*_ncon/_nelig,1) if _nelig else 0.0
+    else:
+        _nelig = _ncon = 0; pct_cob = 0.0
+    nota_cob = f'Calculado sobre pacientes con {_um} o más días desde su primer TOP.'
+
     def pct(n, d): return round(n/d*100,1) if d>0 else 0
     def smean(col):
         if not col or col not in seg.columns: return 0
@@ -358,7 +373,8 @@ def cargar_datos():
     return dict(N=N, N_total=N_total, seg_tiempo=seg_tiempo, sust_top=sust_top,
                 sust=sust, dias=dias, cambio=cambio,
                 pct_tr1=pct_tr1, pct_tr2=pct_tr2, tipos_tr=tipos_tr,
-                salud=salud, vivienda=vivienda)
+                salud=salud, vivienda=vivienda,
+                pct_cob=pct_cob, n_elig=_nelig, nota_cob=nota_cob)
 
 # ── Gráficos ──────────────────────────────────────────────────────────────────
 def g_torta(d):
@@ -486,7 +502,7 @@ def build_pptx(d):
 
     titulo = f'Seguimiento TOP1 vs TOP2 · {NOMBRE_SERVICIO}'
     pie_txt = f'N seguimiento = {d["N"]}  ·  {NOMBRE_SERVICIO}  ·  {PERIODO}'
-    pct_seg = round(d['N']/d['N_total']*100,1) if d['N_total']>0 else 0
+    pct_seg = d.get('pct_cob', 0)   # cobertura homologada (elegibles 90+ días)
     st = d['seg_tiempo']
 
     # ── SLIDE 1: PORTADA ──────────────────────────────────────────────────────
@@ -497,8 +513,9 @@ def build_pptx(d):
     add_txt(sl, 'TOP1 vs TOP2', 0.25, 2.3, 3.2, 0.5, size=12, color=C_LIGHT)
     add_txt(sl, NOMBRE_SERVICIO.upper(), 0.25, 3.1, 3.2, 0.6, size=13, bold=True, color=C_WHITE)
     add_txt(sl, PERIODO, 0.25, 3.75, 3.2, 0.4, size=11, color=C_LIGHT)
-    add_txt(sl, f'N ingreso: {d["N_total"]}  ·  Con seguimiento: {d["N"]} ({pct_seg}%)',
+    add_txt(sl, f'N ingreso: {d["N_total"]}  ·  Cobertura TOP2: {pct_seg}% ({d.get("n_elig",0)} elegibles)',
             0.25, 4.3, 3.2, 0.4, size=10, color=C_LIGHT)
+    add_txt(sl, d.get('nota_cob',''), 0.25, 4.68, 3.2, 0.4, size=7, color=C_LIGHT)
     add_txt(sl, 'Monitoreo de Resultados\nde Tratamiento', 4.5, 2.2, 5.2, 1.0,
             size=16, bold=True, color=C_DARK)
     add_txt(sl, f'Sustancia principal: {d["sust_top"]}', 4.5, 3.3, 5.2, 0.4, size=11, color=C_MID)
