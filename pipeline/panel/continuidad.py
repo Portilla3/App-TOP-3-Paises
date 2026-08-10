@@ -137,7 +137,7 @@ def render(df, pais, centro_id=None):
         st.markdown(
             titulo_seccion(
                 '🔄', 'Seguimiento por centro',
-                f'% de elegibles (90+ días) con segundo TOP · promedio nacional {prom_nac:.1f}%'.replace('.', ',')
+                f'Del total de personas con 90+ días, cuántas tienen un segundo TOP · promedio nacional {prom_nac:.1f}%'.replace('.', ',')
             ),
             unsafe_allow_html=True
         )
