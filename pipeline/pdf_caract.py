@@ -141,6 +141,7 @@ from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Image,
                                  Table, TableStyle, PageBreak, HRFlowable)
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from pipeline.validacion_top import normalizar_sexo
 
 W, H = A4
 C_DARK  = HexColor('#1F3864'); C_MID  = HexColor('#2E75B6')
@@ -270,7 +271,7 @@ def cargar_datos():
 
     # Sexo
     if DC['sexo']:
-        sc = df[DC['sexo']].astype(str).str.strip().str.upper()
+        sc = normalizar_sexo(df[DC['sexo']])
         nv = int(sc.isin(['H','M']).sum())
         R['n_hombre']   = int((sc=='H').sum())
         R['n_mujer']    = int((sc=='M').sum())

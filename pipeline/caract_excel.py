@@ -145,6 +145,7 @@ def safe_mean(s):
 #   5. Metanfetamina va ANTES de Crack (cristal → Metanfetamina, no Crack)
 #   6. Descarta primera sustancia en entradas múltiples (split por / , + y)
 import re as _re
+from pipeline.validacion_top import normalizar_sexo
 
 def norm_sust(s):
     if pd.isna(s): return None
@@ -346,7 +347,7 @@ def build_report(wb, d, N, DC):
     R = sec(ws, R, '1.1', 'Distribución por Sexo')
     R = hdrs(ws, R, ['Sexo', 'n', '%', '', ''])
     if DC['sexo']:
-        sc = d[DC['sexo']].astype(str).str.strip().str.upper()
+        sc = normalizar_sexo(d[DC['sexo']])
         nv_sex = int(sc.isin(['H','M']).sum())
         n_h = int((sc=='H').sum()); n_m = int((sc=='M').sum())
         R = drow(ws, R, ['Hombre', n_h, round(n_h/nv_sex*100,1) if nv_sex>0 else 0, '', ''], alt=False)

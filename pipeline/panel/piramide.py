@@ -19,6 +19,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
+from pipeline.validacion_top import normalizar_sexo_valor
 
 
 COLOR_HOMBRE  = '#004AAD'   # from config PALETA_PRINCIPAL
@@ -28,23 +29,8 @@ TEXTO_OSCURO  = '#004AAD'
 
 
 def _normalizar_sexo(v):
-    """Normaliza variantes a 'H', 'M' o 'Otros'."""
-    if v is None or (isinstance(v, float) and pd.isna(v)):
-        return 'Otros'
-    s = str(v).strip().lower()
-    if not s:
-        return 'Otros'
-    if s.startswith('h') or s in ('m', 'masculino', 'male', 'hombre'):
-        # Distinguir Masculino de Mujer
-        if s.startswith('muj') or s == 'mujer':
-            return 'M'
-        if s.startswith('h') or s in ('masculino', 'male', 'hombre'):
-            return 'H'
-    if s.startswith('f') or s in ('femenino', 'female', 'mujer'):
-        return 'M'
-    if s.startswith('m') and not s.startswith('muj'):
-        return 'H'   # 'masculino', 'm'
-    return 'Otros'
+    """Delegado a validacion_top.normalizar_sexo_valor (fuente única)."""
+    return normalizar_sexo_valor(v)
 
 
 def _calcular_sexo(df):
@@ -69,7 +55,7 @@ def _calcular_sexo(df):
     grupos = df_ing['sexo'].apply(_normalizar_sexo).value_counts()
     n_h = int(grupos.get('H', 0))
     n_m = int(grupos.get('M', 0))
-    n_o = int(grupos.get('Otros', 0))
+    n_o = int(grupos.get('O', 0))
     total = n_h + n_m + n_o
     if total == 0:
         return vacio

@@ -113,3 +113,59 @@ def escala_salud_valida(serie):
     """
     num = pd.to_numeric(serie, errors='coerce')
     return num.where((num >= ESCALA_SALUD_MIN) & (num <= ESCALA_SALUD_MAX))
+
+
+# ── Sexo ────────────────────────────────────────────────────────────────────
+# Convención regional única desde 2026-08-28: H = Hombre, M = Mujer, O = Otro.
+#
+# Antes de esta fecha convivían dos convenciones en la misma columna. Perú
+# escribía M=Masculino y F=Femenino desde sus formularios, mientras Ecuador,
+# El Salvador y México escribían H=Hombre y M=Mujer. Los módulos de reportes
+# leían H/M y los del panel leían M/F, de modo que ningún país quedaba bien
+# contado en ambos lados: el panel mostraba cero mujeres en Ecuador, El
+# Salvador y México, y los informes de Perú reportaban 85% de mujeres.
+#
+# La base de Perú fue homologada a H/M/O y todos los formularios escriben esa
+# convención. Esta función es la única fuente de verdad para leer el campo, y
+# sigue aceptando 'F' y las variantes en texto por si entra un dato histórico.
+
+_SEXO_HOMBRE = ('hombre', 'masculino', 'masc', 'male', 'varon', 'varón')
+_SEXO_MUJER  = ('mujer', 'femenino', 'fem', 'female')
+_SEXO_OTRO   = ('otro', 'otra', 'no binario', 'no binarie', 'nb', 'intersex')
+
+
+def normalizar_sexo_valor(v):
+    """
+    Normaliza un valor del campo sexo a 'H', 'M', 'O' o None.
+
+    None se reserva para el dato ausente, para que los módulos puedan
+    excluirlo del N válido. Un texto libre que no corresponda a ninguna
+    categoría conocida (por ejemplo 'ASEXUAL') se clasifica como 'O'.
+    """
+    if v is None:
+        return None
+    try:
+        if pd.isna(v):
+            return None
+    except (TypeError, ValueError):
+        pass
+
+    s = str(v).strip().lower()
+    if not s:
+        return None
+
+    if s == 'h' or s.startswith(_SEXO_HOMBRE):
+        return 'H'
+    if s in ('m', 'f') or s.startswith(_SEXO_MUJER):
+        return 'M'
+    if s == 'o' or s.startswith(_SEXO_OTRO):
+        return 'O'
+    return 'O'
+
+
+def normalizar_sexo(serie):
+    """
+    Versión vectorizada de normalizar_sexo_valor() para una Serie de pandas.
+    Devuelve una Serie con valores 'H', 'M', 'O' o None.
+    """
+    return pd.Series(serie).apply(normalizar_sexo_valor)

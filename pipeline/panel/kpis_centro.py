@@ -19,6 +19,7 @@ from pipeline.panel import sustancia as panel_sustancia
 from pipeline.panel import dias_consumo as panel_dias_consumo
 from pipeline.panel import transgresion as panel_transgresion
 from pipeline.panel import salud as panel_salud
+from pipeline.validacion_top import normalizar_sexo_valor
 
 
 def _kpi_card(col, label, valor, sub=None, tono=''):
@@ -174,17 +175,8 @@ def render(df, centro, pais=None, df_pais=None):
 
 
 def _normalizar_sexo(v):
-    """Copia exacta de piramide.py:_normalizar_sexo, para consistencia."""
-    if v is None or (isinstance(v, float) and pd.isna(v)):
-        return 'Otros'
-    s = str(v).strip().lower()
-    if not s:
-        return 'Otros'
-    if s.startswith('muj') or s == 'mujer' or s.startswith('f') or s in ('femenino', 'female'):
-        return 'M'
-    if s.startswith('h') or s in ('masculino', 'male', 'hombre') or (s.startswith('m') and not s.startswith('muj')):
-        return 'H'
-    return 'Otros'
+    """Delegado a validacion_top.normalizar_sexo_valor (fuente única)."""
+    return normalizar_sexo_valor(v)
 
 
 def _es_s(v):

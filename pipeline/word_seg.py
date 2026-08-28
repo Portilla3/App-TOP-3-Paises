@@ -25,6 +25,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+from pipeline.validacion_top import normalizar_sexo
 warnings.filterwarnings('ignore')
 
 NAVY=RGBColor(0x1F,0x38,0x64); BLUE=RGBColor(0x2E,0x75,0xB6)
@@ -303,7 +304,7 @@ def cargar_datos():
 
     # Sexo
     if DC['sexo']:
-        sc=seg[DC['sexo']].astype(str).str.strip().str.upper()
+        sc=normalizar_sexo(seg[DC['sexo']])
         nv=int(sc.isin(['H','M']).sum())
         R['n_hombre']=int((sc=='H').sum()); R['n_mujer']=int((sc=='M').sum()); R['nv_sex']=nv
         R['pct_hombre']=round(R['n_hombre']/nv*100,1) if nv>0 else 0

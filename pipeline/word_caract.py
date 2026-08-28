@@ -24,6 +24,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+from pipeline.validacion_top import normalizar_sexo
 warnings.filterwarnings('ignore')
 
 # ── Colores ───────────────────────────────────────────────────────────────────
@@ -310,7 +311,7 @@ def cargar_datos():
 
     # Sexo
     if DC['sexo']:
-        sc=df[DC['sexo']].astype(str).str.strip().str.upper()
+        sc=normalizar_sexo(df[DC['sexo']])
         nv=int(sc.isin(['H','M']).sum())
         R['n_hombre']=int((sc=='H').sum()); R['n_mujer']=int((sc=='M').sum())
         R['nv_sex']=nv

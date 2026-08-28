@@ -14,6 +14,7 @@ from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Cm
+from pipeline.validacion_top import normalizar_sexo
 warnings.filterwarnings('ignore')
 
 # ── Rutas (inyectadas por runner) ─────────────────────────────────────────────
@@ -263,7 +264,7 @@ def cargar_datos():
     # Sexo
     n_h = n_m = 0; pct_h = pct_m = 0.0
     if DC['sexo']:
-        sc = df[DC['sexo']].astype(str).str.strip().str.upper()
+        sc = normalizar_sexo(df[DC['sexo']])
         nv = int(sc.isin(['H','M']).sum())
         n_h = int((sc=='H').sum()); n_m = int((sc=='M').sum())
         pct_h = round(n_h/nv*100,1) if nv else 0
