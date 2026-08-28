@@ -756,6 +756,85 @@ def _mostrar_login():
     div[data-baseweb="popover"] { background: #1a3a5c !important; border: 1px solid #2563a8 !important; }
     div[data-baseweb="menu"] li { color: #ffffff !important; background: #1a3a5c !important; }
     div[data-baseweb="menu"] li:hover { background: #2563a8 !important; }
+
+    /* ── Pestañas del login ───────────────────────────────────────────────
+       El CSS global de pestañas cuelga de la clase .stTabs, que no existe en
+       todas las versiones de Streamlit. Cuando no calza, la pestaña queda con
+       el estilo por defecto (texto oscuro, fondo transparente) y sobre este
+       fondo azul oscuro resulta prácticamente invisible: había que saber que
+       la pestaña "Centro" estaba ahí para poder hacerle clic. Estas reglas
+       cuelgan de los atributos data-baseweb, que son estables, y solo afectan
+       a la pantalla de login porque después de dibujarla la app hace st.stop().
+       ------------------------------------------------------------------- */
+    div[data-baseweb="tab-list"] {
+        background: rgba(255,255,255,.08) !important;
+        border: 1px solid rgba(255,255,255,.22) !important;
+        border-radius: 10px !important;
+        padding: 5px !important;
+        gap: 4px !important;
+        box-shadow: none !important;
+    }
+    div[data-baseweb="tab-highlight"],
+    div[data-baseweb="tab-border"] { display: none !important; }
+    button[data-baseweb="tab"] {
+        background: rgba(255,255,255,.10) !important;
+        border: 1px solid rgba(255,255,255,.18) !important;
+        border-radius: 8px !important;
+        padding: 8px 18px !important;
+        min-height: 38px !important;
+        font-weight: 700 !important;
+        font-size: .85rem !important;
+    }
+    button[data-baseweb="tab"],
+    button[data-baseweb="tab"] * { color: #E6F0FA !important; }
+    button[data-baseweb="tab"]:hover { background: rgba(255,255,255,.20) !important; }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background: #9DC3E6 !important;
+        border-color: #9DC3E6 !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"],
+    button[data-baseweb="tab"][aria-selected="true"] * { color: #10233B !important; }
+
+    /* ── Texto que se escribe en los campos ───────────────────────────────
+       La regla de más arriba apunta a stTextInput > div > div > input, que
+       depende de la jerarquía exacta de divs que genera Streamlit. Cuando esa
+       jerarquía cambia, el input se queda sin color propio y lo que la persona
+       tipea no se ve. Estos selectores no dependen de la estructura.
+       ------------------------------------------------------------------- */
+    div[data-testid="stTextInput"] input,
+    div[data-testid="stTextInput"] input[type="text"],
+    div[data-testid="stTextInput"] input[type="password"] {
+        background: rgba(255,255,255,.12) !important;
+        border: 1px solid rgba(255,255,255,.30) !important;
+        border-radius: 6px !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
+        caret-color: #FFFFFF !important;
+    }
+    div[data-testid="stTextInput"] input::placeholder {
+        color: rgba(255,255,255,.55) !important;
+        -webkit-text-fill-color: rgba(255,255,255,.55) !important;
+    }
+    div[data-testid="stTextInput"] input:focus {
+        border-color: #9DC3E6 !important;
+        box-shadow: 0 0 0 2px rgba(157,195,230,.35) !important;
+    }
+    /* Autocompletado del navegador: Chrome repinta el fondo y el texto queda
+       ilegible. box-shadow inset es la única forma de sobrescribir ese fondo. */
+    div[data-testid="stTextInput"] input:-webkit-autofill,
+    div[data-testid="stTextInput"] input:-webkit-autofill:hover,
+    div[data-testid="stTextInput"] input:-webkit-autofill:focus {
+        -webkit-text-fill-color: #FFFFFF !important;
+        -webkit-box-shadow: 0 0 0 1000px #2B5580 inset !important;
+        caret-color: #FFFFFF !important;
+    }
+    /* Selectbox de país: mismo criterio, sin depender de la jerarquía */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        background: rgba(255,255,255,.12) !important;
+        border: 1px solid rgba(255,255,255,.30) !important;
+        color: #FFFFFF !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] * { color: #FFFFFF !important; }
     </style>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;max-width:680px;margin:3rem auto;
