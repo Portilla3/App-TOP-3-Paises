@@ -269,13 +269,12 @@ def _sb_url(tabla='top_registros'):
     return f"{st.secrets['SUPABASE_URL']}/rest/v1/{tabla}"
 
 def _cargar_supabase(pais=None):
-    import urllib.request, urllib.parse, json
-    url = _sb_url() + '?select=*&order=fecha_entrevista.asc'
+    import urllib.parse
+    from pipeline.sb_paginado import fetch_todo
+    url = _sb_url() + '?select=*&order=fecha_entrevista.asc,id.asc'
     if pais and pais != 'Todos':
         url += f"&pais=eq.{urllib.parse.quote(pais)}"
-    req = urllib.request.Request(url, headers=_sb_headers())
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read().decode('utf-8'))
+    return fetch_todo(url, _sb_headers())
 
 def _actualizar_registro(registro_id, campos):
     import urllib.request, json
@@ -341,11 +340,9 @@ RETENCION_SEMANAS_BACKUP = 12  # Snapshots más viejos que esto se eliminan al r
 
 def _leer_todos_registros_full():
     """Descarga todos los registros de top_registros sin filtro de país."""
-    import urllib.request, json
+    from pipeline.sb_paginado import fetch_todo
     url = _sb_url() + '?select=*&order=id.asc'
-    req = urllib.request.Request(url, headers=_sb_headers())
-    with urllib.request.urlopen(req) as r:
-        return json.loads(r.read().decode('utf-8'))
+    return fetch_todo(url, _sb_headers())
 
 
 def _registrar_backup_log(tipo, num_registros, snapshot_id=None, notas=None):

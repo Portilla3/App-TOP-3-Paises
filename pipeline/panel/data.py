@@ -24,6 +24,7 @@ import pandas as pd
 import urllib.request
 import urllib.parse
 import json
+from pipeline.sb_paginado import fetch_todo
 
 
 def _sb_headers():
@@ -57,12 +58,10 @@ def cargar_datos_pais(pais):
         KeyError si faltan credenciales en Streamlit Secrets
         Exception genérica en otros errores de red o parsing
     """
-    url = _sb_url() + '?select=*&order=fecha_entrevista.asc'
+    url = _sb_url() + '?select=*&order=fecha_entrevista.asc,id.asc'
     url += f"&pais=eq.{urllib.parse.quote(pais)}"
 
-    req = urllib.request.Request(url, headers=_sb_headers())
-    with urllib.request.urlopen(req, timeout=15) as r:
-        registros = json.loads(r.read().decode('utf-8'))
+    registros = fetch_todo(url, _sb_headers())
 
     if not registros:
         return pd.DataFrame()
