@@ -2037,10 +2037,10 @@ _CORRECCION_HTML_TEMPLATE = """<!DOCTYPE html>
             <label>Etapa</label>
             <select id="etapa">
               <option value="">— Seleccione —</option>
-              <option value="ingreso">Ingreso (TOP1)</option>
-              <option value="seguimiento1">Seguimiento 1</option>
-              <option value="seguimiento2">Seguimiento 2</option>
+              <option value="ingreso">Ingreso</option>
+              <option value="en_tratamiento">En tratamiento</option>
               <option value="egreso">Egreso</option>
+              <option value="seguimiento">Seguimiento</option>
             </select>
           </div>
           <div class="campo">
@@ -2061,8 +2061,8 @@ _CORRECCION_HTML_TEMPLATE = """<!DOCTYPE html>
             <label>Sexo</label>
             <select id="sexo">
               <option value="">— Seleccione —</option>
-              <option value="M">Masculino</option>
-              <option value="F">Femenino</option>
+              <option value="H">Hombre</option>
+              <option value="M">Mujer</option>
               <option value="O">Otro</option>
             </select>
           </div>
