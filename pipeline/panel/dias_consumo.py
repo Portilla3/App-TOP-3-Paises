@@ -46,7 +46,9 @@ _CAT_A_COL = {
     'Alcohol':         'alcohol_total',
     'Cannabis/Marihuana': 'marihuana_total',
     'Cocaína':         'cocaina_total',
+    'Crack/Cristal':   'crack_total',
     'Pasta base':      'pastabase_total',
+    'Metanfetamina':   'metanfetamina_total',
     'Sedantes':        'sedantes_total',
 }
 
