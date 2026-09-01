@@ -6,6 +6,8 @@ from io import BytesIO
 from pathlib import Path
 
 PIPELINE_DIR = Path(__file__).parent
+REPO_ROOT    = PIPELINE_DIR.parent   # raíz del repo: necesaria para que los
+                                     # subprocesos puedan importar 'pipeline.*'
 
 OUTPUTS = {
     'caract_excel': ('TOP_Caracterizacion_Ingreso.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
@@ -149,6 +151,7 @@ def run_script(script_key, wide_path, filtro_centro=None):
                 f.write(src)
 
             env = os.environ.copy()
+            env['PYTHONPATH'] = str(REPO_ROOT) + os.pathsep + env.get('PYTHONPATH', '')
             env['QALAT_WIDE']   = wide_path
             env['QALAT_OUT']    = out_path
             env['QALAT_CENTRO'] = filtro_centro or ''
@@ -174,6 +177,7 @@ def run_script(script_key, wide_path, filtro_centro=None):
             shutil.copy(str(PIPELINE_DIR / SCRIPT_FILES[script_key]), tmp_py)
 
             env = os.environ.copy()
+            env['PYTHONPATH'] = str(REPO_ROOT) + os.pathsep + env.get('PYTHONPATH', '')
             env['QALAT_WIDE']   = wide_path
             env['QALAT_OUT']    = out_path
             env['QALAT_CENTRO'] = filtro_centro or ''
@@ -258,6 +262,7 @@ def run_script(script_key, wide_path, filtro_centro=None):
                 f.write(src)
 
             env = os.environ.copy()
+            env['PYTHONPATH'] = str(REPO_ROOT) + os.pathsep + env.get('PYTHONPATH', '')
             env['QALAT_WIDE'] = wide_path
             env['QALAT_OUT']  = out_path
 
