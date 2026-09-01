@@ -144,6 +144,7 @@ from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Image,
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from pipeline.validacion_top import normalizar_sexo
+from pipeline.cambio_consumo import clasificar_cambio
 
 W, H = A4
 C_DARK  = HexColor('#1F3864'); C_MID  = HexColor('#2E75B6')
@@ -370,17 +371,13 @@ def cargar_datos():
     cambio = []
     for lbl, c1, c2 in DC['sust_cols']:
         if not c2: continue
-        v1 = pd.to_numeric(seg[c1], errors='coerce').fillna(0)
-        v2 = pd.to_numeric(seg[c2], errors='coerce').fillna(0)
-        mask = v1>0; n_cons = int(mask.sum())
-        if n_cons < 2: continue
-        s1=v1[mask]; s2=v2[mask]
-        n_abs=int((s2==0).sum()); n_dis=int(((s2>0)&(s2<s1)).sum())
-        n_sc=int((s2==s1).sum()); n_emp=int((s2>s1).sum())
-        pct=lambda n: round(n/n_cons*100,1) if n_cons>0 else 0
-        cambio.append({'label':lbl,'n_cons':n_cons,
-            'pct_abs':pct(n_abs),'pct_dis':pct(n_dis),
-            'pct_sc':pct(n_sc),'pct_emp':pct(n_emp)})
+        res = clasificar_cambio(seg[c1], seg[c2])
+        if res['n_consumia_ingreso'] < 2: continue
+        cambio.append({'label':lbl,'n_cons':res['n_consumia_ingreso'],
+            'pct_abs':res['pct_cons_abstinencia'],'pct_dis':res['pct_cons_disminuyo'],
+            'pct_sc':res['pct_cons_sin_cambio'],'pct_emp':res['pct_cons_aumento'],
+            'n_inicio':res['inicio'],'pct_inicio':res['pct_inicio'],
+            'n_valido':res['n_valido']})
     R['cambio'] = cambio
 
     # Salud TOP1 vs TOP2 (G10)

@@ -9,7 +9,7 @@ Lógica:
   1. Filtrar etapa=ingreso
   2. Clasificar sustancia_principal con la misma taxonomía de panel/sustancia.py
   3. Para cada categoría canónica, tomar la columna _total correspondiente
-     y calcular el promedio entre quienes tienen valor > 0
+     y calcular el promedio incluyendo los ceros (ver nota en el codigo)
   4. Excluir categorías sin columna _total disponible (Tusi, Ketamina, etc.)
 
 Mapeo categoría → columna Supabase:
@@ -85,7 +85,12 @@ def _calcular_dias(df):
         if not mask.any():
             continue
         serie = dias_validos_mes(df_ing.loc[mask, col])
-        con_valor = serie[serie > 0]
+        # Se incluyen los ceros. Aqui solo entran los pacientes que declararon
+        # esta sustancia como su principal, de modo que un cero significa que
+        # ingresaron sin consumo de su propia sustancia problema, tipico de las
+        # derivaciones desde desintoxicacion. Ese cero es su dato real y
+        # excluirlo esconde justamente lo que el indicador quiere mostrar.
+        con_valor = serie.dropna()
         if con_valor.empty:
             continue
         resultado.append({

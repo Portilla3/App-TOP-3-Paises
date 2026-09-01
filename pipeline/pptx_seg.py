@@ -14,6 +14,7 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
+from pipeline.cambio_consumo import clasificar_cambio
 warnings.filterwarnings('ignore')
 
 # ── Rutas (inyectadas por runner) ─────────────────────────────────────────────
@@ -322,16 +323,12 @@ def cargar_datos():
     cambio = []
     for lbl, c1, c2 in DC['sust_cols']:
         if not c2: continue
-        v1 = pd.to_numeric(seg[c1], errors='coerce').fillna(0)
-        v2 = pd.to_numeric(seg[c2], errors='coerce').fillna(0)
-        mask = v1>0; nc = int(mask.sum())
-        if nc<2: continue
-        s1=v1[mask]; s2=v2[mask]
-        n_abs=int((s2==0).sum()); n_dis=int(((s2>0)&(s2<s1)).sum())
-        n_sc=int((s2==s1).sum()); n_emp=int((s2>s1).sum())
-        p2 = lambda n: round(n/nc*100,1)
-        cambio.append({'label':lbl,'n':nc,
-                       'abs':p2(n_abs),'dis':p2(n_dis),'sin':p2(n_sc),'emp':p2(n_emp)})
+        res = clasificar_cambio(seg[c1], seg[c2])
+        if res['n_consumia_ingreso'] < 2: continue
+        cambio.append({'label':lbl,'n':res['n_consumia_ingreso'],
+                       'abs':res['pct_cons_abstinencia'],'dis':res['pct_cons_disminuyo'],
+                       'sin':res['pct_cons_sin_cambio'],'emp':res['pct_cons_aumento'],
+                       'n_inicio':res['inicio'],'pct_inicio':res['pct_inicio']})
 
     # Transgresión
     tr_cols1=[c1 for _,c1,_ in DC['tr_sn']]; tr_cols2=[c2 for _,_,c2 in DC['tr_sn']]

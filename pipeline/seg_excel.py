@@ -73,6 +73,7 @@ import numpy as np
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import warnings
+from pipeline.cambio_consumo import clasificar_cambio, CATEGORIAS
 warnings.filterwarnings('ignore')
 
 def _es_positivo(valor):
@@ -376,17 +377,23 @@ def build_seguimiento(wb, seg, N_total, N_seg, DC, seg_tiempo=None):
 
     # ── 2. DÍAS DE CONSUMO POR SUSTANCIA ─────────────────────────────────────
     R = sec(ws, R, '2', 'Promedio de Días de Consumo por Sustancia (últimas 4 semanas, 0–28)')
-    R = hdrs(ws, R, ['Sustancia', 'TOP 1\nProm. días', 'N válido\nTOP 1', 'TOP 2\nProm. días', 'N válido\nTOP 2', 'Cambio'])
+    R = hdrs(ws, R, ['Sustancia', 'TOP 1\nProm. días', 'N consum.\nTOP 1', 'TOP 2\nProm. días', 'N consum.\nTOP 2', 'Cambio'])
     for i, (lbl, c1, c2) in enumerate(DC['sust_cols']):
         s1 = v1(seg, c1); s2 = v2(seg, c2)
-        m1 = float(s1.mean()) if s1.notna().sum()>0 else np.nan
-        m2 = float(s2.mean()) if (c2 and s2.notna().sum()>0) else np.nan
-        nv1_ = int(s1.notna().sum()); nv2_ = int(s2.notna().sum()) if c2 else 0
+        # Intensidad: promedio entre quienes consumen esa sustancia en cada
+        # momento. Sobre el total, el numero mezclaria intensidad con
+        # prevalencia; la prevalencia se informa en la seccion 3.
+        cons1 = s1[s1 > 0]; cons2 = s2[s2 > 0] if c2 else s2
+        m1 = float(cons1.mean()) if len(cons1) else np.nan
+        m2 = float(cons2.mean()) if (c2 and len(cons2)) else np.nan
+        nv1_ = int(len(cons1)); nv2_ = int(len(cons2)) if c2 else 0
         ch = cambio(m1, m2, mejor_si_sube=False)
         R = drow(ws, R, [lbl,
             round(m1,1) if not np.isnan(m1) else 0, nv1_,
             round(m2,1) if not np.isnan(m2) else 0, nv2_, ch], alt=i%2==0)
-    R = note(ws, R, f'Promedio sobre los {N_seg} pacientes con seguimiento (incluye 0). ↑ Reducción del consumo (mejora).')
+    R = note(ws, R, 'Promedio calculado solo entre quienes consumen esa sustancia en cada momento, '
+                    'de modo que mide intensidad y no se mezcla con la prevalencia (sección 3). '
+                    'Las dos bases pueden diferir entre TOP 1 y TOP 2. ↑ Reducción del consumo.')
 
     # ── 3. % CONSUMIDORES POR SUSTANCIA ──────────────────────────────────────
     R = sec(ws, R, '3', f'% de Personas que Consume cada Sustancia (sobre N={N_seg})')
@@ -517,77 +524,72 @@ def build_cambio_consumo(wb, seg, N_seg, DC):
     ws.sheet_view.showGridLines = False
     ws.column_dimensions['A'].width = 2
     ws.column_dimensions['B'].width = 22
-    for col in ['C','D','E','F','G','H','I','J','K','L']:
-        ws.column_dimensions[col].width = 10
+    for col in ['C','D','E','F','G','H','I','J','K','L','M','N','O']:
+        ws.column_dimensions[col].width = 9.5
 
     # Encabezado
     for r, txt, bg, sz, bold, tc in [
-        (1, 'CAMBIO EN EL CONSUMO POR SUSTANCIA  ·  TOP  ·  Ingreso → Seguimiento', C_DARK, 13, True, C_WHITE),
-        (2, f'Solo pacientes con consumo > 0 en TOP 1  ·  % sobre n consumidores  ·  N seguimiento = {N_seg}', C_MID, 9, False, C_WHITE),
+        (1, 'CAMBIO EN DÍAS DE CONSUMO POR SUSTANCIA  ·  TOP  ·  Ingreso → Seguimiento', C_DARK, 13, True, C_WHITE),
+        (2, f'Todos los pacientes con dato válido en ambas mediciones  ·  N seguimiento = {N_seg}', C_MID, 9, False, C_WHITE),
     ]:
-        ws.merge_cells(f'B{r}:L{r}')
+        ws.merge_cells(f'B{r}:O{r}')
         c = ws[f'B{r}']; c.value = txt
         c.font = Font(bold=bold, size=sz, color=tc, name='Arial')
         c.fill = PatternFill('solid', start_color=bg)
         c.alignment = Alignment(horizontal='center', vertical='center')
         ws.row_dimensions[r].height = 28 if r==1 else 18
 
+    COLS = ['B','C','D','E','F','G','H','I','J','K','L','M','N','O']
+
     # Cabeceras
     R = 4
-    ws.row_dimensions[R].height = 28
-    for cl, txt in zip(['B','C','D','E','F','G','H','I','J','K','L'],
-                       ['Sustancia','n cons.\nTOP 1','Abstinencia\nn','Abstinencia\n%',
-                        'Disminuyó\nn','Disminuyó\n%','Sin cambio\nn','Sin cambio\n%',
-                        'Empeoró\nn','Empeoró\n%','% Abs +\nDisminuyó']):
+    ws.row_dimensions[R].height = 32
+    for cl, txt in zip(COLS,
+                       ['Sustancia', 'N\nválido',
+                        'Sin consumo\nn', 'Sin consumo\n%',
+                        'Inició\nn', 'Inició\n%',
+                        'Abstinencia\nn', 'Abstinencia\n%',
+                        'Disminuyó\nn', 'Disminuyó\n%',
+                        'Sin cambio\nn', 'Sin cambio\n%',
+                        'Aumentó\nn', 'Aumentó\n%']):
         c = ws[f'{cl}{R}']; c.value = txt
-        c.font = Font(bold=True, size=9, color=C_DARK, name='Arial')
+        c.font = Font(bold=True, size=8, color=C_DARK, name='Arial')
         c.fill = PatternFill('solid', start_color=C_LIGHT)
         c.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
         c.border = bd()
     R += 1
 
-    tot = {'n':0,'abs':0,'dis':0,'sc':0,'emp':0}
+    tot = {k: 0 for k, _ in CATEGORIAS}
+    tot['n'] = 0
     for i, (lbl, c1, c2) in enumerate(DC['sust_cols']):
         if c2 is None: continue
-        s1 = pd.to_numeric(seg[c1], errors='coerce').fillna(0)
-        s2 = pd.to_numeric(seg[c2], errors='coerce').fillna(0)
-        mask = s1 > 0
-        n_cons = int(mask.sum())
-        if n_cons < 2: continue
-        sub1 = s1[mask]; sub2 = s2[mask]
-        n_abs = int((sub2==0).sum())
-        n_dis = int(((sub2>0)&(sub2<sub1)).sum())
-        n_sc  = int((sub2==sub1).sum())
-        n_emp = int((sub2>sub1).sum())
-        pct   = lambda n: round(n/n_cons*100,1) if n_cons>0 else 0
-        pabs_dis = round((n_abs+n_dis)/n_cons*100,1)
+        res = clasificar_cambio(seg[c1], seg[c2])
+        if res['n_valido'] < 2: continue
 
         bg = C_ALT if i%2==0 else C_WHITE
         ws.row_dimensions[R].height = 16
-        for cl, val in zip(['B','C','D','E','F','G','H','I','J','K','L'],
-                           [lbl, n_cons, n_abs, pct(n_abs), n_dis, pct(n_dis),
-                            n_sc, pct(n_sc), n_emp, pct(n_emp), pabs_dis]):
+        valores = [lbl, res['n_valido']]
+        for clave, _ in CATEGORIAS:
+            valores += [res[clave], res['pct_' + clave]]
+        for cl, val in zip(COLS, valores):
             c = ws[f'{cl}{R}']; c.value = round(val,1) if isinstance(val,float) else val
-            c.font = Font(size=9, name='Arial', bold=(cl=='L'),
-                          color=C_MID if cl=='L' else '000000')
+            c.font = Font(size=9, name='Arial')
             c.fill = PatternFill('solid', start_color=bg)
             c.alignment = Alignment(horizontal='left' if cl=='B' else 'center',
                                     vertical='center', indent=1 if cl=='B' else 0)
             c.border = bd()
-        tot['n']+=n_cons; tot['abs']+=n_abs; tot['dis']+=n_dis
-        tot['sc']+=n_sc; tot['emp']+=n_emp
+        tot['n'] += res['n_valido']
+        for clave, _ in CATEGORIAS:
+            tot[clave] += res[clave]
         R += 1
 
     # Fila de totales
     ws.row_dimensions[R].height = 18
     n_t = tot['n']; pct = lambda n: round(n/n_t*100,1) if n_t>0 else 0
-    for cl, val in zip(['B','C','D','E','F','G','H','I','J','K','L'],
-                       ['TOTAL (todas las sustancias)', n_t,
-                        tot['abs'], pct(tot['abs']),
-                        tot['dis'], pct(tot['dis']),
-                        tot['sc'],  pct(tot['sc']),
-                        tot['emp'], pct(tot['emp']),
-                        round((tot['abs']+tot['dis'])/n_t*100,1) if n_t>0 else 0]):
+    valores = ['TOTAL (todas las sustancias)', n_t]
+    for clave, _ in CATEGORIAS:
+        valores += [tot[clave], pct(tot[clave])]
+    for cl, val in zip(COLS, valores):
         c = ws[f'{cl}{R}']; c.value = round(val,1) if isinstance(val,float) else val
         c.font = Font(bold=True, size=9, name='Arial', color=C_WHITE)
         c.fill = PatternFill('solid', start_color=C_DARK)
@@ -596,14 +598,18 @@ def build_cambio_consumo(wb, seg, N_seg, DC):
         c.border = bd()
     R += 2
 
-    ws.merge_cells(f'B{R}:L{R}')
+    ws.merge_cells(f'B{R}:O{R}')
     c = ws[f'B{R}']
-    c.value = ('Abstinencia = consumo 0 en TOP2 (con consumo > 0 en TOP1). '
-               'Disminuyó = TOP2 < TOP1. Sin cambio = TOP2 = TOP1. Empeoró = TOP2 > TOP1. '
-               '% sobre n consumidores de esa sustancia en TOP1.')
+    c.value = ('Las seis categorías son excluyentes y suman el N válido. '
+               'Sin consumo = 0 días en ambas mediciones. Inició = 0 al ingreso y más de 0 al seguimiento. '
+               'Abstinencia = consumía al ingreso y 0 al seguimiento. Disminuyó, Sin cambio y Aumentó comparan '
+               'los días entre ambas mediciones en quienes consumían al ingreso. '
+               'Quedan fuera del N válido los pacientes sin dato en alguna de las dos mediciones. '
+               'La comparación es de días brutos: no aplica el índice de cambio fiable, de modo que una '
+               'diferencia pequeña también se cuenta como disminución o aumento.')
     c.font = Font(size=8, color=C_NOTE, name='Arial', italic=True)
-    c.alignment = Alignment(horizontal='left', vertical='center', indent=1, wrap_text=True)
-    ws.row_dimensions[R].height = 20
+    c.alignment = Alignment(horizontal='left', vertical='top', indent=1, wrap_text=True)
+    ws.row_dimensions[R].height = 46
 
     ws.freeze_panes = 'B5'
     print(f'  ✓ Hoja 2: Cambio en Consumo')
