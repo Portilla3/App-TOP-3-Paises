@@ -648,7 +648,7 @@ def build_word(R):
             add_body(doc,
                 f'Los porcentajes pueden sumar más del 100% ya que una persona puede consumir varias sustancias. '
                 f'{sk} es la más prevalente: {cp[sk]["pct"]}% ({cp[sk]["n"]} personas).')
-            add_note(doc,f'N total: {R["N"]} personas.')
+            add_note(doc,f'N total: {R["N"]} personas. Solo se listan las sustancias del formulario con al menos un consumidor registrado.')
         doc.add_paragraph()
 
     if R['dias_sust']:
