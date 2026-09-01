@@ -16,7 +16,9 @@ Mapeo categoría → columna Supabase:
   Alcohol          → alcohol_total
   Marihuana        → marihuana_total
   Cocaína          → cocaina_total
+  Crack/Cristal    → crack_total
   Pasta base       → pastabase_total
+  Metanfetamina    → metanfetamina_total
   Sedantes         → sedantes_total
   (resto: sin columna _total → no se muestran)
 
