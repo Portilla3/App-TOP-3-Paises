@@ -128,7 +128,7 @@ def _ax_style(ax):
     ax.spines['left'].set_color('#D0D0D0'); ax.spines['bottom'].set_color('#D0D0D0')
 
 # ── Detección de columnas ─────────────────────────────────────────────────────
-_SUST_NOMBRES_FLAT = ['Alcohol','Marihuana','Pasta Base','Cocaína','Sedantes']
+_SUST_NOMBRES_FLAT = ['Alcohol','Marihuana','Pasta Base','Crack','Cocaína','Metanfetamina','Heroína','Sedantes','Otra Sustancia']
 _TR_NOMBRES_FLAT    = ['Hurto','Robo','Venta de droga','Riña/Pelea']
 
 def detectar_columnas(cols):
