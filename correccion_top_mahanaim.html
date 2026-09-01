@@ -1050,7 +1050,7 @@ async function guardarCambios() {
     const el = document.querySelector(`input.${sem}[data-sust="${sust}"]`);
     return (el && el.value !== '') ? parseInt(el.value) : null;
   };
-  const tv = id => { const el = document.getElementById(id); return el ? parseInt(el.textContent) || null : null; };
+  const tv = id => { const el = document.getElementById(id); return el ? (isNaN(parseInt(el.textContent))?null:parseInt(el.textContent)) : null; };
   const pv = id => { const el = document.getElementById(id); return el && el.value !== '' ? parseFloat(el.value) : null; };
 
   const payload = {
@@ -1095,17 +1095,17 @@ async function guardarCambios() {
     vif_s4: n('vif_s4'), vif_s3: n('vif_s3'), vif_s2: n('vif_s2'), vif_s1: n('vif_s1'),
     vif_total: tv('vif_total'),
 
-    salud_psicologica: parseInt(document.querySelector('input[name="salud_psicologica"]:checked')?.value ?? 'NaN') || null,
+    salud_psicologica: parseInt(document.querySelector('input[name="salud_psicologica"]:checked')?.value ?? 'NaN'),
     dias_trabajo_s4: n('dias_trabajo_s4'), dias_trabajo_s3: n('dias_trabajo_s3'),
     dias_trabajo_s2: n('dias_trabajo_s2'), dias_trabajo_s1: n('dias_trabajo_s1'),
     dias_trabajo_total: tv('dias_trabajo_total'),
     dias_educacion_s4: n('dias_educacion_s4'), dias_educacion_s3: n('dias_educacion_s3'),
     dias_educacion_s2: n('dias_educacion_s2'), dias_educacion_s1: n('dias_educacion_s1'),
     dias_educacion_total: tv('dias_educacion_total'),
-    salud_fisica: parseInt(document.querySelector('input[name="salud_fisica"]:checked')?.value ?? 'NaN') || null,
+    salud_fisica: parseInt(document.querySelector('input[name="salud_fisica"]:checked')?.value ?? 'NaN'),
     vivienda_estable: toggleValues.vivienda_estable,
     vivienda_basica: toggleValues.vivienda_basica,
-    calidad_vida: parseInt(document.querySelector('input[name="calidad_vida"]:checked')?.value ?? 'NaN') || null
+    calidad_vida: parseInt(document.querySelector('input[name="calidad_vida"]:checked')?.value ?? 'NaN')
   };
 
   try {
