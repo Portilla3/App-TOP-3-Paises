@@ -429,7 +429,7 @@ def build_report(wb, d, N, DC):
         n_c = int((v > 0).sum())
         if n_c == 0: continue
         R = drow(ws, R, [lbl, n_c, round(n_c/N*100,1), N, ''], alt=i%2==0)
-    R = note(ws, R, f'% sobre N total = {N} pacientes. Los % pueden sumar más de 100% (una persona puede consumir varias sustancias).')
+    R = note(ws, R, f'% sobre N total = {N} pacientes. Los % pueden sumar más de 100% (una persona puede consumir varias sustancias). Solo se listan las sustancias del formulario con al menos un consumidor registrado.')
 
     # 2.4 Promedio días por sustancia (todos los consumidores)
     R = sec(ws, R, '2.4', 'Promedio de Días de Consumo por Sustancia (últimas 4 semanas)')
