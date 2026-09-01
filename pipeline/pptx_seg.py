@@ -196,7 +196,7 @@ def detectar_columnas(cols):
     if not sust_cols:
         for c in cols:
             if c.endswith('_TOP1') and 'Total (0-28)' in c:
-                for nombre in ['Alcohol','Marihuana','Pasta Base','Cocaína','Sedantes']:
+                for nombre in ['Alcohol','Marihuana','Pasta Base','Crack','Cocaína','Metanfetamina','Heroína','Sedantes','Otra Sustancia']:
                     if _norm(nombre) in _norm(c):
                         c1, c2 = par(c); sust_cols.append((nombre, c1, c2)); break
     if not tr_sn:
