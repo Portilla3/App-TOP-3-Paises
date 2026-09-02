@@ -365,7 +365,7 @@ def cargar_datos():
     cons_pct=[]
     for lbl,c1,c2 in DC['sust_cols']:
         v1=pd.to_numeric(seg[c1],errors='coerce')
-        v2=pd.to_numeric(seg[c2],errors='coerce') if c2 else pd.Series([0]*N_seg)
+        v2=pd.to_numeric(seg[c2],errors='coerce') if c2 else pd.Series([np.nan]*N_seg)
         n1=int((v1>0).sum()); n2=int((v2>0).sum()) if c2 else 0
         if n1>0 or n2>0:
             cons_pct.append({'label':lbl,'n1':n1,'n2':n2,

@@ -8,6 +8,20 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### Retirados dos rellenos con cero que no rellenaban nada
+`pptx_caract.py` aplicaba `.fillna(0)` antes de contar consumidores y
+`word_seg.py` construía una serie de ceros cuando faltaba la columna del TOP 2.
+Ninguno de los dos alteraba un resultado: `NaN > 0` ya es `False`, y la serie de
+ceros quedaba anulada por el `if c2 else 0` de la línea siguiente. Se retiran
+porque hacen pensar que existe un error donde no lo hay, y porque el próximo que
+lea ese código va a intentar arreglarlo.
+
+Verificado sobre los 571 pacientes: los seis conteos de consumidores son
+idénticos antes y después.
+
+`pptx_caract.py` pasa además el N válido de cada sustancia junto al porcentaje,
+para poder mostrarlo en el gráfico cuando se decida el denominador.
+
 ### `es_flag_activo()` centraliza la lectura de las casillas "no aplica"
 `pipeline/validacion_top.py` incorpora `es_flag_activo()`, y `caract_excel.py` y
 `seg_excel.py` lo importan en lugar de aplicar cada uno su propio

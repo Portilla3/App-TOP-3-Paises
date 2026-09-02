@@ -308,9 +308,9 @@ def cargar_datos():
     # % Consumidores
     consumo_pct = []
     for lbl, col in DC['sust_cols']:
-        v = pd.to_numeric(df[col], errors='coerce').fillna(0)
-        n_c = int((v>0).sum())
-        if n_c > 0: consumo_pct.append({'label':lbl,'pct':round(n_c/N*100,1),'n':n_c})
+        v = pd.to_numeric(df[col], errors='coerce')
+        n_c = int((v>0).sum()); nv = int(v.notna().sum())
+        if n_c > 0: consumo_pct.append({'label':lbl,'pct':round(n_c/N*100,1),'n':n_c,'nv':nv})
     consumo_pct.sort(key=lambda x:-x['pct'])
 
     # Días por sustancia
