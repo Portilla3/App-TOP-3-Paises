@@ -8,6 +8,24 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### Los rangos de edad se calculaban con dos criterios distintos
+El panel clasificaba con `int(edad) < 18` y los cuatro módulos de reporte con
+`pd.cut(bins=[0,17,30,...])`. Como la edad es un número con decimales, alguien
+de 17 años y medio caía en "Menos de 18" en el panel y en "18 a 30" en los
+informes. En México eso daba 21 contra 22 personas en el mismo rango.
+
+`rango_etario()` y `rangos_etarios()` en `validacion_top.py` cuentan los años
+cumplidos, que es el criterio del panel. Los cinco módulos los usan.
+
+### El panel mostraba dos nombres para la misma sustancia
+El gráfico de prevalencia dibujaba la categoría interna y el de días la etiqueta
+del país, así que en México uno decía "Cocaína" y el otro "Cocaína/crack" para
+los mismos pacientes. Ambos usan la etiqueta.
+
+### Pie de texto desactualizado en el Word de caracterización
+Decía "solo se listan las sustancias con al menos un consumidor registrado",
+que dejó de ser cierto cuando los gráficos pasaron a mostrar todas.
+
 ### El panel y los reportes dan los mismos números
 `tools/verificar_coincidencia.py` corre los dos caminos sobre el mismo archivo y
 compara indicador por indicador: pacientes, N válido, distribución de sustancia

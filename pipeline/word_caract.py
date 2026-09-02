@@ -26,7 +26,8 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from pipeline.validacion_top import (
     categorias_pais, clasificar_sustancia, columna_de_sustancia, detectar_pais,
-    etiqueta_sustancia, normalizar_sexo,
+    etiqueta_sustancia, normalizar_sexo, RANGOS_ETARIOS,
+    rangos_etarios,
 )
 warnings.filterwarnings('ignore')
 
@@ -326,8 +327,8 @@ def cargar_datos():
         R['edad_sd']=round(float(edad.std()),1) if R['nv_edad']>0 else 0
         R['edad_min']=int(edad.min()) if R['nv_edad']>0 else 0
         R['edad_max']=int(edad.max()) if R['nv_edad']>0 else 0
-        bins=[0,17,30,40,50,60,200]; labs=['Menos de 18','18 a 30','31 a 40','41 a 50','51 a 60','61 o más']
-        ec=pd.cut(edad,bins=bins,labels=labs)
+        labs=RANGOS_ETARIOS
+        ec=rangos_etarios(edad)
         R['edad_dist']={l:int((ec==l).sum()) for l in labs}
     else:
         R['edad_media']=R['edad_sd']=0; R['edad_min']=R['edad_max']=0
@@ -669,7 +670,7 @@ def build_word(R):
             add_body(doc,
                 f'Los porcentajes pueden sumar más del 100% ya que una persona puede consumir varias sustancias. '
                 f'{sk} es la más prevalente: {cp[sk]["pct"]}% ({cp[sk]["n"]} personas).')
-            add_note(doc,f'N total: {R["N"]} personas. Solo se listan las sustancias del formulario con al menos un consumidor registrado.')
+            add_note(doc,f'N total: {R["N"]} personas. Se muestran todas las sustancias que mide el formulario de este país, incluidas las que no registran consumidores.')
         doc.add_paragraph()
 
     if R['dias_sust']:

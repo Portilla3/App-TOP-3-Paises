@@ -16,7 +16,8 @@ from pptx.enum.text import PP_ALIGN
 from pptx.util import Cm
 from pipeline.validacion_top import (
     categorias_pais, clasificar_sustancia, columna_de_sustancia, detectar_pais,
-    etiqueta_sustancia, normalizar_sexo,
+    etiqueta_sustancia, normalizar_sexo, RANGOS_ETARIOS,
+    rangos_etarios,
 )
 warnings.filterwarnings('ignore')
 
@@ -275,8 +276,7 @@ def cargar_datos():
         edad = edad[(edad>=10)&(edad<=100)]
         if len(edad):
             edad_media = round(float(edad.mean()),1)
-            bins = [0,17,30,40,50,60,200]; labs = ['<18','18–30','31–40','41–50','51–60','61+']
-            ec = pd.cut(edad, bins=bins, labels=labs)
+            ec = rangos_etarios(edad, sufijo='')
             total_e = len(edad)
             edad_grupos = [{'label':l,'n':int((ec==l).sum()),
                             'pct':round(int((ec==l).sum())/total_e*100,1)}

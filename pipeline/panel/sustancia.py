@@ -274,13 +274,13 @@ def render(df, pais, centro_id=None):
             return
 
         # Colores: Otras siempre en gris, las demás en verde
-        colores = [COLOR_OTRAS if c == 'Otras' else COLOR_BARRA for c in ranking['categoria']]
+        colores = [COLOR_OTRAS if c == OTRA_SUSTANCIA else COLOR_BARRA for c in ranking['categoria']]
 
         # Hovers
         hovers = []
         for _, row in ranking.iterrows():
-            base = f"<b>{row['categoria']}</b><br>{int(row['n'])} pacientes<br>{row['pct']:.1f}%".replace('.', ',')
-            if row['categoria'] == 'Otras':
+            base = f"<b>{row['etiqueta']}</b><br>{int(row['n'])} pacientes<br>{row['pct']:.1f}%".replace('.', ',')
+            if row['categoria'] == OTRA_SUSTANCIA:
                 detalle = _formatear_hover_otras(otras_desglose)
                 if detalle:
                     base = base + '<br>' + detalle
@@ -290,7 +290,7 @@ def render(df, pais, centro_id=None):
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
-            x=ranking['categoria'],
+            x=ranking['etiqueta'],
             y=ranking['pct'],
             marker=dict(color=colores, line=dict(width=0)),
             text=textos,
@@ -305,7 +305,7 @@ def render(df, pais, centro_id=None):
         max_pct = float(ranking['pct'].max())
 
         # ticktext explícito: evita que Plotly añada sufijos como "(menos frecuentes)"
-        categorias_lista = list(ranking['categoria'])
+        categorias_lista = list(ranking['etiqueta'])
 
         fig.update_layout(
             height=175,

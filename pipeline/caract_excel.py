@@ -147,7 +147,8 @@ def safe_mean(s):
 import re as _re
 from pipeline.validacion_top import (
     categorias_pais, clasificar_sustancia, detectar_pais, es_flag_activo,
-    etiqueta_sustancia, normalizar_sexo,
+    etiqueta_sustancia, normalizar_sexo, RANGOS_ETARIOS,
+    rangos_etarios,
 )
 
 def norm_sust(s, pais=None):
@@ -347,10 +348,8 @@ def build_report(wb, d, N, DC):
         edad  = ((ref_s - fn_s).dt.days / 365.25).round(1)
         edad  = edad[(edad >= 10) & (edad <= 100)]
         nv_edad = int(edad.notna().sum())
-        bins = [0, 17, 30, 40, 50, 60, 200]
-        labs = ['Menos de 18 años','18 a 30 años','31 a 40 años',
-                '41 a 50 años','51 a 60 años','61 o más años']
-        ec = pd.cut(edad, bins=bins, labels=labs)
+        labs = [r + ' años' for r in RANGOS_ETARIOS]
+        ec = rangos_etarios(edad, sufijo=' años')
         for i, l in enumerate(labs):
             n_l = int((ec==l).sum())
             R = drow(ws, R, [l, n_l, round(n_l/nv_edad*100,1) if nv_edad>0 else 0,

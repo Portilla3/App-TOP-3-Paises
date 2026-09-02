@@ -26,7 +26,8 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from pipeline.validacion_top import (
-    categorias_pais, clasificar_sustancia, detectar_pais, etiqueta_sustancia, normalizar_sexo,
+    categorias_pais, clasificar_sustancia, detectar_pais, etiqueta_sustancia, normalizar_sexo, RANGOS_ETARIOS,
+    rangos_etarios,
 )
 from pipeline.cambio_consumo import clasificar_cambio
 warnings.filterwarnings('ignore')
@@ -318,8 +319,8 @@ def cargar_datos():
         R['edad_sd']=round(float(edad.std()),1) if len(edad)>0 else 0
         R['nv_edad']=int(edad.notna().sum()); R['edad_min']=int(edad.min()) if len(edad)>0 else 0
         R['edad_max']=int(edad.max()) if len(edad)>0 else 0
-        bins=[0,17,30,40,50,60,200]; labs=['Menos de 18','18 a 30','31 a 40','41 a 50','51 a 60','61 o más']
-        ec=pd.cut(edad,bins=bins,labels=labs); R['edad_dist']={l:int((ec==l).sum()) for l in labs}
+        labs=RANGOS_ETARIOS
+        ec=rangos_etarios(edad); R['edad_dist']={l:int((ec==l).sum()) for l in labs}
     else:
         R['edad_media']=R['edad_sd']=0; R['edad_min']=R['edad_max']=0
         R['nv_edad']=0; R['edad_dist']={'Sin datos':0}

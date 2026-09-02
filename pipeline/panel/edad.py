@@ -18,7 +18,9 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
-from pipeline.validacion_top import edad_valida, lineas_base   # criterios compartidos
+from pipeline.validacion_top import (   # criterios compartidos
+    RANGOS_ETARIOS as _RANGOS, edad_valida, lineas_base, rango_etario,
+)
 
 COLOR_DESTAC = '#004AAD'   # from config PALETA_PRINCIPAL
 COLOR_BASE   = '#E5E5E5'   # from config PALETA_SECUNDARIO
@@ -30,13 +32,7 @@ RANGOS = ['Menos de 18', '18 a 30', '31 a 40', '41 a 50', '51 a 60', '61 o más'
 def _clasificar_edad(edad):
     if pd.isna(edad):
         return None
-    e = int(edad)
-    if e < 18:  return 'Menos de 18'
-    if e <= 30: return '18 a 30'
-    if e <= 40: return '31 a 40'
-    if e <= 50: return '41 a 50'
-    if e <= 60: return '51 a 60'
-    return '61 o más'
+    return rango_etario(edad)
 
 
 def _calcular_edad(df):

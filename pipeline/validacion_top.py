@@ -468,3 +468,37 @@ def columna_de_sustancia(categoria, columnas, sufijo='_TOP1'):
         return None
     conservan_sufijo = [c for c in totales if _norm_str(c).endswith(_norm_str(sufijo))]
     return (conservan_sufijo or totales)[0]
+
+
+# ── Rangos etarios ──────────────────────────────────────────────────────────
+# El panel clasificaba con `int(edad) < 18` y los cuatro módulos de reporte con
+# `pd.cut(bins=[0,17,30,...])`. Como la edad es un float, alguien de 17 años y
+# medio caía en "Menos de 18" en el panel y en "18 a 30" en los informes, y el
+# mismo país mostraba un conteo distinto en cada salida.
+
+RANGOS_ETARIOS = ['Menos de 18', '18 a 30', '31 a 40', '41 a 50', '51 a 60', '61 o más']
+
+_CORTES_ETARIOS = [(18, 'Menos de 18'), (31, '18 a 30'), (41, '31 a 40'),
+                   (51, '41 a 50'), (61, '51 a 60')]
+
+
+def rango_etario(edad, sufijo=''):
+    """
+    Devuelve el rango etario de una edad, o None si no es válida.
+
+    Los años se cuentan cumplidos: quien tiene 17 años y medio está en "Menos de
+    18", no en "18 a 30". `sufijo` permite ' años' para las tablas que lo usan.
+    """
+    if edad is None or pd.isna(edad):
+        return None
+    try:
+        anios = int(float(edad))
+    except (TypeError, ValueError):
+        return None
+    etiqueta = next((r for tope, r in _CORTES_ETARIOS if anios < tope), '61 o más')
+    return etiqueta + sufijo
+
+
+def rangos_etarios(serie, sufijo=''):
+    """Versión vectorizada de rango_etario() para una Serie."""
+    return pd.Series(serie).apply(lambda v: rango_etario(v, sufijo))
