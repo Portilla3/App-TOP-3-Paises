@@ -169,3 +169,23 @@ def normalizar_sexo(serie):
     Devuelve una Serie con valores 'H', 'M', 'O' o None.
     """
     return pd.Series(serie).apply(normalizar_sexo_valor)
+
+
+# ── Flags booleanos ─────────────────────────────────────────────────────────
+# Los formularios escriben las casillas "no aplica" (trabajo_na, educacion_na)
+# como booleanos de JavaScript, pero llegan al Base Wide en formatos distintos
+# según la etapa: en el TOP de ingreso como True/False y en el de seguimiento
+# como 1.0/0.0. Un criterio que reconozca solo uno de los dos deja pasar
+# registros que debía excluir, sin avisar.
+_FLAG_ACTIVO = {'true', 't', 'si', 'sí', 'yes', 'y', 'x', '1', '1.0'}
+
+
+def es_flag_activo(serie):
+    """
+    Recibe una Serie con un flag booleano tal como llega del Base Wide y
+    devuelve una Serie de booleanos donde True significa que el flag está
+    marcado. Reconoce True/False, 1.0/0.0, 1/0 y las variantes de texto.
+    Los vacíos cuentan como no marcado.
+    """
+    return (pd.Series(serie).astype(str).str.strip().str.lower()
+            .isin(_FLAG_ACTIVO))

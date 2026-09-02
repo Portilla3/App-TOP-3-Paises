@@ -74,6 +74,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import warnings
 from pipeline.cambio_consumo import clasificar_cambio, CATEGORIAS
+from pipeline.validacion_top import es_flag_activo
 warnings.filterwarnings('ignore')
 
 def _es_positivo(valor):
@@ -450,7 +451,7 @@ def build_seguimiento(wb, seg, N_total, N_seg, DC, seg_tiempo=None):
         s1 = v1(seg, c1); s2 = v2(seg, c2)
         # Excluir registros donde el flag NA esté activo
         if col_na and col_na in seg.columns:
-            mask_na = seg[col_na].astype(str).str.lower().isin(['true','1','t'])
+            mask_na = es_flag_activo(seg[col_na])
             s1 = s1[~mask_na]; s2 = s2[~mask_na] if c2 else s2
         m1 = float(s1.mean()) if s1.notna().any() else np.nan
         m2 = float(s2.mean()) if c2 and s2.notna().any() else np.nan

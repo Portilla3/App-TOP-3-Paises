@@ -145,7 +145,7 @@ def safe_mean(s):
 #   5. Metanfetamina va ANTES de Crack (cristal → Metanfetamina, no Crack)
 #   6. Descarta primera sustancia en entradas múltiples (split por / , + y)
 import re as _re
-from pipeline.validacion_top import normalizar_sexo
+from pipeline.validacion_top import normalizar_sexo, es_flag_activo
 
 def norm_sust(s):
     if pd.isna(s): return None
@@ -534,7 +534,7 @@ def build_report(wb, d, N, DC):
         v = pd.to_numeric(d[col], errors='coerce')
         # Excluir registros donde el flag NA esté activo (True)
         if col_na and col_na in d.columns:
-            mask_na = d[col_na].astype(str).str.lower().isin(['true','1','t'])
+            mask_na = es_flag_activo(d[col_na])
             v = v[~mask_na]
         nv   = int(v.notna().sum()); n_act = int((v > 0).sum()); m = v.mean()
         R = drow(ws, R, [lbl, round(m,1) if not np.isnan(m) else 0, n_act, nv, ''], alt=i%2==0)
