@@ -8,6 +8,18 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### El clasificador reconoce las respuestas vacías de una letra
+`clasificar_sustancia()` mandaba a `Otra sustancia` valores como `N`, `-`, `nan`
+o `s/d`, que no nombran ninguna sustancia y deben quedar fuera del denominador.
+Se comparan exactos y no como subcadena, porque `n` y `no` aparecen dentro de
+casi cualquier nombre de sustancia. Se suma `minguna`, la errata habitual de
+`ninguna` en los registros del pilotaje.
+
+Probado contra los 94 registros que hoy tienen en la base una sustancia
+principal fuera de la lista de su país: Tusi 28, Tabaco 29, Metanfetamina en El
+Salvador 7, Crack en Perú 4, y las variantes `Otra` y `Otras`. Todos caen donde
+corresponde. Setenta pruebas en total.
+
 ### `detectar_pais()` lee el país de los datos, no del nombre del archivo
 `word_caract.py` y los otros tres módulos que conocían el país lo sacaban de
 `_extraer_pais(os.path.basename(wide_file))`, y el runner tenía que neutralizar

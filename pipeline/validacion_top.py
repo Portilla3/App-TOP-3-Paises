@@ -264,8 +264,15 @@ _SINONIMOS = [
 ]
 
 # Respuestas que no nombran una sustancia: se descartan, no van a 'Otra'.
-_SIN_SUSTANCIA = ['ninguno', 'ninguna', 'niega', 'no aplica', 'no consume', 'nada',
-                  'ludopatia', 'juego', 'apuesta', 'gaming', 'azar']
+# 'minguna' es la errata habitual de 'ninguna' en los registros del pilotaje.
+_SIN_SUSTANCIA = ['ninguno', 'ninguna', 'minguna', 'niega', 'no aplica',
+                  'no consume', 'nada', 'ludopatia', 'juego', 'apuesta',
+                  'gaming', 'azar']
+
+# Respuestas de una o dos letras que significan "no", y marcadores de vacío.
+# Van por coincidencia exacta: como subcadena, 'n' o 'no' aparecerían dentro de
+# casi cualquier nombre de sustancia.
+_VACIO_EXACTO = {'n', 's', 'no', 'na', 'nan', 'ninguna.', '-', '--', '0', 'x', 'sd'}
 
 
 def _limpiar_declaracion(texto):
@@ -297,7 +304,7 @@ def clasificar_sustancia(texto, pais=None):
     if not primera:
         return None
     n = _norm_str(primera)
-    if any(x in n for x in _SIN_SUSTANCIA):
+    if n in _VACIO_EXACTO or any(x in n for x in _SIN_SUSTANCIA):
         return None
 
     cat = next((c for claves, c in _SINONIMOS if any(k in n for k in claves)), OTRA_SUSTANCIA)

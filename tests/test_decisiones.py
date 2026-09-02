@@ -70,10 +70,37 @@ def test_sustancia_fuera_de_lista_va_a_otra(texto, pais, esperado):
     assert clasificar_sustancia(texto, pais) == esperado
 
 
-@pytest.mark.parametrize('texto', ['ninguna', 'niega', 'ludopatia', '', '0', None])
+@pytest.mark.parametrize('texto', [
+    'ninguna', 'niega', 'ludopatia', '', '0', None,
+    'N', 'no', 'nan', '-', 'x', 's/d', 'minguna',
+])
 def test_lo_que_no_es_sustancia_no_va_a_otra_sino_a_nulo(texto):
     """Ausencia de dato es None, y queda fuera del denominador. No es 'Otra'."""
     assert clasificar_sustancia(texto, 'Perú') is None
+
+
+@pytest.mark.parametrize('texto', ['Nicotina', 'Sedantes', 'Naranja rara'])
+def test_el_filtro_de_vacios_no_se_come_sustancias_reales(texto):
+    """'n' y 'no' se comparan exactos: como subcadena estarían en todo."""
+    assert clasificar_sustancia(texto, 'Perú') is not None
+
+
+@pytest.mark.parametrize('texto,pais,esperado', [
+    ('Tusi',                          'Perú',        OTRA_SUSTANCIA),
+    ('Tabaco',                        'Perú',        OTRA_SUSTANCIA),
+    ('Ketamina',                      'Perú',        OTRA_SUSTANCIA),
+    ('Inhalantes',                    'Perú',        OTRA_SUSTANCIA),
+    ('Crack',                          'Perú',       OTRA_SUSTANCIA),
+    ('Metanfetamina',                 'El Salvador', OTRA_SUSTANCIA),
+    ('Otra',                          'Perú',        OTRA_SUSTANCIA),
+    ('Otras',                         'El Salvador', OTRA_SUSTANCIA),
+    ('marihuana',                     'El Salvador', 'Marihuana'),
+    ('Sedantes',                      'Ecuador',     'Sedantes'),
+    ('LAS DOS, ALCOHOL Y LA COCAINA', 'Perú',        'Alcohol'),
+])
+def test_valores_reales_que_hay_hoy_en_la_base(texto, pais, esperado):
+    """Los 94 registros con sustancia fuera de la lista de su país, al 2026-09-02."""
+    assert clasificar_sustancia(texto, pais) == esperado
 
 
 def test_toda_categoria_de_todo_pais_tiene_columna_de_dias():
