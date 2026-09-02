@@ -41,7 +41,7 @@ import streamlit as st
 from pipeline.panel.config import titulo_seccion
 from pipeline.validacion_top import (
     SUSTANCIA_A_COLUMNA, categorias_pais, clasificar_sustancia, detectar_pais,
-    dias_validos_mes, etiqueta_sustancia,
+    dias_validos_mes, etiqueta_sustancia, lineas_base,
 )
 
 COLOR_BARRA   = '#004AAD'   # PALETA_PRINCIPAL
@@ -63,7 +63,9 @@ def _calcular_dias(df):
     if df is None or df.empty or not cols_req.issubset(df.columns):
         return []
 
-    df_ing = df[df['etapa'].astype(str).str.strip() == 'ingreso'].copy()
+    # Una fila por episodio: el TOP de ingreso que lo abre. El filtro anterior
+    # comparaba la etapa como texto y contaba dos veces los ingresos duplicados.
+    df_ing = lineas_base(df).copy()
     if df_ing.empty:
         return []
 

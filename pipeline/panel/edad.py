@@ -18,7 +18,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
-from pipeline.validacion_top import edad_valida   # criterio compartido con wide_top.py
+from pipeline.validacion_top import edad_valida, lineas_base   # criterios compartidos
 
 COLOR_DESTAC = '#004AAD'   # from config PALETA_PRINCIPAL
 COLOR_BASE   = '#E5E5E5'   # from config PALETA_SECUNDARIO
@@ -46,7 +46,8 @@ def _calcular_edad(df):
     if df is None or df.empty or 'etapa' not in df.columns:
         return vacio
 
-    df_ing = df[df['etapa'].astype(str).str.strip() == 'ingreso'].copy()
+    # Una fila por episodio: el TOP de ingreso que lo abre. Ver DECISIONES.md.
+    df_ing = lineas_base(df).copy()
     if df_ing.empty:
         return vacio
 

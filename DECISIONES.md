@@ -81,6 +81,65 @@ con el mismo peso que una de trescientos.
 
 ---
 
+### La línea base es el TOP con etapa de ingreso, y solo ese
+**Regla.** El TOP 1 de un paciente es el que tiene etapa `ingreso`. Los
+pacientes sin ningún TOP de ingreso quedan fuera de la caracterización y del
+análisis de cambio. No se los recupera tomando su TOP más antiguo.
+
+**Qué significa `ingreso`.** El ingreso real al centro, no la primera vez que se
+le aplica el instrumento. Una persona que lleva seis meses atendiéndose y recién
+ahora recibe su primer TOP no está ingresando: esa etapa es `en tratamiento` y
+está bien puesta. Un derivado desde otro centro o desde una desintoxicación sí
+está ingresando, porque ingresa a ese centro.
+
+**Fundamento.** La caracterización responde cómo llegan los pacientes al centro.
+Un TOP aplicado a mitad del tratamiento no describe cómo llegó esa persona, así
+que usarlo como línea base fabricaría un dato que nadie midió. Es preferible un
+N más chico y honesto que uno completo y falso.
+
+**Consecuencia asumida.** Al 2026-09-02 quedan fuera 182 pacientes, el 13,7 %.
+El reparto es desigual: México pierde el 34,5 %, Perú el 15,5 %, El Salvador el
+11,8 % y Ecuador el 9,8 %. Tres centros quedan sin ningún paciente en su informe
+y EESS28CI queda con dos de dieciocho.
+
+Para el análisis de cambio el costo es mucho menor: de esos 182, solo 11 tienen
+una segunda medición, así que los otros 171 nunca iban a servir para comparar
+TOP 1 contra TOP 2.
+
+**Por qué el costo es aceptable.** Buena parte de esos casos no son un error de
+captura. Cuando un centro adopta el TOP, su cohorte ya está en curso, y esos
+pacientes son legítimamente `en tratamiento`. México empezó a registrar en mayo
+de 2026 con gente que ya atendía. Nunca tuvieron línea base y no la van a tener.
+
+**Lo que sí es accionable.** Pedir a los centros que confirmen cuáles de esos 182
+sí ingresaron recién y quedaron mal etiquetados, y reforzar que todo paciente que
+ingresa al centro por primera vez lleva etapa `ingreso`, incluso si viene
+derivado.
+
+*2026-09-02*
+
+### La unidad de análisis es el episodio, no la persona
+**Regla.** Se cuentan episodios de tratamiento: un paciente que ingresa dos veces
+al mismo centro, o a dos centros distintos, cuenta dos veces. Cada TOP con etapa
+`ingreso` abre un episodio.
+
+**Fundamento.** Los informes son para que el centro vea su propia operación. Un
+paciente que egresó y volvió es una atención nueva desde el punto de vista del
+centro, y contarlo una sola vez esconde trabajo hecho. Es el criterio del NDTMS
+británico, de donde viene el instrumento, y el que se usa en Chile.
+
+**Cuánto cambia hoy.** Poco: 47 pacientes tienen más de un TOP de ingreso en el
+mismo centro y solo 4 códigos aparecen en más de un centro. Personas únicas da
+1.326 y episodios por centro 1.330. La diferencia crece con el tiempo, y por eso
+se define ahora y no cuando haya que recalcular informes ya entregados.
+
+**Lo que se conserva.** El código de paciente sigue en la base, así que contar
+personas únicas cuando haga falta es una consulta, no un recálculo.
+
+*2026-09-02*
+
+---
+
 ## Instrumento
 
 ### El campo sexo usa H/M/O en los cuatro países

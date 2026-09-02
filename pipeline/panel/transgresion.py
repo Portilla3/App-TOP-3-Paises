@@ -20,6 +20,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
+from pipeline.validacion_top import lineas_base
 from pipeline.panel.config import titulo_seccion
 
 
@@ -49,7 +50,8 @@ def _calcular_transgresion(df):
     if df is None or df.empty or not cols_req.issubset(df.columns):
         return None
 
-    df_ing = df[df['etapa'].astype(str).str.strip() == 'ingreso'].copy()
+    # Una fila por episodio: el TOP de ingreso que lo abre. Ver DECISIONES.md.
+    df_ing = lineas_base(df).copy()
     if df_ing.empty:
         return None
 

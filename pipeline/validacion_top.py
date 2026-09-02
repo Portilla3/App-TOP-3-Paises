@@ -364,3 +364,72 @@ def detectar_pais(df):
             if huella in n and df[col].notna().any():
                 presentes.add(huella)
     return next((p for huella, p in _HUELLA_PAIS if huella in presentes), None)
+
+
+# ── Episodios de tratamiento ────────────────────────────────────────────────
+# La unidad de análisis es el episodio, no la persona: quien ingresa dos veces
+# al mismo centro, o a dos centros distintos, cuenta dos veces. Decidido el
+# 2026-09-02, con el criterio del NDTMS británico de donde viene el instrumento.
+#
+# Un TOP con etapa de ingreso abre un episodio. Los TOP siguientes del mismo
+# paciente en el mismo centro pertenecen a ese episodio hasta que aparezca otro
+# ingreso. Los TOP anteriores a cualquier ingreso no pertenecen a ninguno: son
+# de pacientes que ya estaban en tratamiento cuando el centro adoptó el TOP, y
+# no describen cómo llegó esa persona.
+
+ETAPA_INGRESO = 'ingreso'
+
+
+def es_etapa_ingreso(valor):
+    """Reconoce la etapa de ingreso tolerando mayúsculas, tildes y espacios."""
+    return _norm_str(valor) == ETAPA_INGRESO
+
+
+def construir_episodios(df, col_codigo='codigo_paciente', col_centro='centro',
+                        col_fecha='fecha_entrevista', col_etapa='etapa'):
+    """
+    Agrega la columna `_episodio` al DataFrame.
+
+    El identificador de un episodio es `código|centro|fecha del TOP de ingreso`.
+    Los registros que no pertenecen a ningún episodio quedan en None y deben
+    excluirse de la caracterización y del análisis de cambio.
+
+    No modifica el DataFrame recibido.
+    """
+    d = df.copy()
+    d['_fecha_ord'] = pd.to_datetime(d[col_fecha], errors='coerce')
+    d = d.sort_values([col_codigo, col_centro, '_fecha_ord'], na_position='last')
+
+    episodios = []
+    actual = None
+    clave_previa = None
+    for _, fila in d.iterrows():
+        clave = (fila[col_codigo], fila[col_centro])
+        if clave != clave_previa:
+            actual = None
+            clave_previa = clave
+        if es_etapa_ingreso(fila[col_etapa]):
+            fecha = fila['_fecha_ord']
+            marca = fecha.strftime('%Y-%m-%d') if pd.notna(fecha) else 'sin-fecha'
+            actual = f'{fila[col_codigo]}|{fila[col_centro]}|{marca}'
+        episodios.append(actual)
+
+    d['_episodio'] = episodios
+    return d.drop(columns='_fecha_ord').reindex(df.index)
+
+
+def lineas_base(df, col_codigo='codigo_paciente', col_centro='centro',
+                col_fecha='fecha_entrevista', col_etapa='etapa'):
+    """
+    Devuelve una fila por episodio: el TOP de ingreso que lo abre.
+
+    Es la población de la caracterización. Reemplaza al filtro
+    `etapa == 'ingreso'`, que contaba dos veces los ingresos duplicados y no
+    distinguía episodios del mismo paciente en centros distintos.
+    """
+    faltan = {col_codigo, col_centro, col_etapa} - set(df.columns)
+    if faltan:
+        return df.iloc[0:0]
+    d = construir_episodios(df, col_codigo, col_centro, col_fecha, col_etapa)
+    d = d[d['_episodio'].notna() & d[col_etapa].apply(es_etapa_ingreso)]
+    return d.drop_duplicates(subset='_episodio', keep='first')

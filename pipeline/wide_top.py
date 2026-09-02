@@ -26,7 +26,7 @@ _MES_ES = {'ene':'Jan','feb':'Feb','mar':'Mar','abr':'Apr','may':'May','jun':'Ju
            'nov':'Nov','dic':'Dec'}
 _EXCEL_ORIGEN = pd.Timestamp('1899-12-30')
 
-from pipeline.validacion_top import fecha_nacimiento_valida, dias_validos_semana, dias_validos_mes
+from pipeline.validacion_top import construir_episodios, fecha_nacimiento_valida, dias_validos_semana, dias_validos_mes
 
 _SUST_KEYS_NORM = [_norm_str(x) for x in [
     'sustancia principal', 'cual considera', 'cuál considera',
@@ -143,6 +143,8 @@ def procesar_wide(input_path: str,
     df[COL_FECHA] = _parse_fecha(df[COL_FECHA])
     alertas = []
 
+    COL_ETAPA = next((c for c in df.columns if _norm_str(c) == 'etapa'), None)
+
     COL_CENTRO = None
     for c in df.columns:
         nc = _norm_str(c)
@@ -258,13 +260,35 @@ def procesar_wide(input_path: str,
     # intacto para el reporte de duplicados más abajo.
     df_wide = df.drop_duplicates(subset=[COL_CODIGO, COL_FECHA], keep='first').reset_index(drop=True)
 
-    conteo    = df_wide[COL_CODIGO].value_counts()
-    N_total   = int(conteo.shape[0])
-    N_top2    = int((conteo >= 2).sum())
-    N_solo1   = N_total - N_top2
+    # La unidad es el episodio de tratamiento: cada TOP con etapa de ingreso abre
+    # uno, y los TOP siguientes del mismo paciente en el mismo centro le
+    # pertenecen. Los registros anteriores a cualquier ingreso quedan fuera: son
+    # de pacientes que ya estaban en tratamiento cuando el centro adoptó el
+    # instrumento, y no describen cómo llegó esa persona. Ver DECISIONES.md.
+    if COL_ETAPA and COL_CENTRO:
+        df_wide = construir_episodios(df_wide, COL_CODIGO, COL_CENTRO,
+                                      COL_FECHA, COL_ETAPA)
+        _n_fuera = int(df_wide['_episodio'].isna().sum())
+        df_wide = df_wide[df_wide['_episodio'].notna()].reset_index(drop=True)
+        if _n_fuera:
+            logs.append(f'✓ {_n_fuera} registros sin TOP de ingreso quedan fuera '
+                        f'de la caracterización')
+        CLAVE = '_episodio'
+    else:
+        # Sin columna de etapa o de centro no se pueden armar episodios; se cae
+        # al criterio anterior para no dejar el pipeline sin salida.
+        df_wide = df_wide.copy()
+        df_wide['_episodio'] = df_wide[COL_CODIGO]
+        CLAVE = '_episodio'
+        logs.append('⚠ Sin columna de etapa o centro: no se arman episodios')
+
+    conteo  = df_wide[CLAVE].value_counts()
+    N_total = int(conteo.shape[0])
+    N_top2  = int((conteo >= 2).sum())
+    N_solo1 = N_total - N_top2
 
     top1_rows, top2_rows = [], []
-    for cod, grp in df_wide.groupby(COL_CODIGO, sort=False):
+    for _ep, grp in df_wide.groupby(CLAVE, sort=False):
         grp = grp.reset_index(drop=True)
         top1_rows.append(grp.loc[0])
         if len(grp) >= 2: top2_rows.append(grp.loc[1])
@@ -272,20 +296,25 @@ def procesar_wide(input_path: str,
     df_top1 = pd.DataFrame(top1_rows).reset_index(drop=True)
     if top2_rows:
         df_top2 = pd.DataFrame(top2_rows).reset_index(drop=True)
-        df_top2_alin = (df_top2.set_index(COL_CODIGO)
-                        .reindex(df_top1[COL_CODIGO]).reset_index())
+        df_top2_alin = (df_top2.set_index(CLAVE)
+                        .reindex(df_top1[CLAVE]).reset_index())
     else:
         # Sin ningún TOP2: crear DataFrame vacío con las mismas columnas que df_top1
         df_top2 = pd.DataFrame(columns=df_top1.columns)
         df_top2_alin = pd.DataFrame(
-            {COL_CODIGO: df_top1[COL_CODIGO],
-             **{c: np.nan for c in df_top1.columns if c != COL_CODIGO}}
+            {CLAVE: df_top1[CLAVE],
+             **{c: np.nan for c in df_top1.columns if c != CLAVE}}
         )
 
-    otras_cols = [c for c in df_top1.columns if c != COL_CODIGO]
+    otras_cols = [c for c in df_top1.columns if c != CLAVE]
     t1 = df_top1.rename(columns={c: f'{c}_TOP1' for c in otras_cols})
     t2 = df_top2_alin.rename(columns={c: f'{c}_TOP2' for c in otras_cols})
-    wide = t1.merge(t2, on=COL_CODIGO, how='left')
+    wide = t1.merge(t2, on=CLAVE, how='left')
+    # La clave del merge pasó a ser el episodio, así que el código del paciente
+    # quedó con sufijo. Se restituye sin sufijo porque el resto del pipeline y
+    # los módulos de reporte lo buscan con su nombre original.
+    if f'{COL_CODIGO}_TOP1' in wide.columns and COL_CODIGO not in wide.columns:
+        wide.insert(1, COL_CODIGO, wide[f'{COL_CODIGO}_TOP1'])
     wide.insert(1, 'Tiene_TOP2',
         wide[[c for c in wide.columns if c.endswith('_TOP2')]]
         .notna().any(axis=1).map({True: 'Sí', False: 'No'}))

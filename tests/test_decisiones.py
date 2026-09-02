@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pipeline.validacion_top import (  # noqa: E402
     CATEGORIAS_POR_PAIS, OTRA_SUSTANCIA, SUSTANCIA_A_COLUMNA,
-    categorias_pais, clasificar_sustancia, detectar_pais, es_flag_activo,
-    normalizar_sexo_valor,
+    categorias_pais, clasificar_sustancia, construir_episodios, detectar_pais,
+    es_flag_activo, es_etapa_ingreso, lineas_base, normalizar_sexo_valor,
 )
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -211,3 +211,87 @@ def test_pais_desconocido_devuelve_none():
 def test_sin_pais_no_se_filtra_de_mas():
     """Sin país conocido, la categoría canónica se devuelve sin recortar."""
     assert clasificar_sustancia('heroina', None) == 'Heroína'
+
+
+# ── La línea base es el TOP con etapa de ingreso, y solo ese ────────────────
+
+@pytest.fixture
+def registros():
+    """Los cinco casos que definen la regla, con un reingreso y dos sin ingreso."""
+    return pd.DataFrame([
+        ('A', 'C1', '2026-01-10', 'ingreso'),
+        ('A', 'C1', '2026-04-10', 'seguimiento'),
+        ('A', 'C1', '2026-08-10', 'ingreso'),
+        ('A', 'C1', '2026-09-01', 'en_tratamiento'),
+        ('B', 'C1', '2026-05-14', 'en_tratamiento'),
+        ('C', 'C1', '2026-03-01', 'ingreso'),
+        ('C', 'C2', '2026-07-01', 'ingreso'),
+        ('D', 'C1', '2026-02-01', 'en_tratamiento'),
+        ('D', 'C1', '2026-06-01', 'ingreso'),
+    ], columns=['codigo_paciente', 'centro', 'fecha_entrevista', 'etapa'])
+
+
+def test_un_top_de_ingreso_abre_un_episodio(registros):
+    ep = construir_episodios(registros)['_episodio']
+    assert ep.iloc[0] == 'A|C1|2026-01-10'
+
+
+def test_los_top_siguientes_pertenecen_al_mismo_episodio(registros):
+    ep = construir_episodios(registros)['_episodio']
+    assert ep.iloc[1] == ep.iloc[0]
+
+
+def test_un_reingreso_abre_un_episodio_nuevo(registros):
+    ep = construir_episodios(registros)['_episodio']
+    assert ep.iloc[2] == 'A|C1|2026-08-10' != ep.iloc[0]
+
+
+def test_sin_top_de_ingreso_no_hay_episodio(registros):
+    """Son 182 pacientes al 2026-09-02. Quedan fuera de la caracterización."""
+    ep = construir_episodios(registros)['_episodio']
+    assert pd.isna(ep.iloc[4])
+
+
+def test_lo_anterior_al_ingreso_queda_fuera(registros):
+    """Un TOP de en_tratamiento previo no describe cómo llegó la persona."""
+    ep = construir_episodios(registros)['_episodio']
+    assert pd.isna(ep.iloc[7])
+
+
+def test_el_mismo_paciente_en_dos_centros_son_dos_episodios(registros):
+    ep = construir_episodios(registros)['_episodio']
+    assert ep.iloc[5] != ep.iloc[6]
+
+
+def test_lineas_base_devuelve_una_fila_por_episodio(registros):
+    lb = lineas_base(registros)
+    assert len(lb) == 5
+    assert (lb['etapa'] == 'ingreso').all()
+
+
+def test_lineas_base_sin_columnas_no_revienta():
+    assert lineas_base(pd.DataFrame({'algo': [1, 2]})).empty
+
+
+@pytest.mark.parametrize('valor,esperado', [
+    ('ingreso', True), ('Ingreso', True), ('  INGRESO  ', True),
+    ('en_tratamiento', False), ('seguimiento', False), ('', False),
+])
+def test_la_etapa_de_ingreso_tolera_mayusculas_y_espacios(valor, esperado):
+    assert es_etapa_ingreso(valor) is esperado
+
+
+def test_el_panel_no_filtra_la_etapa_a_mano():
+    """Los módulos de caracterización usan lineas_base(), no su propio filtro."""
+    import glob
+    culpables = []
+    for ruta in glob.glob(os.path.join(RAIZ, 'pipeline', 'panel', '*.py')):
+        nombre = os.path.basename(ruta)[:-3]
+        if nombre not in ('edad', 'piramide', 'salud', 'transgresion',
+                          'dias_consumo', 'sustancia'):
+            continue
+        with open(ruta, encoding='utf-8') as fh:
+            src = fh.read()
+        if "str.strip() == 'ingreso'" in src:
+            culpables.append(nombre)
+    assert not culpables, 'filtran la etapa a mano: ' + ', '.join(culpables)

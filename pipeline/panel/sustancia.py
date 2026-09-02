@@ -31,7 +31,7 @@ import plotly.graph_objects as go
 from pipeline.panel.config import titulo_seccion
 from pipeline.validacion_top import (
     OTRA_SUSTANCIA, categorias_pais, clasificar_sustancia, detectar_pais,
-    etiqueta_sustancia,
+    etiqueta_sustancia, lineas_base,
 )
 
 
@@ -155,9 +155,8 @@ def _calcular_sustancias(df):
     if df is None or df.empty or not cols_req.issubset(df.columns):
         return vacio
 
-    tmp = df.copy()
-    tmp['etapa'] = tmp['etapa'].fillna('').astype(str)
-    tmp = tmp[tmp['etapa'] == 'ingreso']
+    # Una fila por episodio: el TOP de ingreso que lo abre.
+    tmp = lineas_base(df).copy()
     if tmp.empty:
         return vacio
 

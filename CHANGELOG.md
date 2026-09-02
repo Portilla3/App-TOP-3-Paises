@@ -8,6 +8,28 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### La unidad de análisis pasa a ser el episodio de tratamiento
+`construir_episodios()` y `lineas_base()` en `pipeline/validacion_top.py`. Un TOP
+con etapa de ingreso abre un episodio, identificado por
+`código|centro|fecha del ingreso`; los TOP siguientes del mismo paciente en el
+mismo centro le pertenecen hasta que aparezca otro ingreso. Lo anterior a
+cualquier ingreso queda fuera.
+
+Antes había dos criterios conviviendo. `procesar_wide()` tomaba el registro más
+antiguo de cada código como TOP 1, sin mirar la etapa ni el centro, y contaba
+1.326 pacientes. El panel comparaba `etapa == 'ingreso'` como texto y contaba
+1.199 registros. Con episodios ambos cuentan 1.162.
+
+`procesar_wide()` arma los TOP 1 y TOP 2 por episodio, y `edad.py`,
+`piramide.py`, `salud.py`, `transgresion.py`, `dias_consumo.py` y
+`sustancia.py` reemplazan su filtro por `lineas_base()`.
+
+Los porcentajes se mueven poco, menos de un punto en la distribución de sexo de
+los cuatro países. Lo que cambia es el N, y que los dos caminos por fin cuentan
+lo mismo.
+
+Quince pruebas nuevas, ochenta y seis en total.
+
 ### `tools/comparar_panel_wide.py` mide la brecha entre los dos caminos
 Los reportes leen el Base Wide y el panel lee los registros crudos. El script
 corre los dos criterios sobre el mismo archivo y compara pacientes contados,

@@ -37,6 +37,14 @@ El clasificador actual los resuelve bien y el texto original está en
 
 ## Código
 
+**Ocho módulos del panel siguen filtrando la etapa a mano.** `config.py`,
+`kpis_centro.py`, `metricas.py`, `semaforo_seguimiento.py` y `tiempo_top.py`
+comparan `etapa == 'ingreso'` por su cuenta. No se homologaron con el resto
+porque su lógica no es de caracterización: cuentan aplicaciones, miden tiempos
+entre TOP y arman el semáforo de seguimiento. Cada uno necesita decidirse por
+separado si su unidad es el episodio o el registro. *2026-09-02*
+
+
 **`auto_archivo_wide()` busca rutas de otro entorno.** `/mnt/user-data/uploads`
 y `/home/claude`, y se ejecuta al importar el módulo, no al llamarlo. Importar
 `caract_excel` falla si no hay base presente. *2026-09-02*
