@@ -15,7 +15,8 @@ from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Cm
 from pipeline.validacion_top import (
-    categorias_pais, clasificar_sustancia, detectar_pais, etiqueta_sustancia, normalizar_sexo,
+    categorias_pais, clasificar_sustancia, columna_de_sustancia, detectar_pais,
+    etiqueta_sustancia, normalizar_sexo,
 )
 warnings.filterwarnings('ignore')
 
@@ -283,38 +284,63 @@ def cargar_datos():
 
     # Sustancia principal
     sust_ppal = []; sust_top1 = '—'; sust_top1_pct = 0
+    _pais = detectar_pais(df)
+    _cats = categorias_pais(_pais)
+    sust_norm = (df[DC['sust_pp']].apply(lambda v: norm_sust(v, _pais))
+                 if DC['sust_pp'] else pd.Series([None]*N))
+
     if DC['sust_pp']:
-        _pais = detectar_pais(df)
-        sr = df[DC['sust_pp']].apply(lambda v: norm_sust(v, _pais)).dropna()
+        sr = sust_norm.dropna()
         vc = sr.value_counts(); total_sp = len(sr)
-        sust_ppal = [{'label':k,'pct':round(v/total_sp*100,1),'n':int(v)} for k,v in vc.items()]
+        # Todas las categorías del país, aunque alguna venga en cero.
+        sust_ppal = [{'label': etiqueta_sustancia(c, _pais),
+                      'pct': round(int(vc.get(c, 0))/total_sp*100, 1) if total_sp else 0,
+                      'n': int(vc.get(c, 0))} for c in _cats]
         sust_top1 = vc.index[0] if len(vc) else '—'
         sust_top1_pct = round(vc.iloc[0]/total_sp*100,1) if len(vc) else 0
 
-    # Días consumo por sustancia principal
-    sust_norm = df[DC['sust_pp']].apply(lambda v: norm_sust(v, detectar_pais(df))) if DC['sust_pp'] else pd.Series([None]*N)
+    # Días de consumo de la sustancia principal.
+    # Entran todos los que la declararon principal, con sus ceros: un cero
+    # significa que ingresaron en abstinencia de su propia droga problema, y ese
+    # es su dato real. Ver DECISIONES.md.
     dias_princ = []
-    for lbl, col in DC['sust_cols']:
-        v = pd.to_numeric(df[col], errors='coerce')
-        mask = sust_norm.apply(lambda s: isinstance(s,str) and lbl.lower() in s.lower())
-        sub  = v[mask & (v>0)].dropna()
-        if len(sub): dias_princ.append({'label':lbl,'prom':round(float(sub.mean()),1),'n':int(len(sub))})
-    dias_princ.sort(key=lambda x:-x['prom'])
+    for cat in _cats:
+        col = columna_de_sustancia(cat, df.columns)
+        mask = sust_norm == cat
+        n_cat = int(mask.sum())
+        sub = pd.to_numeric(df.loc[mask, col], errors='coerce').dropna() if col else pd.Series(dtype=float)
+        dias_princ.append({'label': etiqueta_sustancia(cat, _pais),
+                           'prom': round(float(sub.mean()),1) if len(sub) else None,
+                           'n': int(len(sub)), 'n_cat': n_cat})
+    dias_princ.sort(key=lambda x: (x['prom'] is None, -(x['prom'] or 0)))
 
-    # % Consumidores
+    # % de consumidores de cada sustancia
     consumo_pct = []
-    for lbl, col in DC['sust_cols']:
+    for cat in _cats:
+        col = columna_de_sustancia(cat, df.columns)
+        if col is None:
+            continue
         v = pd.to_numeric(df[col], errors='coerce')
         n_c = int((v>0).sum()); nv = int(v.notna().sum())
-        if n_c > 0: consumo_pct.append({'label':lbl,'pct':round(n_c/N*100,1),'n':n_c,'nv':nv})
+        consumo_pct.append({'label': etiqueta_sustancia(cat, _pais),
+                            'pct': round(n_c/N*100,1) if N else 0, 'n': n_c, 'nv': nv})
     consumo_pct.sort(key=lambda x:-x['pct'])
 
     # Días por sustancia
+    # Días por sustancia, recorriendo todas las que consume la población.
+    # Acá el promedio va solo entre quienes la consumieron: incluir a los demás
+    # convertiría el número en una función de la composición de la población.
+    # Ver DECISIONES.md.
     dias_sust = []
-    for lbl, col in DC['sust_cols']:
+    for cat in _cats:
+        col = columna_de_sustancia(cat, df.columns)
+        if col is None:
+            continue
         v = pd.to_numeric(df[col], errors='coerce'); sub = v[v>0].dropna()
-        if len(sub): dias_sust.append({'label':lbl,'prom':round(float(sub.mean()),1),'n':int(len(sub))})
-    dias_sust.sort(key=lambda x:-x['prom'])
+        dias_sust.append({'label': etiqueta_sustancia(cat, _pais),
+                          'prom': round(float(sub.mean()),1) if len(sub) else None,
+                          'n': int(len(sub))})
+    dias_sust.sort(key=lambda x: (x['prom'] is None, -(x['prom'] or 0)))
 
     # Transgresión
     def has_tr(row):
@@ -406,15 +432,21 @@ def g_torta(d):
 
 def g_barras_h(datos, ylabel=''):
     if not datos: return None
-    labs = [d['label'] for d in datos]; vals = [d['prom'] for d in datos]
+    labs = [d['label'] for d in datos]
+    # Las categorías del país se dibujan todas. Las que no tienen ningún caso
+    # van con altura cero y sin cifra encima, en vez de desaparecer del gráfico.
+    vals = [(d['prom'] if d.get('prom') is not None else 0) for d in datos]
+    tope = max(vals) if vals else 0
     fig, ax = plt.subplots(figsize=(max(4, len(labs)*0.9), 3))
-    cols = ['#2E75B6' if v==max(vals) else '#BDD7EE' for v in vals]
+    cols = ['#2E75B6' if (v == tope and tope > 0) else '#BDD7EE' for v in vals]
     bars = ax.bar(labs, vals, color=cols, width=0.55, zorder=3)
     for bar, d_item in zip(bars, datos):
+        texto = (f'{d_item["prom"]}d\n(n={d_item["n"]})'
+                 if d_item.get('prom') is not None else f'sin dato\n(n={d_item["n"]})')
         ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+0.2,
-                f'{d_item["prom"]}d\n(n={d_item["n"]})', ha='center', va='bottom',
+                texto, ha='center', va='bottom',
                 fontsize=8, fontweight='bold', color='#333')
-    ax.set_ylim(0, max(vals)*1.4 if max(vals)>0 else 1)
+    ax.set_ylim(0, tope*1.4 if tope > 0 else 1)
     ax.set_ylabel(ylabel, fontsize=8, color='#595959')
     ax.tick_params(labelsize=8)
     _ax_style(ax); fig.patch.set_facecolor('white'); fig.tight_layout()

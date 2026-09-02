@@ -255,10 +255,15 @@ def procesar_wide(input_path: str,
     # ── Construir Wide ─────────────────────────────────────────────────────────
     df = df.sort_values([COL_CODIGO, COL_FECHA]).reset_index(drop=True)
 
-    # Homologación: para construir TOP1/TOP2 se deduplican los registros del mismo
-    # paciente con la MISMA fecha (duplicados de carga). El df original se conserva
-    # intacto para el reporte de duplicados más abajo.
-    df_wide = df.drop_duplicates(subset=[COL_CODIGO, COL_FECHA], keep='first').reset_index(drop=True)
+    # Homologación: se deduplican los registros del mismo paciente cargados dos
+    # veces. La clave incluye el centro y la etapa además de la fecha, porque un
+    # mismo día puede haber un TOP de ingreso y uno de seguimiento, y porque hay
+    # registros sin fecha: deduplicar solo por código y fecha se llevaba por
+    # delante el TOP de ingreso de un paciente cuyos tres registros venían con la
+    # fecha en nulo, y ese episodio desaparecía de los reportes pero no del panel.
+    # El df original se conserva intacto para el reporte de duplicados más abajo.
+    _clave_dedup = [c for c in [COL_CODIGO, COL_CENTRO, COL_FECHA, COL_ETAPA] if c]
+    df_wide = df.drop_duplicates(subset=_clave_dedup, keep='first').reset_index(drop=True)
 
     # La unidad es el episodio de tratamiento: cada TOP con etapa de ingreso abre
     # uno, y los TOP siguientes del mismo paciente en el mismo centro le

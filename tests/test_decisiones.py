@@ -19,8 +19,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pipeline.validacion_top import (  # noqa: E402
     CATEGORIAS_POR_PAIS, OTRA_SUSTANCIA, SUSTANCIA_A_COLUMNA,
-    categorias_pais, clasificar_sustancia, construir_episodios, detectar_pais,
-    es_flag_activo, es_etapa_ingreso, lineas_base, normalizar_sexo_valor,
+    categorias_pais, clasificar_sustancia, columna_de_sustancia,
+    construir_episodios, detectar_pais, es_etapa_ingreso, es_flag_activo,
+    lineas_base, normalizar_sexo_valor,
 )
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -295,3 +296,47 @@ def test_el_panel_no_filtra_la_etapa_a_mano():
         if "str.strip() == 'ingreso'" in src:
             culpables.append(nombre)
     assert not culpables, 'filtran la etapa a mano: ' + ', '.join(culpables)
+
+
+# ── Todos los gráficos muestran todas las categorías del país ──────────────
+
+REPORTES = ['caract_excel', 'seg_excel', 'word_caract', 'word_seg',
+            'pptx_caract', 'pptx_seg']
+
+
+def test_ningun_reporte_se_salta_las_categorias_vacias():
+    """Antes hacían `if n > 0: agregar`, y la sustancia desaparecía del gráfico."""
+    patrones = ['if len(sub): dias', 'if len(sub)>=1: dias',
+                'if n_c > 0: consumo', 'if n_c>0: consumo']
+    culpables = []
+    for m in REPORTES:
+        src = _fuente(m)
+        if any(p in src for p in patrones):
+            culpables.append(m)
+    assert not culpables, 'se saltan categorías vacías: ' + ', '.join(culpables)
+
+
+def test_la_columna_de_dias_se_encuentra_en_los_dos_formatos():
+    """Supabase las llama `alcohol_total`; el Base Wide, `alcohol_total_TOP1`."""
+    cortas = ['alcohol_total', 'pastabase_total', 'otra_sust_total']
+    largas = ['alcohol_total_TOP1', 'pastabase_total_TOP1', 'otra_sust_total_TOP1']
+    for cols in (cortas, largas):
+        assert columna_de_sustancia('Alcohol', cols) is not None
+        assert columna_de_sustancia('Pasta Base', cols) is not None
+        assert columna_de_sustancia(OTRA_SUSTANCIA, cols) is not None
+
+
+def test_una_sustancia_que_el_pais_no_mide_no_tiene_columna():
+    """Crack en Perú o heroína en México: la categoría existe, la columna no."""
+    cols = ['alcohol_total', 'marihuana_total', 'cocaina_total']
+    assert columna_de_sustancia('Heroína', cols) is None
+    assert columna_de_sustancia('Crack', cols) is None
+
+
+def test_la_deduplicacion_del_wide_conserva_el_top_de_ingreso():
+    """Un paciente con sus tres registros sin fecha perdía su ingreso, y su
+    episodio desaparecía de los reportes pero no del panel."""
+    with open(os.path.join(RAIZ, 'pipeline', 'wide_top.py'), encoding='utf-8') as fh:
+        src = fh.read()
+    assert 'drop_duplicates(subset=[COL_CODIGO, COL_FECHA]' not in src
+    assert '_clave_dedup' in src

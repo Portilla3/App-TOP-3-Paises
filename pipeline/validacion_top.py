@@ -433,3 +433,38 @@ def lineas_base(df, col_codigo='codigo_paciente', col_centro='centro',
     d = construir_episodios(df, col_codigo, col_centro, col_fecha, col_etapa)
     d = d[d['_episodio'].notna() & d[col_etapa].apply(es_etapa_ingreso)]
     return d.drop_duplicates(subset='_episodio', keep='first')
+
+
+# Palabras que identifican la columna de días de cada categoría, sirvan los
+# nombres cortos de Supabase (`alcohol_total`) o los largos del Base Wide
+# (`Alcohol Total (0-28)_TOP1`).
+_PALABRA_DE_SUSTANCIA = {
+    'Alcohol':       'alcohol',
+    'Marihuana':     'marihuana',
+    'Pasta Base':    'pasta',
+    'Cocaína':       'cocaina',
+    'Crack':         'crack',
+    'Metanfetamina': 'metanfetamina',
+    'Heroína':       'heroina',
+    'Sedantes':      'sedantes',
+    OTRA_SUSTANCIA:  'otra_sust',
+}
+
+
+def columna_de_sustancia(categoria, columnas, sufijo='_TOP1'):
+    """
+    Encuentra la columna de días totales de una categoría entre las columnas
+    dadas. Devuelve None si esa sustancia no se mide en ese formulario, que es
+    lo que ocurre con crack en Perú o heroína en México.
+    """
+    palabra = _PALABRA_DE_SUSTANCIA.get(categoria)
+    if palabra is None:
+        return None
+    candidatas = [c for c in columnas if palabra in _norm_str(c)]
+    if not candidatas:
+        return None
+    totales = [c for c in candidatas if 'total' in _norm_str(c)]
+    if not totales:
+        return None
+    conservan_sufijo = [c for c in totales if _norm_str(c).endswith(_norm_str(sufijo))]
+    return (conservan_sufijo or totales)[0]

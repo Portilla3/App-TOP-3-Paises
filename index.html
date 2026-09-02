@@ -1046,9 +1046,72 @@ function mostrarToast(msg, esError=false) {
 }
 
 // ── ENVÍO ────────────────────────────────────────────────
+
+// ── Aviso de etapa ─────────────────────────────────────────────────────────
+// Aparece cuando la etapa elegida no es Ingreso. Al 2026-09-02 hay 182
+// pacientes sin ningún TOP de ingreso, y esos quedan fuera de la
+// caracterización: sin línea base no hay con qué comparar el seguimiento.
+// De esos 182, 111 marcaron "en tratamiento" y 43 "seguimiento".
+// Es JavaScript local, no consulta la base ni agrega espera.
+function _mostrarAvisoEtapa(etapaTexto) {
+  return new Promise(function (resolver) {
+    var fondo = document.createElement('div');
+    fondo.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);' +
+      'display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+
+    var caja = document.createElement('div');
+    caja.style.cssText = 'background:#fff;border-radius:12px;max-width:440px;width:100%;' +
+      'overflow:hidden;font-family:inherit;';
+
+    caja.innerHTML =
+      '<div style="background:#004AAD;padding:14px 20px;">' +
+        '<div style="color:#cfe0f5;font-size:13px;">QALAT &middot; Formulario TOP</div>' +
+        '<div style="color:#fff;font-size:15px;font-weight:500;margin-top:2px;">Antes de enviar</div>' +
+      '</div>' +
+      '<div style="padding:20px;">' +
+        '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#1F3864;">' +
+          'Marcaste la etapa <b>' + etapaTexto + '</b>.</p>' +
+        '<p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#1F3864;">' +
+          'Si esta persona <b>acaba de ingresar al centro</b>, la etapa correcta es ' +
+          '<b>Ingreso</b>, aunque venga derivada de otro centro o de una desintoxicación.</p>' +
+        '<p style="margin:0 0 18px;font-size:13px;line-height:1.6;color:#5a6b85;">' +
+          'Usa <b>' + etapaTexto + '</b> solo si la persona ya llevaba tiempo atendiéndose ' +
+          'acá antes de esta medición.</p>' +
+        '<div style="display:flex;gap:10px;">' +
+          '<button type="button" id="_avisoSeguir" style="flex:1;font-size:13px;padding:10px 8px;' +
+            'border:1px solid #c8d0da;background:#fff;color:#1F3864;border-radius:8px;cursor:pointer;">' +
+            'Ya llevaba tiempo acá</button>' +
+          '<button type="button" id="_avisoCorregir" style="flex:1;font-size:13px;padding:10px 8px;' +
+            'border:1px solid #c8d0da;background:#fff;color:#1F3864;border-radius:8px;cursor:pointer;">' +
+            'Recién ingresó</button>' +
+        '</div>' +
+      '</div>';
+
+    fondo.appendChild(caja);
+    document.body.appendChild(fondo);
+
+    caja.querySelector('#_avisoSeguir').onclick = function () {
+      document.body.removeChild(fondo); resolver(true);
+    };
+    caja.querySelector('#_avisoCorregir').onclick = function () {
+      document.body.removeChild(fondo);
+      var sel = document.getElementById('etapa');
+      if (sel) sel.value = 'ingreso';
+      resolver(true);
+    };
+  });
+}
+
 async function enviarFormulario() {
   let ok = true;
   let errMsg = [];
+
+  const _etapaSel = document.getElementById('etapa');
+  const _etapaVal = _etapaSel ? _etapaSel.value : '';
+  if (_etapaVal === 'en_tratamiento' || _etapaVal === 'seguimiento') {
+    const _txt = _etapaSel.options[_etapaSel.selectedIndex].text;
+    await _mostrarAvisoEtapa(_txt);
+  }
 
   // Campos obligatorios
   ['centro','etapa','codigo_paciente','fecha_entrevista','sustancia_principal','sexo','nombre_entrevistador','fecha_nacimiento'].forEach(id=>{

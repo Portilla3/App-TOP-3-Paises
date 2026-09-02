@@ -25,7 +25,8 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from pipeline.validacion_top import (
-    categorias_pais, clasificar_sustancia, detectar_pais, etiqueta_sustancia, normalizar_sexo,
+    categorias_pais, clasificar_sustancia, columna_de_sustancia, detectar_pais,
+    etiqueta_sustancia, normalizar_sexo,
 )
 warnings.filterwarnings('ignore')
 
@@ -343,28 +344,42 @@ def cargar_datos():
         R['nv_sust']=0; R['sust_vc']=pd.Series(dtype=int)
         R['sust_top1']='—'; R['sust_top1_pct']=0
 
-    # Días consumo sustancia principal
-    sust_norm=df[DC['sust_pp']].apply(lambda v: norm_sust(v, detectar_pais(df))) if DC['sust_pp'] else pd.Series([None]*N)
+    # Días de consumo de la sustancia principal.
+    # Todas las categorías del país, y con los ceros incluidos: un cero significa
+    # que la persona ingresó en abstinencia de su propia droga problema, y ese es
+    # su dato real. Ver DECISIONES.md.
+    _pais=detectar_pais(df)
+    sust_norm=df[DC['sust_pp']].apply(lambda v: norm_sust(v, _pais)) if DC['sust_pp'] else pd.Series([None]*N)
     dias_princ={}
-    for lbl,col in DC['sust_cols']:
-        v=pd.to_numeric(df[col],errors='coerce')
-        mask=sust_norm.apply(lambda s: isinstance(s,str) and lbl.lower() in s.lower())
-        sub=v[mask&(v>0)]
-        if len(sub)>=1: dias_princ[lbl]={'prom':round(float(sub.mean()),1),'n':int(len(sub))}
+    for cat in categorias_pais(_pais):
+        col=columna_de_sustancia(cat, df.columns)
+        mask=sust_norm==cat
+        sub=pd.to_numeric(df.loc[mask,col],errors='coerce').dropna() if col else pd.Series(dtype=float)
+        dias_princ[etiqueta_sustancia(cat,_pais)]={
+            'prom':round(float(sub.mean()),1) if len(sub) else None,
+            'n':int(len(sub)),'n_cat':int(mask.sum())}
     R['dias_princ']=dias_princ
 
     # % consumidores
     consumo_pct={}
-    for lbl,col in DC['sust_cols']:
+    for cat in categorias_pais(_pais):
+        col=columna_de_sustancia(cat, df.columns)
+        if col is None: continue
         v=pd.to_numeric(df[col],errors='coerce'); n_c=int((v>0).sum())
-        if n_c>0: consumo_pct[lbl]={'pct':round(n_c/N*100,1),'n':n_c}
+        consumo_pct[etiqueta_sustancia(cat,_pais)]={
+            'pct':round(n_c/N*100,1) if N else 0,'n':n_c,'nv':int(v.notna().sum())}
     R['consumo_pct']=consumo_pct
 
     # Días por sustancia
+    # Días por sustancia, todas las que consume la población. El promedio va solo
+    # entre quienes la consumieron. Ver DECISIONES.md.
     dias_sust={}
-    for lbl,col in DC['sust_cols']:
-        v=pd.to_numeric(df[col],errors='coerce'); sub=v[v>0]
-        if len(sub)>=1: dias_sust[lbl]={'prom':round(float(sub.mean()),1),'n':int(len(sub))}
+    for cat in categorias_pais(_pais):
+        col=columna_de_sustancia(cat, df.columns)
+        if col is None: continue
+        v=pd.to_numeric(df[col],errors='coerce'); sub=v[v>0].dropna()
+        dias_sust[etiqueta_sustancia(cat,_pais)]={
+            'prom':round(float(sub.mean()),1) if len(sub) else None,'n':int(len(sub))}
     R['dias_sust']=dias_sust
 
     # Salud
@@ -454,14 +469,20 @@ def g_torta_sust(R):
 
 def g_barras_h(datos, ylabel='Promedio días (0–28)', fmt='{v}d\n(n={n})'):
     if not datos: return None
-    labs=list(datos.keys()); proms=[datos[l]['prom'] for l in labs]; ns=[datos[l]['n'] for l in labs]
+    labs=list(datos.keys()); ns=[datos[l]['n'] for l in labs]
+    # Las categorías del país se dibujan todas. Las que no tienen ningún caso van
+    # con altura cero y el rótulo 'sin dato', en vez de desaparecer del gráfico.
+    crudos=[datos[l]['prom'] for l in labs]
+    proms=[(p if p is not None else 0) for p in crudos]
+    tope=max(proms) if proms else 0
     fig,ax=plt.subplots(figsize=(max(5,len(labs)*1.0),3.8))
-    cols=[MC_MID if p==max(proms) else MC_LIGHT for p in proms]
+    cols=[MC_MID if (p==tope and tope>0) else MC_LIGHT for p in proms]
     bars=ax.bar(labs,proms,color=cols,width=0.55,zorder=3)
-    for bar,p,n in zip(bars,proms,ns):
+    for bar,p,n in zip(bars,crudos,ns):
+        txt=fmt.format(v=p,n=n) if p is not None else f'sin dato\n(n={n})'
         ax.text(bar.get_x()+bar.get_width()/2,bar.get_height()+0.15,
-                fmt.format(v=p,n=n),ha='center',va='bottom',fontsize=9,fontweight='bold',color='#333')
-    ax.set_ylim(0,max(proms)*1.38); ax.set_ylabel(ylabel,fontsize=9,color='#595959')
+                txt,ha='center',va='bottom',fontsize=9,fontweight='bold',color='#333')
+    ax.set_ylim(0,tope*1.38 if tope>0 else 1); ax.set_ylabel(ylabel,fontsize=9,color='#595959')
     ax.tick_params(labelsize=9); _ax_style(ax); fig.patch.set_facecolor('white'); fig.tight_layout()
     return fig
 
@@ -627,11 +648,15 @@ def build_word(R):
         if fig:
             buf,w=fig_to_img(fig,13)
             add_picture_kwnext(doc,buf,w)
-            dp_max=max(R['dias_princ'],key=lambda k:R['dias_princ'][k]['prom'])
-            add_body(doc,
-                f'{dp_max} presenta el mayor promedio: {R["dias_princ"][dp_max]["prom"]} días '
-                f'(n={R["dias_princ"][dp_max]["n"]}). '
-                f'Promedio en últimas 4 semanas, calculado sobre quienes declararon esa sustancia como principal.')
+            _con_dato={k:v for k,v in R['dias_princ'].items() if v['prom'] is not None}
+            if _con_dato:
+                dp_max=max(_con_dato,key=lambda k:_con_dato[k]['prom'])
+                add_body(doc,
+                    f'{dp_max} presenta el mayor promedio: {_con_dato[dp_max]["prom"]} días '
+                    f'(n={_con_dato[dp_max]["n"]}). '
+                    f'Promedio en últimas 4 semanas, sobre quienes declararon esa sustancia como '
+                    f'principal, incluidos los que ingresaron sin consumo. Las categorías sin '
+                    f'ningún caso se muestran en cero.')
         doc.add_paragraph()
 
     if R['consumo_pct']:

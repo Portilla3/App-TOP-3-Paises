@@ -8,6 +8,44 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### El panel y los reportes dan los mismos números
+`tools/verificar_coincidencia.py` corre los dos caminos sobre el mismo archivo y
+compara indicador por indicador: pacientes, N válido, distribución de sustancia
+principal, porcentaje de mujeres y promedio de días de cada sustancia. Sobre los
+1.475 registros, los cuatro países coinciden en todo.
+
+Para llegar ahí faltaban tres cosas.
+
+**Los gráficos de `pptx_caract.py` y `word_caract.py` se saltaban las categorías
+sin casos.** Ahora recorren `categorias_pais()` y dibujan todas, con "sin dato"
+sobre las vacías. Alcanza a los tres gráficos de sustancias de cada módulo.
+
+**El promedio de días de la sustancia principal excluía los ceros.** Filtraba
+`v > 0`, así que dejaba fuera a quienes ingresaron en abstinencia de su propia
+droga problema, justo lo que `DECISIONES.md` manda incluir desde el 1 de
+septiembre. El de días por sustancia sí debe filtrarlos y se mantiene.
+
+**La deduplicación del Wide se llevaba por delante un TOP de ingreso.**
+`drop_duplicates` usaba código y fecha; un paciente con sus tres registros sin
+fecha perdía el de ingreso y su episodio desaparecía de los reportes, pero no
+del panel. La clave ahora incluye centro y etapa.
+
+`columna_de_sustancia()` en `validacion_top.py` resuelve el nombre de la columna
+de días en los dos formatos, el corto de Supabase y el largo del Base Wide, para
+que ambos caminos busquen igual.
+
+Cuatro pruebas nuevas, noventa en total.
+
+### Aviso de etapa en los siete formularios de captura
+Cuando la etapa elegida es `en tratamiento` o `seguimiento`, antes de enviar
+aparece una confirmación que recuerda que un paciente recién ingresado lleva
+etapa `ingreso` aunque venga derivado. Uno de los dos botones corrige la etapa y
+envía; el otro envía tal cual.
+
+Es JavaScript local: no consulta la base, no agrega espera ni un punto de falla.
+De los 182 pacientes sin TOP de ingreso al 2026-09-02, 111 marcaron
+`en tratamiento` y 43 `seguimiento`.
+
 ### La unidad de análisis pasa a ser el episodio de tratamiento
 `construir_episodios()` y `lineas_base()` en `pipeline/validacion_top.py`. Un TOP
 con etapa de ingreso abre un episodio, identificado por
