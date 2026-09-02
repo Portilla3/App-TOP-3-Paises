@@ -8,6 +8,15 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### `tools/comparar_panel_wide.py` mide la brecha entre los dos caminos
+Los reportes leen el Base Wide y el panel lee los registros crudos. El script
+corre los dos criterios sobre el mismo archivo y compara pacientes contados,
+sustancia principal y sexo.
+
+Primera corrida sobre los 1.475 registros: el panel cuenta 1.199 pacientes y los
+reportes 1.326. La diferencia son 182 pacientes que no tienen ningún registro
+con `etapa=ingreso` y que el panel descarta al comparar ese texto exacto.
+
 ### Los seis módulos de reporte usan la taxonomía madre
 `caract_excel.py`, `seg_excel.py`, `word_caract.py`, `word_seg.py`,
 `pptx_caract.py` y `pptx_seg.py` tenían cada uno su copia de `norm_sust()`, con

@@ -46,7 +46,27 @@ calcula sobre válidos; `word_caract.py` y el panel sobre el total. Además
 `_es_s()` trata el vacío como `False`, o sea lo cuenta como no transgresor. Hoy
 son dos o tres casos, pero el criterio está desalineado. *2026-09-02*
 
-**Comparación panel contra Wide.** Los reportes leen el Base Wide y el panel lee
-Supabase directo, con nombres de columna y filtros distintos. Falta correr los
-dos caminos sobre los mismos datos y comparar. Requiere el export completo de
-`top_registros`. *2026-09-02*
+**El panel y los reportes cuentan pacientes distintos: 127 de diferencia.**
+Medido el 2026-09-02 sobre los 1.475 registros. El panel cuenta 1.199 y los
+reportes 1.326.
+
+La causa: el panel filtra `etapa == 'ingreso'` comparando texto exacto, mientras
+`procesar_wide()` toma el registro más antiguo de cada paciente como su TOP1,
+sin mirar cómo el centro etiquetó la etapa. Hay **182 pacientes sin ningún
+registro con `etapa=ingreso`**: 111 solo tienen `en_tratamiento`, 43
+`seguimiento`, 21 `seguimiento1` o `seguimiento2`. El Wide los cuenta, el panel
+no.
+
+Los porcentajes se mueven poco donde hay volumen, menos de dos puntos en Perú,
+Ecuador y El Salvador. En México, con 56 pacientes en el panel y 84 en el Wide,
+la metanfetamina cambia 4,2 puntos y la cocaína 4,8.
+
+**Decisión pendiente.** Alinear el panel al criterio del Wide, tomando la
+primera medición de cada paciente como línea base, o alinear el Wide al del
+panel y perder esos 182. El primer TOP de un paciente es su línea base aunque el
+centro haya escrito mal la etapa, así que la primera opción conserva datos
+válidos; a cambio, el rótulo del gráfico deja de poder decir "al ingreso" y pasa
+a "primera medición".
+
+Reproducible con `python tools/comparar_panel_wide.py <respaldo.xlsx>`.
+*2026-09-02*
