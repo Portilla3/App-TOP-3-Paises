@@ -6,6 +6,26 @@ se cambia con una entrada nueva que diga por qué.
 
 ---
 
+### El formulario de Perú se llama `index.html` y no se renombra
+**Regla.** `index.html` es el formulario de ingreso de Perú. No se renombra a
+`index_peru.html` ni se convierte en portal, aunque rompa la convención de los
+otros seis países.
+
+**Fundamento.** Perú fue el primer país y su formulario quedó como página raíz
+del sitio. Los centros peruanos tienen esa URL guardada por fuera del sistema,
+en correos y favoritos, y no hay forma de avisarles a todos. Renombrar el
+archivo los deja sin acceso sin que nadie se entere hasta que dejan de llegar
+registros. El costo de la inconsistencia es confusión de quien lee el repo; el
+costo de arreglarla es perder centros en producción.
+
+**Consecuencia asumida.** Quien busque `index_peru.html` no lo va a encontrar y
+va a concluir que Perú no tiene formulario. Por eso el archivo lleva un aviso en
+su cabecera y el README abre con la tabla de archivo a país.
+
+*2026-09-02*
+
+---
+
 ## Instrumento
 
 ### El campo sexo usa H/M/O en los cuatro países

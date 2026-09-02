@@ -1,6 +1,32 @@
 # QALAT · Sistema de Monitoreo de Resultados de Tratamiento
 ## App de análisis automático TOP / IRT
 
+### Qué formulario corresponde a cada país
+
+**`index.html` es el formulario de Perú.** No se llama `index_peru.html`. Perú
+fue el primer país y quedó como página raíz del sitio; los centros peruanos
+tienen esa URL guardada por fuera, así que renombrarla los dejaría sin acceso.
+
+| Archivo | País | Tipo |
+|---|---|---|
+| `index.html` | **Perú** | Ingreso y seguimiento |
+| `index_ecuador.html` | Ecuador | Ingreso y seguimiento |
+| `index_elsalvador.html` | El Salvador | Ingreso y seguimiento |
+| `index_mexico.html` | México | Ingreso y seguimiento |
+| `index_mexicocij.html` | México · CIJ | Ingreso y seguimiento |
+| `index_montefenix.html` | México · Monte Fénix | Ingreso y seguimiento |
+| `index_mahanaim.html` | México · Mahanaim | Ingreso y seguimiento |
+| `correccion_top_peru.html` | Perú | Corrección de registros |
+| `correccion_top_ecuador.html` | Ecuador | Corrección de registros |
+| `correccion_top_elsalvador.html` | El Salvador | Corrección de registros |
+| `correccion_top_mexico.html` | México | Corrección de registros |
+| `correccion_top_mexicocij.html` | México · CIJ | Corrección de registros |
+| `correccion_top_montefenix.html` | México · Monte Fénix | Corrección de registros |
+| `correccion_top_mahanaim.html` | México · Mahanaim | Corrección de registros |
+
+Cualquier cambio a un formulario de ingreso son **siete archivos**, y el de
+Perú es el que se olvida.
+
 ### Cómo instalar y correr (computador local)
 
 #### 1. Instalar Python

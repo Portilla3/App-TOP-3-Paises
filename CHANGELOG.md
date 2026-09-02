@@ -8,6 +8,16 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### Documentado que `index.html` es el formulario de Perú
+El archivo no sigue la convención `index_<pais>.html` de los otros seis y eso ya
+indujo a error más de una vez, incluida una conclusión equivocada de que Perú no
+tenía formulario de ingreso. No se renombra, por las URLs que los centros
+peruanos tienen guardadas por fuera. Queda documentado en tres lugares: un aviso
+en la cabecera del propio archivo, la tabla de archivo a país que ahora abre el
+README, y la entrada correspondiente en `DECISIONES.md`.
+
+Sin cambios de código.
+
 ### Retirados dos rellenos con cero que no rellenaban nada
 `pptx_caract.py` aplicaba `.fillna(0)` antes de contar consumidores y
 `word_seg.py` construía una serie de ceros cuando faltaba la columna del TOP 2.
