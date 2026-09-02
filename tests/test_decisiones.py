@@ -129,12 +129,6 @@ def test_las_categorias_del_pais_no_dependen_del_dato():
 
 # ── validacion_top.py es la única fuente de criterios ───────────────────────
 
-@pytest.mark.xfail(strict=True, reason=(
-    'Deuda conocida al 2026-09-02: clasificar_sustancia() ya existe en '
-    'validacion_top.py pero los seis módulos siguen con su copia. El reemplazo '
-    'mueve números en reportes ya entregados y espera la comparación panel '
-    'contra Wide. Cuando se pague, esta prueba pasa y strict=True obliga a '
-    'quitar el xfail.'))
 def test_el_clasificador_de_sustancias_no_esta_duplicado():
     """Diez copias con tres vocabularios distintos dejaban fuera al 12 %."""
     culpables = [m for m in MODULOS_VIVOS

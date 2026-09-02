@@ -145,37 +145,18 @@ def safe_mean(s):
 #   5. Metanfetamina va ANTES de Crack (cristal → Metanfetamina, no Crack)
 #   6. Descarta primera sustancia en entradas múltiples (split por / , + y)
 import re as _re
-from pipeline.validacion_top import normalizar_sexo, es_flag_activo
+from pipeline.validacion_top import (
+    categorias_pais, clasificar_sustancia, detectar_pais, es_flag_activo,
+    etiqueta_sustancia, normalizar_sexo,
+)
 
-def norm_sust(s):
-    if pd.isna(s): return None
-    raw = str(s).strip()
-    if raw in ('0', ''): return None
-    # Tomar solo primera línea y quitar contenido entre paréntesis
-    raw = _re.split(r'[\r\n]', raw)[0].strip()
-    raw = _re.sub(r'\(.*?\)', '', raw).strip()
-    raw = _re.sub(r'^(las dos|ambas|los dos|ambos)[,\s]+', '', raw, flags=_re.IGNORECASE).strip()
-    # Si hay múltiples sustancias, tomar solo la primera declarada
-    primera = _re.split(r'\s+y\s+|[/,+]', raw, maxsplit=1)[0].strip()
-    n = _norm(primera)   # minúsculas + sin tildes (usa _norm() ya definida en este archivo)
-    # Descartar respuestas no informativas
-    if any(x in n for x in ['ninguno','ninguna','niega','no aplica','no consume','nada']): return None
-    if any(x in n for x in ['ludopatia','juego','apuesta','gaming','azar']): return None
-    # Clasificación (mismo orden que wide_top.norm_sust_v3)
-    if any(x in n for x in ['alcohol','alchol','cerveza','licor','aguard','beer','wine','ron']): return 'Alcohol'
-    if any(x in n for x in ['marihu','marhuana','cannabis','cannbis','marij','weed','crispy']): return 'Cannabis/Marihuana'
-    if any(x in n for x in ['tusi','tussi','tusy','tuci','2cb']): return 'Tusi'
-    if any(x in n for x in ['pasta base','pasta basica','papelillo','pbc','basuco','bazuco']): return 'Pasta Base'
-    if any(x in n for x in ['metanfet','anfetam','cristal','crystal']): return 'Metanfetamina'
-    if any(x in n for x in ['crack','piedra','paco']): return 'Crack/Cristal'
-    if any(x in n for x in ['cocain','cocai','perico','coke']): return 'Cocaína'
-    if any(x in n for x in ['tabaco','cigarr','nicot']): return 'Tabaco/Nicotina'
-    if any(x in n for x in ['inhalant','thiner','activo','pegamento','solvente']): return 'Inhalantes'
-    if any(x in n for x in ['sedant','benzod','tranqui','valium','clonaz','diazep','rivotril']): return 'Sedantes'
-    if any(x in n for x in ['opiod','heroina','morfin','fentanil','tramad']): return 'Opiáceos'
-    if any(x in n for x in ['extasis','mdma','xtc']): return 'Éxtasis'
-    if any(x in n for x in ['ketam']): return 'Ketamina'
-    return 'Otras'
+def norm_sust(s, pais=None):
+    """Delega en validacion_top.clasificar_sustancia(), la taxonomía madre.
+
+    Esta función tenía su propia copia del clasificador, con un vocabulario que
+    no coincidía con el de wide_top.py ni con el del panel. Se conserva el
+    nombre porque el módulo la llama en varios puntos."""
+    return clasificar_sustancia(s, pais)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DETECCIÓN DINÁMICA DE COLUMNAS (trabaja sobre columnas _TOP1)
@@ -389,15 +370,15 @@ def build_report(wb, d, N, DC):
     R = sec(ws, R, '2.1', 'Consumo Sustancia Principal')
     R = hdrs(ws, R, ['Sustancia', 'n', '%', 'N válido', ''])
     if DC['sust_ppal']:
-        sr   = d[DC['sust_ppal']].apply(norm_sust).dropna()
+        _pais = detectar_pais(d)
+        sr   = d[DC['sust_ppal']].apply(lambda v: norm_sust(v, _pais)).dropna()
         nv_s = len(sr); vc = sr.value_counts()
-        cats = ['Alcohol','Cannabis/Marihuana','Tusi','Pasta Base','Metanfetamina',
-                'Crack/Cristal','Cocaína','Tabaco/Nicotina','Inhalantes',
-                'Sedantes','Opiáceos','Éxtasis','Ketamina','Otras']
-        for i, cat in enumerate(cats):
+        # Todas las categorías del país, aunque alguna venga en cero: la lista
+        # fija hace comparables los informes entre centros y en el tiempo.
+        for i, cat in enumerate(categorias_pais(_pais)):
             n_c = int(vc.get(cat, 0))
-            if n_c == 0: continue
-            R = drow(ws, R, [cat, n_c, round(n_c/nv_s*100,1) if nv_s>0 else 0,
+            R = drow(ws, R, [etiqueta_sustancia(cat, _pais), n_c,
+                             round(n_c/nv_s*100,1) if nv_s>0 else 0,
                              f'n={nv_s}', ''], alt=i%2==0)
         R = drow(ws, R, ['N válido', nv_s, '100%', '', ''], ba=True)
         R = note(ws, R, f'% sobre casos con sustancia identificada. N válido = {nv_s}')
@@ -408,7 +389,7 @@ def build_report(wb, d, N, DC):
     R = sec(ws, R, '2.2', 'Promedio de Días de Consumo – Sustancia Principal (últimas 4 semanas)')
     R = hdrs(ws, R, ['Sustancia', 'Promedio días', 'N (declararon\ncomo principal)', 'N válido', ''])
     if DC['sust_ppal'] and DC['sust_cols']:
-        sust_norm_s = d[DC['sust_ppal']].apply(norm_sust)
+        sust_norm_s = d[DC['sust_ppal']].apply(lambda v: norm_sust(v, detectar_pais(d)))
         for i, (lbl, col) in enumerate(DC['sust_cols']):
             v    = pd.to_numeric(d[col], errors='coerce')
             mask = sust_norm_s.apply(

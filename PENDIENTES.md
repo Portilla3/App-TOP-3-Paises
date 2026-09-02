@@ -37,11 +37,6 @@ El clasificador actual los resuelve bien y el texto original está en
 
 ## Código
 
-**El clasificador sigue duplicado en los seis módulos vivos.**
-`clasificar_sustancia()` existe y está probado, pero nadie lo usa todavía. La
-prueba `test_el_clasificador_de_sustancias_no_esta_duplicado` está en
-`xfail(strict=True)` esperando este trabajo. *2026-09-02*
-
 **`auto_archivo_wide()` busca rutas de otro entorno.** `/mnt/user-data/uploads`
 y `/home/claude`, y se ejecuta al importar el módulo, no al llamarlo. Importar
 `caract_excel` falla si no hay base presente. *2026-09-02*

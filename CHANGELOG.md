@@ -8,6 +8,22 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### Los seis módulos de reporte usan la taxonomía madre
+`caract_excel.py`, `seg_excel.py`, `word_caract.py`, `word_seg.py`,
+`pptx_caract.py` y `pptx_seg.py` tenían cada uno su copia de `norm_sust()`, con
+vocabularios que no coincidían entre sí ni con `wide_top.py`. Ahora la función
+conserva el nombre pero delega en `clasificar_sustancia()`, y recibe el país
+detectado de los datos.
+
+Las tres listas de categorías escritas a mano en `caract_excel.py`,
+`seg_excel.py` y `word_seg.py` se reemplazan por `categorias_pais()`, y las
+tablas dejan de saltarse las categorías en cero: se muestran todas las del país,
+que es lo que hace comparables los informes entre centros y en el tiempo.
+
+Con esto se salda la deuda que dejaba
+`test_el_clasificador_de_sustancias_no_esta_duplicado` en `xfail(strict=True)`.
+El marcador se quita, tal como estaba previsto. Setenta y una pruebas.
+
 ### El panel aplica la taxonomía por país y muestra todas las categorías
 `pipeline/panel/dias_consumo.py` y `pipeline/panel/sustancia.py` usan
 `clasificar_sustancia()` con el país detectado de los datos, en lugar del mapeo

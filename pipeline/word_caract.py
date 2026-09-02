@@ -24,7 +24,9 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
-from pipeline.validacion_top import normalizar_sexo
+from pipeline.validacion_top import (
+    categorias_pais, clasificar_sustancia, detectar_pais, etiqueta_sustancia, normalizar_sexo,
+)
 warnings.filterwarnings('ignore')
 
 # ── Colores ───────────────────────────────────────────────────────────────────
@@ -246,20 +248,13 @@ def detectar_columnas(cols):
                 viv1=viv1,viv2=viv2,sust_pp=sust_pp,
                 sexo=sexo,fn_col=fn_col,fecha=fecha)
 
-def norm_sust(s):
-    if pd.isna(s) or str(s).strip()=='0': return None
-    s=str(s).strip().lower()
-    if any(x in s for x in ['alcohol','cerveza','licor','aguard','alchol','bebida']): return 'Alcohol'
-    if any(x in s for x in ['marihu','marjhu','marhuana','cannabis','cannbis']): return 'Cannabis/Marihuana'
-    if any(x in s for x in ['pasta base','pasta','papelillo']): return 'Pasta Base'
-    if any(x in s for x in ['crack','cristal','piedra','paco']): return 'Crack/Cristal'
-    if any(x in s for x in ['cocain','perico','coca ']): return 'Cocaína'
-    if any(x in s for x in ['tabaco','cigarr','nicot']): return 'Tabaco/Nicotina'
-    if any(x in s for x in ['inhalant','thiner','activo','resistol']): return 'Inhalantes'
-    if any(x in s for x in ['sedant','benzod','tranqui']): return 'Sedantes'
-    if any(x in s for x in ['opiod','heroina','morfin','fentanil']): return 'Opiáceos'
-    if any(x in s for x in ['metanfet','anfetam']): return 'Metanfetamina'
-    return 'Otras'
+def norm_sust(s, pais=None):
+    """Delega en validacion_top.clasificar_sustancia(), la taxonomía madre.
+
+    Esta función tenía su propia copia del clasificador, con un vocabulario que
+    no coincidía con el de wide_top.py ni con el del panel. Se conserva el
+    nombre porque el módulo la llama en varios puntos."""
+    return clasificar_sustancia(s, pais)
 
 def _es_positivo(valor):
     s=str(valor).strip().lower()
@@ -339,7 +334,8 @@ def cargar_datos():
 
     # Sustancia principal
     if DC['sust_pp']:
-        sr=df[DC['sust_pp']].apply(norm_sust).dropna()
+        _pais=detectar_pais(df)
+        sr=df[DC['sust_pp']].apply(lambda v: norm_sust(v,_pais)).dropna()
         R['nv_sust']=len(sr); vc=sr.value_counts(); R['sust_vc']=vc
         R['sust_top1']=vc.index[0] if len(vc)>0 else '—'
         R['sust_top1_pct']=round(vc.iloc[0]/len(sr)*100,1) if len(sr)>0 else 0
@@ -348,7 +344,7 @@ def cargar_datos():
         R['sust_top1']='—'; R['sust_top1_pct']=0
 
     # Días consumo sustancia principal
-    sust_norm=df[DC['sust_pp']].apply(norm_sust) if DC['sust_pp'] else pd.Series([None]*N)
+    sust_norm=df[DC['sust_pp']].apply(lambda v: norm_sust(v, detectar_pais(df))) if DC['sust_pp'] else pd.Series([None]*N)
     dias_princ={}
     for lbl,col in DC['sust_cols']:
         v=pd.to_numeric(df[col],errors='coerce')

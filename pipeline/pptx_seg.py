@@ -7,6 +7,9 @@ Genera presentación PowerPoint de seguimiento TOP1 vs TOP2
 import glob, os, unicodedata, io, warnings
 import pandas as pd
 import numpy as np
+from pipeline.validacion_top import (
+    categorias_pais, clasificar_sustancia, detectar_pais, etiqueta_sustancia,
+)
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -83,19 +86,13 @@ def _es_positivo(valor):
     n = pd.to_numeric(valor, errors='coerce')
     return not pd.isna(n) and n > 0
 
-def norm_sust(s):
-    if pd.isna(s) or str(s).strip() == '0': return None
-    s = str(s).strip().lower()
-    if any(x in s for x in ['alcohol','cerveza','licor','aguard','alchol','bebida']): return 'Alcohol'
-    if any(x in s for x in ['marihu','marjhu','marhuana','cannabis','cannbis']): return 'Cannabis/Marihuana'
-    if any(x in s for x in ['pasta base','pasta','papelillo']): return 'Pasta Base'
-    if any(x in s for x in ['crack','cristal','piedra','paco']): return 'Crack/Cristal'
-    if any(x in s for x in ['cocain','perico','coca ']): return 'Cocaína'
-    if any(x in s for x in ['tabaco','cigarr','nicot']): return 'Tabaco'
-    if any(x in s for x in ['sedant','benzod','tranqui']): return 'Sedantes'
-    if any(x in s for x in ['opiod','heroina','morfin','fentanil']): return 'Opiáceos'
-    if any(x in s for x in ['metanfet','anfetam']): return 'Metanfetamina'
-    return 'Otras'
+def norm_sust(s, pais=None):
+    """Delega en validacion_top.clasificar_sustancia(), la taxonomía madre.
+
+    Esta función tenía su propia copia del clasificador, con un vocabulario que
+    no coincidía con el de wide_top.py ni con el del panel. Se conserva el
+    nombre porque el módulo la llama en varios puntos."""
+    return clasificar_sustancia(s, pais)
 
 # ── Helpers PPT ───────────────────────────────────────────────────────────────
 def add_rect(slide, x, y, w, h, fill):
@@ -305,7 +302,8 @@ def cargar_datos():
     c1_sp, _ = DC['sust_pp']
     sust = []; sust_top = '—'
     if c1_sp:
-        sr1 = seg[c1_sp].apply(norm_sust).dropna()
+        _pais = detectar_pais(seg)
+        sr1 = seg[c1_sp].apply(lambda v: norm_sust(v, _pais)).dropna()
         nv = len(sr1); vc = sr1.value_counts()
         sust = [{'label':k,'pct':round(v/nv*100,1),'n':int(v)} for k,v in vc.items()]
         sust_top = sust[0]['label'] if sust else '—'

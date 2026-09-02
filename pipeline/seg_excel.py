@@ -74,7 +74,9 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 import warnings
 from pipeline.cambio_consumo import clasificar_cambio, CATEGORIAS
-from pipeline.validacion_top import es_flag_activo
+from pipeline.validacion_top import (
+    categorias_pais, clasificar_sustancia, detectar_pais, es_flag_activo, etiqueta_sustancia,
+)
 warnings.filterwarnings('ignore')
 
 def _es_positivo(valor):
@@ -141,20 +143,13 @@ def cambio(v1, v2, mejor_si_sube=True):
     return '↑' if (subio == mejor_si_sube) else '↓'
 
 # ── Normalización sustancia principal ─────────────────────────────────────────
-def norm_sust(s):
-    if pd.isna(s) or str(s).strip() == '0': return None
-    s = str(s).strip().lower()
-    if any(x in s for x in ['alcohol','cerveza','licor','aguard','alchol','bebida']): return 'Alcohol'
-    if any(x in s for x in ['marihu','marjhu','marhuana','cannabis','cannbis','cannabin']): return 'Cannabis/Marihuana'
-    if any(x in s for x in ['pasta base','pasta','papelillo']): return 'Pasta Base'
-    if any(x in s for x in ['crack','cristal','piedra','paco']): return 'Crack/Cristal'
-    if any(x in s for x in ['cocain','perico','coca ']): return 'Cocaína'
-    if any(x in s for x in ['tabaco','cigarr','nicot']): return 'Tabaco/Nicotina'
-    if any(x in s for x in ['inhalant','thiner','activo','resistol','cemento']): return 'Inhalantes'
-    if any(x in s for x in ['sedant','benzod','tranqui','valium','clonaz']): return 'Sedantes'
-    if any(x in s for x in ['opiod','heroina','morfin','fentanil']): return 'Opiáceos'
-    if any(x in s for x in ['metanfet','anfetam']): return 'Metanfetamina'
-    return 'Otras'
+def norm_sust(s, pais=None):
+    """Delega en validacion_top.clasificar_sustancia(), la taxonomía madre.
+
+    Esta función tenía su propia copia del clasificador, con un vocabulario que
+    no coincidía con el de wide_top.py ni con el del panel. Se conserva el
+    nombre porque el módulo la llama en varios puntos."""
+    return clasificar_sustancia(s, pais)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DETECCIÓN DINÁMICA DE COLUMNAS
@@ -359,11 +354,11 @@ def build_seguimiento(wb, seg, N_total, N_seg, DC, seg_tiempo=None):
     R = hdrs(ws, R, ['Sustancia', 'TOP 1\nn', 'TOP 1\n%', 'TOP 2\nn', 'TOP 2\n%', 'N válido'])
     c1_sp, c2_sp = DC['sust_ppal']
     if c1_sp:
-        sr1 = seg[c1_sp].apply(norm_sust)
-        sr2 = seg[c2_sp].apply(norm_sust) if c2_sp else pd.Series([None]*N_seg)
+        _pais = detectar_pais(seg)
+        sr1 = seg[c1_sp].apply(lambda v: norm_sust(v, _pais))
+        sr2 = seg[c2_sp].apply(lambda v: norm_sust(v, _pais)) if c2_sp else pd.Series([None]*N_seg)
         nv1 = int(sr1.notna().sum()); nv2 = int(sr2.notna().sum())
-        cats = ['Alcohol','Cannabis/Marihuana','Pasta Base','Cocaína','Crack/Cristal',
-                'Tabaco/Nicotina','Inhalantes','Sedantes','Opiáceos','Metanfetamina','Otras']
+        cats = categorias_pais(_pais)
         for i, cat in enumerate(cats):
             n1 = int((sr1==cat).sum()); n2 = int((sr2==cat).sum())
             if n1==0 and n2==0: continue
