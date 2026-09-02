@@ -25,6 +25,9 @@ No confundir con el rango de pandas (años 1677-2262), que es un límite
 técnico de la librería, no un criterio clínico; se mantiene como resguardo
 adicional dentro de edad_valida() pero no reemplaza el criterio clínico.
 """
+import re
+import unicodedata
+
 import pandas as pd
 
 # ── Umbrales centralizados ──────────────────────────────────────────────────
@@ -37,6 +40,13 @@ EDAD_MAXIMA_ANIOS = 100
 ESCALA_SALUD_MIN, ESCALA_SALUD_MAX = 0, 20
 
 _PANDAS_ANIO_MIN, _PANDAS_ANIO_MAX = 1677, 2262
+
+
+def _norm_str(s):
+    """Minúsculas, sin tildes y sin espacios de borde. Base de toda comparación
+    de texto libre del sistema."""
+    return (unicodedata.normalize('NFD', str(s).lower())
+            .encode('ascii', 'ignore').decode().strip())
 
 
 def dias_validos_semana(serie):
@@ -189,3 +199,121 @@ def es_flag_activo(serie):
     """
     return (pd.Series(serie).astype(str).str.strip().str.lower()
             .isin(_FLAG_ACTIVO))
+
+
+# ── Sustancia principal ─────────────────────────────────────────────────────
+# Cada país tiene su propia lista cerrada de sustancia principal en el
+# formulario, y esa lista coincide con las columnas de días que ese país mide.
+# La regla, decidida el 2026-09-02: una sustancia declarada que no está en la
+# lista de su país va a 'Otra sustancia', que tiene su propia columna de días
+# (otra_sust_total) y su propio campo de texto (otra_sust_nombre).
+#
+# Antes de esto el clasificador estaba copiado en diez módulos, con tres
+# vocabularios distintos ('Marihuana' contra 'Cannabis/Marihuana', 'Crack'
+# contra 'Crack/Cristal'), y el mapeo del panel esperaba nombres que el
+# clasificador nunca devolvía. Eso dejaba fuera al 12 % de los pacientes.
+
+OTRA_SUSTANCIA = 'Otra sustancia'
+
+# Categoría canónica → columna de días en Supabase
+SUSTANCIA_A_COLUMNA = {
+    'Alcohol':          'alcohol_total',
+    'Marihuana':        'marihuana_total',
+    'Pasta Base':       'pastabase_total',
+    'Cocaína':          'cocaina_total',
+    'Crack':            'crack_total',
+    'Metanfetamina':    'metanfetamina_total',
+    'Heroína':          'heroina_total',
+    'Sedantes':         'sedantes_total',
+    OTRA_SUSTANCIA:     'otra_sust_total',
+}
+
+# Categorías que ofrece el formulario de cada país, en orden de presentación.
+# Es la taxonomía madre: define qué barras aparecen en los gráficos de ese país.
+CATEGORIAS_POR_PAIS = {
+    'Perú':                 ['Alcohol', 'Marihuana', 'Pasta Base', 'Cocaína', 'Sedantes', OTRA_SUSTANCIA],
+    'Ecuador':              ['Alcohol', 'Marihuana', 'Pasta Base', 'Cocaína', 'Sedantes', 'Heroína', OTRA_SUSTANCIA],
+    'El Salvador':          ['Alcohol', 'Marihuana', 'Crack', 'Cocaína', 'Sedantes', OTRA_SUSTANCIA],
+    'México':               ['Alcohol', 'Marihuana', 'Metanfetamina', 'Cocaína', 'Sedantes', OTRA_SUSTANCIA],
+    'México CIJ':           ['Alcohol', 'Marihuana', 'Metanfetamina', 'Cocaína', 'Sedantes', OTRA_SUSTANCIA],
+    'México Monte Fénix':   ['Alcohol', 'Marihuana', 'Metanfetamina', 'Cocaína', 'Sedantes', OTRA_SUSTANCIA],
+    'México Mahanaim':      ['Alcohol', 'Marihuana', 'Metanfetamina', 'Cocaína', 'Sedantes', OTRA_SUSTANCIA],
+}
+
+# Etiqueta visible por país. México presenta cocaína y crack como una sola
+# opción en su formulario, así que sus días van todos a cocaina_total.
+ETIQUETAS_POR_PAIS = {
+    'México':               {'Cocaína': 'Cocaína/crack', 'Metanfetamina': 'Metanfetamina (cristal)'},
+    'México CIJ':           {'Cocaína': 'Cocaína/crack', 'Metanfetamina': 'Metanfetamina (cristal)'},
+    'México Monte Fénix':   {'Cocaína': 'Cocaína/crack', 'Metanfetamina': 'Metanfetamina (cristal)'},
+    'México Mahanaim':      {'Cocaína': 'Cocaína/crack', 'Metanfetamina': 'Metanfetamina (cristal)'},
+    'Ecuador':              {'Pasta Base': 'Pasta Base/basuco'},
+}
+
+# Sinónimos y erratas del histórico, de cuando el campo era texto libre.
+# El orden importa: 'pasta base' antes que 'base', 'crack' antes que 'cocaina'.
+_SINONIMOS = [
+    (['pasta base', 'pasta basica', 'pastabase', 'papelillo', 'pbc', 'basuco', 'bazuco'], 'Pasta Base'),
+    (['metanfet', 'anfetam', 'cristal', 'crystal'],                                       'Metanfetamina'),
+    (['crack', 'piedra', 'paco'],                                                         'Crack'),
+    (['heroina', 'heroína', 'heroin'],                                                    'Heroína'),
+    (['alcohol', 'alchol', 'cerveza', 'licor', 'aguard', 'beer', 'wine', 'ron'],           'Alcohol'),
+    (['marihu', 'marhuana', 'cannabis', 'cannbis', 'marij', 'weed', 'crispy'],             'Marihuana'),
+    (['cocain', 'cocai', 'perico', 'coke'],                                               'Cocaína'),
+    (['sedant', 'benzod', 'tranqui', 'clonaz', 'diazep', 'rivotril'],                      'Sedantes'),
+]
+
+# Respuestas que no nombran una sustancia: se descartan, no van a 'Otra'.
+_SIN_SUSTANCIA = ['ninguno', 'ninguna', 'niega', 'no aplica', 'no consume', 'nada',
+                  'ludopatia', 'juego', 'apuesta', 'gaming', 'azar']
+
+
+def _limpiar_declaracion(texto):
+    """Deja la primera sustancia declarada, sin paréntesis ni conectores."""
+    raw = str(texto).strip()
+    if raw in ('0', ''):
+        return None
+    raw = re.split(r'[\r\n]', raw)[0].strip()
+    raw = re.sub(r'\(.*?\)', '', raw).strip()
+    raw = re.sub(r'^(las dos|ambas|los dos|ambos)[,\s]+', '', raw, flags=re.IGNORECASE).strip()
+    return re.split(r'\s+y\s+|[/,+]', raw, maxsplit=1)[0].strip()
+
+
+def clasificar_sustancia(texto, pais=None):
+    """
+    Devuelve la categoría canónica de una sustancia principal declarada.
+
+    Si `pais` viene dado, cualquier sustancia que no esté en la lista de ese
+    país cae en 'Otra sustancia'. Sin `pais`, devuelve la categoría canónica
+    sin filtrar, para usos que no dependen del formulario.
+
+    Devuelve None cuando no hay declaración o cuando lo declarado no es una
+    sustancia (ninguna, ludopatía). Esos casos son ausencia de dato y quedan
+    fuera del denominador.
+    """
+    if texto is None or (isinstance(texto, float) and pd.isna(texto)):
+        return None
+    primera = _limpiar_declaracion(texto)
+    if not primera:
+        return None
+    n = _norm_str(primera)
+    if any(x in n for x in _SIN_SUSTANCIA):
+        return None
+
+    cat = next((c for claves, c in _SINONIMOS if any(k in n for k in claves)), OTRA_SUSTANCIA)
+
+    if pais is not None:
+        permitidas = CATEGORIAS_POR_PAIS.get(pais)
+        if permitidas is not None and cat not in permitidas:
+            return OTRA_SUSTANCIA
+    return cat
+
+
+def categorias_pais(pais):
+    """Categorías que se dibujan para ese país, siempre todas y en orden fijo."""
+    return list(CATEGORIAS_POR_PAIS.get(pais, list(SUSTANCIA_A_COLUMNA.keys())))
+
+
+def etiqueta_sustancia(categoria, pais=None):
+    """Nombre visible de la categoría en los gráficos de ese país."""
+    return ETIQUETAS_POR_PAIS.get(pais, {}).get(categoria, categoria)

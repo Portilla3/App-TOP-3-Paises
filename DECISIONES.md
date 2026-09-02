@@ -26,6 +26,61 @@ su cabecera y el README abre con la tabla de archivo a país.
 
 ---
 
+### El denominador excluye los sin dato solo si la pregunta no correspondía
+**Regla.** Ningún porcentaje ni promedio cuenta en su denominador a un paciente
+que no tenía el dato, **salvo en consumo de sustancias**. En trabajo, educación
+y transgresión el vacío sale del denominador. En consumo de sustancias el vacío
+se completa con cero y entra. Todo gráfico muestra el N sobre el que se calculó.
+
+**Fundamento.** La ausencia significa cosas distintas según la pregunta. En
+trabajo y educación existe la casilla "no aplica": un jubilado no tiene días que
+reportar y contarlo como cero diría que estuvo disponible y no asistió. En
+transgresión la pregunta es Sí/No, así que un vacío es una respuesta que no se
+dio. En consumo, en cambio, el instrumento no admite "no aplica", y los vacíos
+que hay vienen del bug del formulario que borró los ceros durante cinco meses.
+Sacarlos del denominador excluiría a quienes sí respondieron, y respondieron
+cero: la prevalencia de marihuana en Perú pasaría de 10,5 % a 23,2 % sin que
+nadie hubiera empezado a consumir.
+
+**Consecuencia asumida.** Mientras los 1.115 valores sigan sin completarse, el
+denominador de sustancias incluye registros cuyo cero es inferido. Al ejecutar
+ese completado la distinción desaparece, porque ya no habrá vacíos.
+
+*2026-09-02*
+
+### La sustancia declarada que no está en la lista del país va a Otra sustancia
+**Regla.** Cada país tiene su lista cerrada de sustancia principal en el
+formulario, y esa lista es la taxonomía. Lo que se declare fuera de ella cae en
+`Otra sustancia`, que tiene columna de días propia. Heroína en Ecuador es
+Heroína; heroína en México es Otra sustancia.
+
+**Fundamento.** La lista del formulario coincide con las columnas de días que
+ese país mide. Una categoría sin columna no puede tener barra: quedaría vacía o
+con un cero falso. Y no es una decisión de análisis, es leer lo que el
+instrumento ya hizo: un mexicano no puede elegir heroína, no está en su lista,
+así que la escribió en el campo de otra sustancia.
+
+**Dónde vive.** `clasificar_sustancia()` en `pipeline/validacion_top.py`, con
+`CATEGORIAS_POR_PAIS` como taxonomía madre. Antes estaba copiada en diez módulos
+con tres vocabularios distintos, y eso dejaba fuera al 12 % de los pacientes.
+
+*2026-09-02*
+
+### Los gráficos muestran todas las categorías del país, siempre
+**Regla.** Tanto los de prevalencia como los de promedio de días dibujan las seis
+categorías del país, siete en Ecuador, aunque alguna venga en cero. Los de
+promedio llevan el n de cada barra debajo.
+
+**Fundamento.** Elegir las más frecuentes hacía que los dos gráficos mostraran
+sustancias distintas, y ya produjo el caso de Sedantes apareciendo en el de días
+y no en el de prevalencia. Con la lista fija son comparables entre centros, entre
+países y en el tiempo. El n debajo evita que una barra de siete pacientes se lea
+con el mismo peso que una de trescientos.
+
+*2026-09-02*
+
+---
+
 ## Instrumento
 
 ### El campo sexo usa H/M/O en los cuatro países

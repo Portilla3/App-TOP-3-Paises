@@ -8,6 +8,32 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### `clasificar_sustancia()` reemplaza diez clasificadores copiados
+`pipeline/validacion_top.py` incorpora la taxonomía madre: `CATEGORIAS_POR_PAIS`
+con la lista cerrada de cada formulario, `SUSTANCIA_A_COLUMNA` con su columna de
+días, y `clasificar_sustancia(texto, pais)` que aplica la regla de que lo
+declarado fuera de la lista del país cae en `Otra sustancia`.
+
+Antes el clasificador estaba copiado en diez módulos, con tres vocabularios
+distintos: `wide_top.py` devolvía `Marihuana`, `caract_excel.py` esperaba
+`Cannabis/Marihuana` y el panel usaba `Inhalables` donde otro usaba
+`Inhalantes`. El mapeo `_CAT_A_COL` del panel fue escrito contra un vocabulario
+y recibía datos clasificados con otro, así que cuatro de sus siete claves nunca
+coincidían con nada.
+
+Medido sobre las 548 declaraciones de Perú: llegaban al gráfico 482, el 88 %.
+Ahora llegan las 548. Los 53 pacientes de marihuana entran en su categoría; los
+9 de crack y 4 de tabaco entran en `Otra sustancia`, porque el formulario
+peruano no mide sus días.
+
+`_norm_str()` también se muda a `validacion_top.py`, por ser criterio de
+normalización de texto.
+
+### Borrados `pdf_caract.py` y `pdf_seg.py`
+1.794 líneas que ningún flujo alcanzaba. El runner mapea la clave `pdf_caract` a
+`word_caract.py` y `pdf_seg` a `word_seg.py`. Contenían dos de las diez copias
+del clasificador, y una de ellas ya había recibido un arreglo sin efecto.
+
 ### Documentado que `index.html` es el formulario de Perú
 El archivo no sigue la convención `index_<pais>.html` de los otros seis y eso ya
 indujo a error más de una vez, incluida una conclusión equivocada de que Perú no
