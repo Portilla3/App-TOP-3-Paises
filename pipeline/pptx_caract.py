@@ -259,13 +259,15 @@ def cargar_datos():
     hoy = pd.Timestamp.now()
 
     # Sexo
-    n_h = n_m = 0; pct_h = pct_m = 0.0
+    n_h = n_m = n_o = 0; pct_h = pct_m = pct_o = 0.0
     if DC['sexo']:
         sc = normalizar_sexo(df[DC['sexo']])
-        nv = int(sc.isin(['H','M']).sum())
-        n_h = int((sc=='H').sum()); n_m = int((sc=='M').sum())
+        # El N válido incluye 'Otro': es una respuesta, no un dato faltante.
+        nv = int(sc.notna().sum())
+        n_h = int((sc=='H').sum()); n_m = int((sc=='M').sum()); n_o = int((sc=='O').sum())
         pct_h = round(n_h/nv*100,1) if nv else 0
         pct_m = round(n_m/nv*100,1) if nv else 0
+        pct_o = round(n_o/nv*100,1) if nv else 0
 
     # Edad
     edad_media = 0; edad_grupos = []
@@ -379,7 +381,7 @@ def cargar_datos():
         return {'n':n_,'pct':round(n_/nv_*100,1)}
     viv1 = viv(DC['viv1']); viv2 = viv(DC['viv2'])
 
-    return dict(N=N, n_h=n_h, n_m=n_m, pct_h=pct_h, pct_m=pct_m,
+    return dict(N=N, n_h=n_h, n_m=n_m, n_o=n_o, pct_h=pct_h, pct_m=pct_m, pct_o=pct_o,
                 edad_media=edad_media, edad_grupos=edad_grupos,
                 sust_ppal=sust_ppal, sust_top1=sust_top1, sust_top1_pct=sust_top1_pct,
                 dias_princ=dias_princ, consumo_pct=consumo_pct, dias_sust=dias_sust,
@@ -389,10 +391,11 @@ def cargar_datos():
 # ── Gráficos ──────────────────────────────────────────────────────────────────
 def g_sexo(d):
     fig, ax = plt.subplots(figsize=(4,3))
-    vals = [d['n_h'], d['n_m']]; labs = ['Hombre','Mujer']
-    cols = ['#2E75B6','#00B0F0']
+    # Las tres categorías del instrumento, aunque alguna venga en cero.
+    vals = [d['n_h'], d['n_m'], d.get('n_o', 0)]; labs = ['Hombre','Mujer','Otro']
+    cols = ['#2E75B6','#00B0F0','#BDD7EE']
     bars = ax.bar(labs, vals, color=cols, width=0.5, zorder=3)
-    for bar, v, p in zip(bars, vals, [d['pct_h'],d['pct_m']]):
+    for bar, v, p in zip(bars, vals, [d['pct_h'], d['pct_m'], d.get('pct_o', 0)]):
         ax.text(bar.get_x()+bar.get_width()/2, bar.get_height()+0.3,
                 f'{v}\n({p}%)', ha='center', va='bottom', fontsize=10, fontweight='bold', color='#333')
     ax.set_ylim(0, max(vals)*1.35 if max(vals)>0 else 1)

@@ -8,6 +8,19 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### Cuatro módulos dejaban fuera del informe a quien declaró otro sexo
+`caract_excel.py`, `word_caract.py`, `word_seg.py` y `pptx_caract.py` calculaban
+el N válido de sexo con `isin(['H','M'])`, así que las personas con `O` no
+entraban ni al denominador ni al gráfico. El panel sí las contaba, de modo que
+Perú y Ecuador daban un N distinto en cada salida. Son dos personas, una en cada
+país. El N válido pasa a ser `notna()` y los cuatro módulos dibujan las tres
+categorías del instrumento, aunque alguna venga en cero.
+
+El pie del informe pasa a decir los dos números: cuántas personas ingresaron y
+sobre cuántas se calcularon los porcentajes.
+
+Doce pruebas nuevas, ciento dos en total.
+
 ### Los rangos de edad se calculaban con dos criterios distintos
 El panel clasificaba con `int(edad) < 18` y los cuatro módulos de reporte con
 `pd.cut(bins=[0,17,30,...])`. Como la edad es un número con decimales, alguien

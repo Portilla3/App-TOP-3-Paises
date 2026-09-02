@@ -330,12 +330,18 @@ def build_report(wb, d, N, DC):
     R = hdrs(ws, R, ['Sexo', 'n', '%', '', ''])
     if DC['sexo']:
         sc = normalizar_sexo(d[DC['sexo']])
-        nv_sex = int(sc.isin(['H','M']).sum())
-        n_h = int((sc=='H').sum()); n_m = int((sc=='M').sum())
-        R = drow(ws, R, ['Hombre', n_h, round(n_h/nv_sex*100,1) if nv_sex>0 else 0, '', ''], alt=False)
-        R = drow(ws, R, ['Mujer',  n_m, round(n_m/nv_sex*100,1) if nv_sex>0 else 0, '', ''], alt=True)
+        # El N válido incluye 'Otro': es una respuesta, no un dato faltante.
+        nv_sex = int(sc.notna().sum())
+        n_h = int((sc=='H').sum()); n_m = int((sc=='M').sum()); n_o = int((sc=='O').sum())
+        # Las tres categorías del instrumento, aunque alguna venga en cero.
+        for i, (lbl, n_x) in enumerate([('Hombre', n_h), ('Mujer', n_m), ('Otro', n_o)]):
+            R = drow(ws, R, [lbl, n_x, round(n_x/nv_sex*100,1) if nv_sex>0 else 0, '', ''],
+                     alt=i%2==1)
         R = drow(ws, R, ['N válido', nv_sex, '100%', '', ''], ba=True)
-        R = note(ws, R, f'N válido = {nv_sex} personas con sexo registrado (H=Hombre, M=Mujer).')
+        _sin = N - nv_sex
+        R = note(ws, R, f'Ingresaron {N} personas. Los porcentajes se calculan sobre las '
+                        f'{nv_sex} con sexo registrado' +
+                        (f'; en {_sin} el campo viene vacío.' if _sin > 0 else '.'))
     else:
         R = note(ws, R, 'Columna Sexo no encontrada en la base.')
 

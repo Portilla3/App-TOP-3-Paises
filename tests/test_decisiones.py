@@ -340,3 +340,35 @@ def test_la_deduplicacion_del_wide_conserva_el_top_de_ingreso():
         src = fh.read()
     assert 'drop_duplicates(subset=[COL_CODIGO, COL_FECHA]' not in src
     assert '_clave_dedup' in src
+
+
+# ── El sexo tiene tres categorías, y "Otro" es una respuesta ───────────────
+
+def test_ningun_modulo_excluye_otro_del_n_valido():
+    """`isin(['H','M'])` dejaba fuera del informe a quien declaró otro sexo,
+    mientras el panel sí lo contaba. Son 2 personas al 2026-09-02."""
+    culpables = []
+    for m in REPORTES:
+        src = _fuente(m)
+        for linea in src.splitlines():
+            if "isin(['H','M'])" in linea.replace(' ', '') and not linea.strip().startswith('#'):
+                culpables.append(m)
+                break
+    assert not culpables, 'excluyen Otro del N válido: ' + ', '.join(culpables)
+
+
+def test_los_rangos_de_edad_no_se_calculan_a_mano():
+    """El panel usaba int(edad) y los reportes pd.cut con bins distintos."""
+    culpables = [m for m in REPORTES if 'bins=[0,17,30' in _fuente(m).replace(' ', '')]
+    assert not culpables, 'calculan rangos de edad a mano: ' + ', '.join(culpables)
+
+
+@pytest.mark.parametrize('edad,esperado', [
+    (17, 'Menos de 18'), (17.5, 'Menos de 18'), (17.99, 'Menos de 18'),
+    (18, '18 a 30'), (30.9, '18 a 30'), (31, '31 a 40'),
+    (60, '51 a 60'), (61, '61 o más'), (None, None),
+])
+def test_el_rango_etario_cuenta_anios_cumplidos(edad, esperado):
+    """Quien tiene 17 años y medio no está en el rango de 18 a 30."""
+    from pipeline.validacion_top import rango_etario
+    assert rango_etario(edad) == esperado

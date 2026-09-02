@@ -303,7 +303,8 @@ def cargar_datos():
     # Sexo
     if DC['sexo']:
         sc=normalizar_sexo(seg[DC['sexo']])
-        nv=int(sc.isin(['H','M']).sum())
+        # El N válido incluye 'Otro': es una respuesta, no un dato faltante.
+        nv=int(sc.notna().sum())
         R['n_hombre']=int((sc=='H').sum()); R['n_mujer']=int((sc=='M').sum()); R['nv_sex']=nv
         R['pct_hombre']=round(R['n_hombre']/nv*100,1) if nv>0 else 0
         R['pct_mujer']=round(R['n_mujer']/nv*100,1) if nv>0 else 0

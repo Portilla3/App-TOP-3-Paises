@@ -309,13 +309,19 @@ def cargar_datos():
     # Sexo
     if DC['sexo']:
         sc=normalizar_sexo(df[DC['sexo']])
-        nv=int(sc.isin(['H','M']).sum())
+        # El N válido incluye 'Otro': es una respuesta, no un dato faltante.
+        # Antes se calculaba con isin(['H','M']) y esas personas desaparecían del
+        # informe, mientras el panel sí las contaba.
+        nv=int(sc.notna().sum())
         R['n_hombre']=int((sc=='H').sum()); R['n_mujer']=int((sc=='M').sum())
+        R['n_otro']=int((sc=='O').sum())
         R['nv_sex']=nv
         R['pct_hombre']=round(R['n_hombre']/nv*100,1) if nv>0 else 0
         R['pct_mujer']=round(R['n_mujer']/nv*100,1) if nv>0 else 0
+        R['pct_otro']=round(R['n_otro']/nv*100,1) if nv>0 else 0
     else:
-        R['n_hombre']=R['n_mujer']=R['nv_sex']=0; R['pct_hombre']=R['pct_mujer']=0
+        R['n_hombre']=R['n_mujer']=R['n_otro']=R['nv_sex']=0
+        R['pct_hombre']=R['pct_mujer']=R['pct_otro']=0
 
     # Edad
     if DC['fn_col'] and DC['fecha']:
@@ -428,8 +434,9 @@ def cargar_datos():
 # ══════════════════════════════════════════════════════════════════════════════
 def g_sexo(R):
     fig,ax=plt.subplots(figsize=(5,3.5))
-    vals=[R['n_hombre'],R['n_mujer']]
-    bars=ax.bar(['Hombre','Mujer'],vals,color=[MC_MID,MC_ACCENT],width=0.5,zorder=3)
+    # Las tres categorías del instrumento, aunque alguna venga en cero.
+    vals=[R['n_hombre'],R['n_mujer'],R.get('n_otro',0)]
+    bars=ax.bar(['Hombre','Mujer','Otro'],vals,color=[MC_MID,MC_ACCENT,MC_LIGHT],width=0.5,zorder=3)
     for bar,val in zip(bars,vals):
         pct=round(val/R['nv_sex']*100,1) if R['nv_sex']>0 else 0
         ax.text(bar.get_x()+bar.get_width()/2,bar.get_height()+0.5,
@@ -612,10 +619,16 @@ def build_word(R):
     add_subsection(doc,'1.1. Distribución de Personas según Sexo')
     buf,w=fig_to_img(g_sexo(R),11)
     add_picture_kwnext(doc,buf,w)
+    _otro=(f' y {R["n_otro"]} ({R["pct_otro"]}%) declaran otro'
+           if R.get('n_otro') else '')
     add_body(doc,
-        f'Del total de {R["N"]} personas, {R["n_hombre"]} ({R["pct_hombre"]}%) son hombres '
-        f'y {R["n_mujer"]} ({R["pct_mujer"]}%) son mujeres.')
-    add_note(doc,f'N válido: {R["nv_sex"]} personas.')
+        f'De las {R["nv_sex"]} personas con sexo registrado, {R["n_hombre"]} '
+        f'({R["pct_hombre"]}%) son hombres, {R["n_mujer"]} ({R["pct_mujer"]}%) '
+        f'son mujeres{_otro}.')
+    _faltan=R['N']-R['nv_sex']
+    add_note(doc, f'Ingresaron {R["N"]} personas. Los porcentajes se calculan sobre '
+                  f'las {R["nv_sex"]} con sexo registrado' +
+                  (f'; en {_faltan} el campo viene vacío.' if _faltan else '.'))
     doc.add_paragraph()
 
     add_subsection(doc,'1.2. Distribución de Personas según Edad')
