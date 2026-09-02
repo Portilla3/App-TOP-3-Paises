@@ -19,7 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pipeline.validacion_top import (  # noqa: E402
     CATEGORIAS_POR_PAIS, OTRA_SUSTANCIA, SUSTANCIA_A_COLUMNA,
-    categorias_pais, clasificar_sustancia, es_flag_activo, normalizar_sexo_valor,
+    categorias_pais, clasificar_sustancia, detectar_pais, es_flag_activo,
+    normalizar_sexo_valor,
 )
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -166,3 +167,26 @@ def test_los_modulos_pdf_siguen_borrados():
     for m in ['pdf_caract', 'pdf_seg']:
         ruta = os.path.join(RAIZ, 'pipeline', m + '.py')
         assert not os.path.exists(ruta), f'{m}.py volvió a aparecer'
+
+
+# ── El país se deduce de los datos, no del nombre del archivo ──────────────
+
+def test_pais_se_lee_de_la_columna_cuando_existe():
+    """La tabla de Supabase la llama `pais` y el Base Wide `pais_TOP1`."""
+    assert detectar_pais(pd.DataFrame({'pais': ['Ecuador'] * 3})) == 'Ecuador'
+    assert detectar_pais(pd.DataFrame({'pais_TOP1': ['El Salvador'] * 3})) == 'El Salvador'
+
+
+def test_pais_no_se_deduce_de_columnas_vacias():
+    """El Wide genera columnas para todas las sustancias, llenas o no."""
+    df = pd.DataFrame({'heroina_total': [None, None], 'crack_total': [3, 5]})
+    assert detectar_pais(df) == 'El Salvador'
+
+
+def test_pais_desconocido_devuelve_none():
+    assert detectar_pais(pd.DataFrame({'algo': [1, 2]})) is None
+
+
+def test_sin_pais_no_se_filtra_de_mas():
+    """Sin país conocido, la categoría canónica se devuelve sin recortar."""
+    assert clasificar_sustancia('heroina', None) == 'Heroína'

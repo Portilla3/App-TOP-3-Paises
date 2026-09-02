@@ -8,6 +8,20 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### `detectar_pais()` lee el país de los datos, no del nombre del archivo
+`word_caract.py` y los otros tres módulos que conocían el país lo sacaban de
+`_extraer_pais(os.path.basename(wide_file))`, y el runner tenía que neutralizar
+esa llamada al cargar el módulo. `caract_excel.py` y `seg_excel.py` no lo
+intentaban siquiera.
+
+La columna existe en los dos formatos: `pais` en la tabla de Supabase y
+`pais_TOP1` en el Base Wide. `detectar_pais()` la busca ahí primero, y solo si
+no aparece deduce el país por las columnas de días que traen datos. Esa segunda
+vía tiene que mirar el contenido y no la presencia de la columna, porque el Wide
+genera columnas para todas las sustancias del sistema estén llenas o no: el Base
+Wide de El Salvador trae las doce columnas de heroína y las doce de pasta base,
+todas vacías.
+
 ### `clasificar_sustancia()` reemplaza diez clasificadores copiados
 `pipeline/validacion_top.py` incorpora la taxonomía madre: `CATEGORIAS_POR_PAIS`
 con la lista cerrada de cada formulario, `SUSTANCIA_A_COLUMNA` con su columna de

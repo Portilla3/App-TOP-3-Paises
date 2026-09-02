@@ -317,3 +317,43 @@ def categorias_pais(pais):
 def etiqueta_sustancia(categoria, pais=None):
     """Nombre visible de la categoría en los gráficos de ese país."""
     return ETIQUETAS_POR_PAIS.get(pais, {}).get(categoria, categoria)
+
+
+# Palabras que delatan el país por las sustancias que mide su formulario.
+# Se evalúan en orden: Ecuador antes que Perú, porque Ecuador tiene pasta base
+# además de heroína.
+_HUELLA_PAIS = [
+    ('heroina',       'Ecuador'),
+    ('crack',         'El Salvador'),
+    ('metanfetamina', 'México'),
+    ('pastabase',     'Perú'),
+    ('pasta base',    'Perú'),
+]
+
+
+def detectar_pais(df):
+    """
+    Devuelve el país de un conjunto de registros.
+
+    Primero busca una columna de país, que existe tanto en la tabla de Supabase
+    (`pais`) como en el Base Wide (`pais_TOP1`). Solo si no la encuentra recurre
+    a deducirlo por las columnas de días que traen datos, porque el Wide genera
+    columnas para todas las sustancias del sistema estén llenas o no, y la sola
+    presencia de `heroina_total` no dice nada.
+
+    Devuelve None si no logra determinarlo, y en ese caso quien llame debe
+    permitir todas las categorías en vez de filtrar de más.
+    """
+    for col in df.columns:
+        if _norm_str(col).split('_')[0] in ('pais', 'country'):
+            vals = df[col].dropna().astype(str).str.strip()
+            if not vals.empty:
+                return vals.mode().iloc[0]
+
+    presentes = set()
+    for col in df.columns:
+        n = _norm_str(col)
+        for huella, _ in _HUELLA_PAIS:
+            if huella in n and df[col].notna().any():
+                presentes.add(huella)
+    return next((p for huella, p in _HUELLA_PAIS if huella in presentes), None)
