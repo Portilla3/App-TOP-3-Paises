@@ -29,6 +29,10 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
+from pipeline.validacion_top import (
+    OTRA_SUSTANCIA, categorias_pais, clasificar_sustancia, detectar_pais,
+    etiqueta_sustancia,
+)
 
 
 COLOR_BARRA  = '#004AAD'   # from config PALETA_PRINCIPAL
@@ -157,12 +161,21 @@ def _calcular_sustancias(df):
     if tmp.empty:
         return vacio
 
-    total = len(tmp)
+    pais = detectar_pais(tmp)
+    tmp['categoria'] = tmp['sustancia_principal'].apply(
+        lambda v: clasificar_sustancia(v, pais)
+    )
+    tmp['subclase'] = tmp['sustancia_principal'].apply(
+        lambda v: _clasificar(v)[1]
+    )
 
-    # Clasificar cada fila
-    clasificaciones = tmp['sustancia_principal'].apply(_clasificar)
-    tmp['categoria']  = clasificaciones.apply(lambda t: t[0])
-    tmp['subclase']   = clasificaciones.apply(lambda t: t[1])
+    # Denominador: los que declararon una sustancia. Los que dejaron la pregunta
+    # en blanco, o escribieron 'ninguna', quedan fuera y no diluyen los
+    # porcentajes de los demás.
+    tmp = tmp[tmp['categoria'].notna()]
+    total = len(tmp)
+    if total == 0:
+        return vacio
 
     # Conteos por categoría
     conteos = tmp.groupby('categoria').size().to_dict()
@@ -186,34 +199,23 @@ def _calcular_sustancias(df):
 
     otras_desglose['_sin_reconocer_detalle'] = sin_reconocer_detalle
 
-    # Ranking: categorías principales ordenadas por conteo desc
-    principales = []
-    for cat in ORDEN_CATEGORIAS:
-        n = int(conteos.get(cat, 0))
-        if n > 0:
-            principales.append({'categoria': cat, 'n': n})
-    principales.sort(key=lambda d: -d['n'])
+    # Todas las categorías del país, siempre, aunque alguna venga en cero.
+    # Antes había un corte de las cinco más frecuentes, y por eso este gráfico y
+    # el de días de consumo mostraban sustancias distintas: Tusi entraba al top
+    # cinco y Sedantes quedaba fuera, pese a ser categoría del instrumento.
+    filas = [{'categoria': cat,
+              'etiqueta':  etiqueta_sustancia(cat, pais),
+              'n':         int(conteos.get(cat, 0))}
+             for cat in categorias_pais(pais)]
 
-    # Corte top 5: las que queden fuera se suman a "Otras"
-    TOP_N = 5
-    if len(principales) > TOP_N:
-        top     = principales[:TOP_N]
-        fuera   = principales[TOP_N:]
-        n_fuera = sum(d['n'] for d in fuera)
-    else:
-        top     = principales
-        n_fuera = 0
-
-    filas = list(top)
-    n_otras = int(conteos.get('Otras', 0)) + n_fuera
-    if n_otras > 0:
-        filas.append({'categoria': 'Otras', 'n': n_otras})
-
-    if not filas:
-        return vacio
+    # Se ordenan por frecuencia para leerlas de un vistazo, con Otra sustancia
+    # siempre al final por ser el cajón de lo que no está en la lista.
+    filas.sort(key=lambda d: (d['categoria'] == OTRA_SUSTANCIA, -d['n']))
 
     ranking = pd.DataFrame(filas)
-    ranking['pct'] = ranking['n'] / total * 100
+    # El denominador son los que declararon algo. Quien no contestó la pregunta
+    # no es un paciente sin sustancia principal, es un dato que falta.
+    ranking['pct'] = ranking['n'] / total * 100 if total else 0
 
     return {
         'ranking': ranking,

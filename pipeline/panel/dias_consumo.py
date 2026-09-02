@@ -39,20 +39,10 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from pipeline.panel.config import titulo_seccion
-from pipeline.panel.sustancia import _clasificar_sustancia   # reutiliza la misma taxonomía
-from pipeline.validacion_top import dias_validos_mes          # criterio compartido con wide_top.py
-
-
-# Mapeo categoría canónica → columna _total en Supabase
-_CAT_A_COL = {
-    'Alcohol':         'alcohol_total',
-    'Cannabis/Marihuana': 'marihuana_total',
-    'Cocaína':         'cocaina_total',
-    'Crack/Cristal':   'crack_total',
-    'Pasta base':      'pastabase_total',
-    'Metanfetamina':   'metanfetamina_total',
-    'Sedantes':        'sedantes_total',
-}
+from pipeline.validacion_top import (
+    SUSTANCIA_A_COLUMNA, categorias_pais, clasificar_sustancia, detectar_pais,
+    dias_validos_mes, etiqueta_sustancia,
+)
 
 COLOR_BARRA   = '#004AAD'   # PALETA_PRINCIPAL
 COLOR_REF     = '#B0B8C1'   # from config PALETA_REF_LINE
@@ -62,10 +52,12 @@ ALTO_BARRA_PX = 32
 
 def _calcular_dias(df):
     """
-    Filtra etapa=ingreso, clasifica sustancia_principal y calcula el promedio
-    de días de consumo para cada categoría canónica con columna _total disponible.
+    Filtra etapa=ingreso, clasifica la sustancia principal según la lista del
+    país y calcula el promedio de días de consumo de cada categoría.
 
-    Retorna lista de dicts ordenados desc por promedio.
+    Devuelve **todas** las categorías del país, en el orden del formulario y
+    aunque alguna no tenga ningún caso. Elegir solo las más frecuentes hacía que
+    este gráfico y el de prevalencia mostraran sustancias distintas.
     """
     cols_req = {'etapa', 'sustancia_principal'}
     if df is None or df.empty or not cols_req.issubset(df.columns):
@@ -75,47 +67,58 @@ def _calcular_dias(df):
     if df_ing.empty:
         return []
 
-    # Clasificar sustancia principal (reutiliza taxonomía de sustancia.py)
+    pais = detectar_pais(df_ing)
     df_ing['_cat'] = df_ing['sustancia_principal'].apply(
-        lambda v: _clasificar_sustancia(v)[0]
+        lambda v: clasificar_sustancia(v, pais)
     )
 
     resultado = []
-    for cat, col in _CAT_A_COL.items():
-        if col not in df_ing.columns:
-            continue
-        # Solo pacientes que declararon esta categoría como principal
+    for cat in categorias_pais(pais):
+        col = SUSTANCIA_A_COLUMNA.get(cat)
         mask = df_ing['_cat'] == cat
-        if not mask.any():
+        n_cat = int(mask.sum())
+
+        if col is None or col not in df_ing.columns:
+            resultado.append({'sustancia': cat, 'etiqueta': etiqueta_sustancia(cat, pais),
+                              'promedio': None, 'n': 0, 'n_cat': n_cat})
             continue
-        serie = dias_validos_mes(df_ing.loc[mask, col])
-        # Se incluyen los ceros. Aqui solo entran los pacientes que declararon
+
+        # Se incluyen los ceros. Aquí solo entran los pacientes que declararon
         # esta sustancia como su principal, de modo que un cero significa que
-        # ingresaron sin consumo de su propia sustancia problema, tipico de las
-        # derivaciones desde desintoxicacion. Ese cero es su dato real y
+        # ingresaron sin consumo de su propia sustancia problema, típico de las
+        # derivaciones desde desintoxicación. Ese cero es su dato real y
         # excluirlo esconde justamente lo que el indicador quiere mostrar.
-        con_valor = serie.dropna()
-        if con_valor.empty:
-            continue
+        con_valor = dias_validos_mes(df_ing.loc[mask, col]).dropna()
         resultado.append({
             'sustancia': cat,
-            'promedio':  round(con_valor.mean(), 1),
+            'etiqueta':  etiqueta_sustancia(cat, pais),
+            'promedio':  round(con_valor.mean(), 1) if len(con_valor) else None,
             'n':         len(con_valor),
-            'n_cat':     int(mask.sum()),   # total que declararon esta como principal
+            'n_cat':     n_cat,
         })
 
-    resultado.sort(key=lambda x: x['promedio'], reverse=True)
+    # Las que tienen casos van primero, de mayor a menor promedio; las vacías
+    # cierran el gráfico sin desaparecer de él.
+    resultado.sort(key=lambda x: (x['promedio'] is None, -(x['promedio'] or 0)))
     return resultado
 
 
 def _figura(datos):
-    labels  = [d['sustancia'] for d in datos]
-    valores = [d['promedio']  for d in datos]
-    textos  = [f"<b>{d['promedio']}</b>" for d in datos]
+    # El n va bajo cada barra: sin él, siete pacientes se leen con el mismo peso
+    # que trescientos, y ahora se muestran todas las categorías del país.
+    labels  = [f"{d['etiqueta']}<br><span style='font-size:9px'>n = {d['n']}</span>"
+               for d in datos]
+    valores = [d['promedio'] or 0 for d in datos]
+    textos  = [f"<b>{d['promedio']}</b>" if d['promedio'] is not None else ''
+               for d in datos]
     hovers  = [
-        f"<b>{d['sustancia']}</b><br>"
-        f"Promedio: {d['promedio']} días<br>"
-        f"Pacientes con consumo: {d['n']} de {d['n_cat']} que la declararon principal"
+        f"<b>{d['etiqueta']}</b><br>" + (
+            f"Promedio: {d['promedio']} días<br>"
+            f"Con dato de días: {d['n']} de {d['n_cat']} que la declararon principal"
+            if d['promedio'] is not None else
+            f"Sin registro de días<br>"
+            f"La declararon principal: {d['n_cat']}"
+        )
         for d in datos
     ]
 
@@ -166,6 +169,7 @@ def _figura(datos):
         xaxis=dict(
             title=None,
             tickfont=dict(size=10),
+            tickangle=0,
             fixedrange=True,
         ),
         bargap=0.35,

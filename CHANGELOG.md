@@ -8,6 +8,30 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### El panel aplica la taxonomía por país y muestra todas las categorías
+`pipeline/panel/dias_consumo.py` y `pipeline/panel/sustancia.py` usan
+`clasificar_sustancia()` con el país detectado de los datos, en lugar del mapeo
+`_CAT_A_COL`, cuyas claves nunca coincidían con lo que el clasificador devolvía.
+
+Tres cambios de comportamiento, los tres decididos hoy:
+
+**Se muestran todas las categorías del país**, seis o siete según el formulario,
+aunque alguna venga en cero. El gráfico de prevalencia tenía un corte de las
+cinco más frecuentes, y por eso mostraba Tusi en Perú mientras el de días
+mostraba Sedantes: dos gráficos de la misma pantalla con sustancias distintas.
+Ahora los dos recorren la misma lista.
+
+**El n va bajo cada barra** en el gráfico de días. Al mostrar todas las
+categorías, una barra de siete pacientes se dibuja igual de alta que una de
+trescientos, y sin el n se leen con el mismo peso.
+
+**El denominador de prevalencia son los que declararon una sustancia.** Antes
+era el total de pacientes al ingreso, así que quien dejó la pregunta en blanco
+diluía los porcentajes de los demás y la suma no daba cien.
+
+Las etiquetas siguen la convención de cada país: Ecuador ve "Pasta Base/basuco"
+y México verá "Cocaína/crack", sin que cambie la categoría con que se calcula.
+
 ### El clasificador reconoce las respuestas vacías de una letra
 `clasificar_sustancia()` mandaba a `Otra sustancia` valores como `N`, `-`, `nan`
 o `s/d`, que no nombran ninguna sustancia y deben quedar fuera del denominador.
