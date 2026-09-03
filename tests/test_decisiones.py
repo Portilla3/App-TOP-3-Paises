@@ -372,3 +372,12 @@ def test_el_rango_etario_cuenta_anios_cumplidos(edad, esperado):
     """Quien tiene 17 años y medio no está en el rango de 18 a 30."""
     from pipeline.validacion_top import rango_etario
     assert rango_etario(edad) == esperado
+
+
+def test_un_centro_sin_top_de_ingreso_no_revienta_el_pipeline():
+    """Tres centros no tienen ningún TOP de ingreso. Sin la guarda, pd.DataFrame([])
+    sale sin columnas y procesar_wide falla con KeyError en la clave del episodio."""
+    with open(os.path.join(RAIZ, 'pipeline', 'wide_top.py'), encoding='utf-8') as fh:
+        src = fh.read()
+    assert 'if not top1_rows:' in src
+    assert 'df_top1 = pd.DataFrame(columns=list(df_wide.columns))' in src

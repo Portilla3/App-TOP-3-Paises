@@ -8,6 +8,21 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-09-02
 
+### Un centro sin ningún TOP de ingreso reventaba el pipeline
+`procesar_wide(filtro_centro=...)` fallaba con `KeyError: '_episodio'` cuando el
+centro filtrado no tenía ningún TOP de ingreso: `pd.DataFrame([])` sale sin
+columnas. Son tres centros al 2026-09-02, dos de México y uno de Ecuador. Ahora
+devuelve un Wide vacío con la estructura correcta y lo deja anotado en el log.
+
+Salió al extender la verificación al nivel centro, que es un camino distinto:
+el Wide filtra con `filtro_centro` antes de armar los episodios y el panel filtra
+el DataFrame después.
+
+### La verificación de coincidencia cubre los 91 centros
+`tools/verificar_coincidencia.py` compara ahora por país y por centro. Los 91
+centros dan idéntico en pacientes contados y distribución de sustancia
+principal. Ciento dos pruebas.
+
 ### Cuatro módulos dejaban fuera del informe a quien declaró otro sexo
 `caract_excel.py`, `word_caract.py`, `word_seg.py` y `pptx_caract.py` calculaban
 el N válido de sexo con `isin(['H','M'])`, así que las personas con `O` no

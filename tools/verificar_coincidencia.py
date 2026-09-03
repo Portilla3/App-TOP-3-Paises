@@ -115,6 +115,38 @@ def verificar(ruta):
             fb = '—' if b is None else (f'{b:.1f}' if isinstance(b, float) else str(b))
             print(f'{k:<28}{fa:>10}{fb:>11}   {"" if ok else "DIFIERE"}')
 
+    # ── Nivel centro ────────────────────────────────────────────────────────
+    # El Wide se procesa una sola vez y se filtra por `centro_TOP1`, en vez de
+    # llamar a procesar_wide() por cada centro: son noventa y un centros y el
+    # pipeline completo por cada uno tarda minutos. La diferencia entre ambas
+    # formas solo aparecería en los cuatro pacientes que figuran en dos centros.
+    print(f'\n{"═" * 58}\nPOR CENTRO\n{"═" * 58}')
+    tmp_todo = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+    crudo.to_excel(tmp_todo.name, index=False)
+    tmp_todo.close()
+    wide_todo = procesar_wide(tmp_todo.name)['wide']
+    os.unlink(tmp_todo.name)
+
+    revisados = 0
+    for (pais, cen), sub in crudo.groupby(['pais', 'centro']):
+        revisados += 1
+        lb = lineas_base(sub)
+        w = wide_todo[wide_todo['centro_TOP1'].astype(str).str.strip() == str(cen).strip()]
+        if len(lb) != len(w):
+            problemas.append(f'{pais} · {cen}: N panel {len(lb)} contra reportes {len(w)}')
+            continue
+        if not len(lb):
+            continue
+        p = detectar_pais(lb) or pais
+        ca = lb['sustancia_principal'].apply(lambda v: clasificar_sustancia(v, p))
+        cb = w['sustancia_principal_TOP1'].apply(lambda v: clasificar_sustancia(v, p))
+        na, nb = max(int(ca.notna().sum()), 1), max(int(cb.notna().sum()), 1)
+        for c in categorias_pais(p):
+            a, b = (ca == c).sum() / na * 100, (cb == c).sum() / nb * 100
+            if abs(a - b) >= TOLERANCIA:
+                problemas.append(f'{pais} · {cen} · {c}: {a:.1f} contra {b:.1f}')
+    print(f'{revisados} centros revisados.')
+
     print(f'\n{"═" * 58}')
     if problemas:
         print(f'{len(problemas)} indicadores no coinciden:\n')

@@ -298,7 +298,14 @@ def procesar_wide(input_path: str,
         top1_rows.append(grp.loc[0])
         if len(grp) >= 2: top2_rows.append(grp.loc[1])
 
-    df_top1 = pd.DataFrame(top1_rows).reset_index(drop=True)
+    # Un centro puede no tener ningún TOP de ingreso, y entonces no hay episodios
+    # que armar. Sin esta guarda, pd.DataFrame([]) sale sin columnas y el pipeline
+    # revienta con KeyError al buscar la clave. Al 2026-09-02 son tres centros.
+    if not top1_rows:
+        logs.append('⚠ Sin ningún TOP de ingreso: no hay episodios que reportar')
+        df_top1 = pd.DataFrame(columns=list(df_wide.columns))
+    else:
+        df_top1 = pd.DataFrame(top1_rows).reset_index(drop=True)
     if top2_rows:
         df_top2 = pd.DataFrame(top2_rows).reset_index(drop=True)
         df_top2_alin = (df_top2.set_index(CLAVE)
