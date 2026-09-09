@@ -668,6 +668,12 @@ def _generar_excel(wide, alertas, dupes, COL_CODIGO, COL_CENTRO,
             Pacientes=(COL_CODIGO, 'count'),
             Con_TOP2=('Tiene_TOP2', lambda x: (x=='Sí').sum()),
         ).reset_index()
+        # Con una base vacía —un centro sin ningún TOP de ingreso— la agregación
+        # devuelve columnas de texto vacías, y con pandas 3 la resta entre una
+        # columna entera y una de texto aborta el procesamiento antes de generar
+        # el Excel. Se fuerzan a entero, que es lo que estas dos columnas son.
+        df_pc['Pacientes'] = pd.to_numeric(df_pc['Pacientes'], errors='coerce').fillna(0).astype(int)
+        df_pc['Con_TOP2']  = pd.to_numeric(df_pc['Con_TOP2'],  errors='coerce').fillna(0).astype(int)
         df_pc['Sin_TOP2'] = df_pc['Pacientes'] - df_pc['Con_TOP2']
         df_pc.columns = ['Centro','Pacientes','Con TOP2','Sin TOP2']
         for ci, col in enumerate(df_pc.columns, 1):
