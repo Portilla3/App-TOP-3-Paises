@@ -255,6 +255,12 @@ def cargar_datos():
         NOMBRE_SERVICIO = f'{_pl}  —  Centro {FILTRO_CENTRO}' if _pl else f'Centro {FILTRO_CENTRO}'
 
     N  = len(df)
+    # Un centro sin ningún TOP de ingreso dejaba N en cero y el cálculo de
+    # porcentajes moría con una división por cero. Se avisa en castellano.
+    if N == 0:
+        _cm = f' para el centro "{FILTRO_CENTRO}"' if FILTRO_CENTRO else ''
+        raise ValueError(f'No hay registros de ingreso (TOP1){_cm}. '
+                         f'Verifica el filtro o el período seleccionado.')
     DC = detectar_columnas(cols)
     hoy = pd.Timestamp.now()
 
@@ -282,7 +288,7 @@ def cargar_datos():
             total_e = len(edad)
             edad_grupos = [{'label':l,'n':int((ec==l).sum()),
                             'pct':round(int((ec==l).sum())/total_e*100,1)}
-                           for l in labs if int((ec==l).sum())>0]
+                           for l in RANGOS_ETARIOS if int((ec==l).sum())>0]
 
     # Sustancia principal
     sust_ppal = []; sust_top1 = '—'; sust_top1_pct = 0
