@@ -256,6 +256,15 @@ def cargar_datos():
     N_total = len(df)
     seg = df[df['Tiene_TOP2']=='Sí'].copy().reset_index(drop=True)
     N = len(seg)
+    # Sin pacientes, o sin ninguna segunda medición, la presentación salía vacía
+    # y sin explicación. Mejor decir por qué no hay nada que mostrar.
+    _cm = f' para el centro "{FILTRO_CENTRO}"' if FILTRO_CENTRO else ''
+    if N_total == 0:
+        raise ValueError(f'No hay registros de ingreso (TOP1){_cm}. '
+                         f'Verifica el filtro o el período seleccionado.')
+    if N == 0:
+        raise ValueError(f'Todavía no hay ningún TOP de seguimiento (TOP2){_cm}. '
+                         f'La presentación comparativa necesita al menos una segunda medición.')
     DC = detectar_columnas(seg.columns.tolist())
 
     # Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA. Este script corre como
