@@ -11,7 +11,7 @@ import streamlit as st
 import tempfile, os
 
 from pipeline.wide_top import procesar_wide
-from pipeline.runner import run_script
+from pipeline.runner import run_script, es_falta_de_datos
 
 LABELS = {
     'caract_excel': ('Excel de ingreso', 'Excel', '11 tablas: sexo, edad, sustancias, transgresión'),
@@ -104,7 +104,11 @@ def _boton_reporte(col, key, centro, raw_path):
                     _buf, _fn, _mi = run_script(key, _wp, filtro_centro=centro)
                     st.session_state[f'dl_centro_{key}'] = (_buf, _fn, _mi)
                 except Exception as e:
-                    st.error(f'Error: {str(e)[:200]}')
+                    # Falta de datos del propio centro: nota informativa, no error.
+                    if es_falta_de_datos(e):
+                        st.info(str(e)[:300])
+                    else:
+                        st.error(f'Error: {str(e)[:200]}')
         st.markdown('</div>', unsafe_allow_html=True)
         if f'dl_centro_{key}' in st.session_state:
             _b, _f2, _m = st.session_state[f'dl_centro_{key}']
