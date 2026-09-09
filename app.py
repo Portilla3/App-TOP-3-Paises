@@ -15,7 +15,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pipeline.wide_top import procesar_wide
-from pipeline.runner   import run_script, run_paquetes_centros
+from pipeline.runner   import run_script, run_paquetes_centros, es_falta_de_datos
 from pipeline.panel.data import cargar_datos_pais, invalidar_cache_pais
 from pipeline.panel     import metricas    as panel_metricas
 from pipeline.panel     import semaforo    as panel_semaforo
@@ -1313,7 +1313,10 @@ with tab_reportes:
                     _rq = procesar_wide(st.session_state['supabase_path'])
                     st.session_state['dl_quick_wide'] = _rq['excel_bytes'].getvalue()
                 except Exception as _e:
-                    st.error(f'Error: {_e}')
+                    if es_falta_de_datos(_e):
+                        st.info(str(_e))
+                    else:
+                        st.error(f'Error: {_e}')
         if 'dl_quick_wide' in st.session_state:
             st.download_button('Descargar Base Wide (.xlsx)',
                 data=st.session_state['dl_quick_wide'],
@@ -1443,7 +1446,12 @@ with tab_reportes:
                             _buf, _fn, _mi = run_script(key, _wp, filtro_centro=filtro_centro_val)
                             st.session_state[f'dl_{key}'] = (_buf, _fn, _mi)
                         except Exception as _e:
-                            st.error(f'Error: {_e}')
+                            # Que un centro todavía no tenga datos suficientes no
+                            # es una falla: se avisa como nota, no como error.
+                            if es_falta_de_datos(_e):
+                                st.info(str(_e))
+                            else:
+                                st.error(f'Error: {_e}')
                 st.markdown('</div>', unsafe_allow_html=True)
                 if f'dl_{key}' in st.session_state:
                     _b, _f2, _m = st.session_state[f'dl_{key}']
