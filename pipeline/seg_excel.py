@@ -274,6 +274,15 @@ def cargar_datos():
     N_total = len(df)
     seg = df[df['Tiene_TOP2'] == 'Sí'].copy().reset_index(drop=True)
     N_seg = len(seg)
+    # Sin pacientes, o sin ninguna segunda medición, no hay comparativo posible:
+    # antes el reporte moría con una división por cero.
+    _cm = f' para el centro "{FILTRO_CENTRO}"' if FILTRO_CENTRO else ''
+    if N_total == 0:
+        raise ValueError(f'No hay registros de ingreso (TOP1){_cm}. '
+                         f'Verifica el filtro o el período seleccionado.')
+    if N_seg == 0:
+        raise ValueError(f'Todavía no hay ningún TOP de seguimiento (TOP2){_cm}. '
+                         f'El reporte comparativo necesita al menos una segunda medición.')
 
     # Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA (fuente única, corre en proceso)
     from pipeline.panel.seguimiento_core import cobertura_desde_wide

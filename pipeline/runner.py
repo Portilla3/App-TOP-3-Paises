@@ -28,6 +28,26 @@ SCRIPT_FILES = {
 }
 
 
+def _mensaje_error(stderr, stdout):
+    """
+    Convierte la salida de error de un subproceso en un mensaje legible.
+
+    Cuando el script corta a propósito (ValueError con una explicación en
+    castellano) se muestra solo esa frase; el usuario del panel no necesita ver
+    veinte líneas de traceback para saber que su centro no tiene registros.
+    Ante cualquier otro fallo se conserva el traceback completo, que es lo que
+    sirve para depurar.
+    """
+    texto = (stderr or stdout or '').strip()
+    if not texto:
+        return 'El reporte no se generó y el proceso no informó la causa.'
+    ultima = texto.split('\n')[-1].strip()
+    for prefijo in ('ValueError: ', 'RuntimeError: '):
+        if ultima.startswith(prefijo):
+            return ultima[len(prefijo):]
+    return texto[-2000:]
+
+
 def _load_mod(script_key, wide_path, out_path, filtro_centro=None):
     """
     Carga un script como módulo Python sin ejecutar código de nivel superior
@@ -163,7 +183,7 @@ def run_script(script_key, wide_path, filtro_centro=None):
                     timeout=180, env=env
                 )
                 if r.returncode != 0:
-                    raise RuntimeError(r.stderr[-2000:] or r.stdout[-2000:])
+                    raise RuntimeError(_mensaje_error(r.stderr, r.stdout))
             finally:
                 try: os.unlink(tmp_py)
                 except: pass
@@ -189,7 +209,7 @@ def run_script(script_key, wide_path, filtro_centro=None):
                     timeout=180, env=env
                 )
                 if r.returncode != 0:
-                    raise RuntimeError(r.stderr[-2000:] or r.stdout[-2000:])
+                    raise RuntimeError(_mensaje_error(r.stderr, r.stdout))
             finally:
                 try: os.unlink(tmp_py)
                 except: pass

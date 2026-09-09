@@ -692,10 +692,16 @@ def build_word(R):
         if fig:
             buf,w=fig_to_img(fig,13)
             add_picture_kwnext(doc,buf,w)
-            ds=R['dias_sust']; dk=max(ds,key=lambda k:ds[k]['prom'])
-            add_body(doc,
-                f'{dk} tiene el mayor promedio: {ds[dk]["prom"]} días (n={ds[dk]["n"]}). '
-                f'Promedio calculado solo entre consumidores (días > 0).')
+            # Una sustancia sin ningún consumidor en el centro llega con
+            # prom=None, y compararla contra un promedio reventaba el informe.
+            # Se describen solo las que tienen dato; el gráfico ya las muestra
+            # todas, las vacías con la etiqueta 'sin dato'.
+            ds={k:v for k,v in R['dias_sust'].items() if v['prom'] is not None}
+            if ds:
+                dk=max(ds,key=lambda k:ds[k]['prom'])
+                add_body(doc,
+                    f'{dk} tiene el mayor promedio: {ds[dk]["prom"]} días (n={ds[dk]["n"]}). '
+                    f'Promedio calculado solo entre consumidores (días > 0).')
         doc.add_paragraph()
 
     # ── Sección 3: Transgresión ────────────────────────────────────────────────
