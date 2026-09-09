@@ -28,6 +28,23 @@ SCRIPT_FILES = {
 }
 
 
+# Frases con las que los módulos de reporte cortan cuando el centro todavía no
+# tiene datos suficientes. No son fallas del sistema, así que la interfaz las
+# muestra como una nota informativa y no como un error rojo.
+MENSAJES_SIN_DATOS = (
+    'No hay registros de ingreso',
+    'Todavía no hay ningún TOP de seguimiento',
+    'no tiene registros',
+    'No hay registros en el período',
+)
+
+
+def es_falta_de_datos(mensaje):
+    """True si el mensaje describe una falta de datos y no una falla técnica."""
+    texto = str(mensaje or '')
+    return any(frase in texto for frase in MENSAJES_SIN_DATOS)
+
+
 def _mensaje_error(stderr, stdout):
     """
     Convierte la salida de error de un subproceso en un mensaje legible.
