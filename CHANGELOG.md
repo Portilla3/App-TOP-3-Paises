@@ -6,6 +6,27 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-09-10
+
+### Se eliminó la pestaña de migración JotForm y el botón de borrado por país
+`app.py` pierde la pestaña completa "📥 Migración JotForm (obsoleta)" y las cinco
+funciones que solo ella usaba: `_migrar_excel_jotform`, `_insertar_lote_supabase`,
+`_eliminar_por_pais`, y las dos que ya no llamaba nadie desde `e176885`,
+`_actualizar_registro` y `_eliminar_registro`. Con eso desaparece el botón que
+borraba todos los registros de un país entero con solo escribir BORRAR en una
+caja de texto, y también el `st.json(registros_migra[0])` que volcaba en pantalla
+un registro de paciente completo, más los cinco `except:` desnudos que quedaban
+en el archivo.
+
+La app pasa de cinco pestañas a cuatro para UNODC. Las de países no cambian.
+
+Verificado antes de tocar: búsqueda en todo el repositorio confirmando que las
+cinco funciones no se llamaban desde ningún otro lugar. `py_compile` limpio,
+`pyflakes` sin avisos nuevos, 102 pruebas pasando. El fundamento está en
+`DECISIONES.md`, "La app no borra registros de producción".
+
+---
+
 ## 2026-09-02
 
 ### Un centro sin ningún TOP de ingreso reventaba el pipeline
