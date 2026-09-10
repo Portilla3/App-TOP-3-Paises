@@ -44,6 +44,14 @@ porque su lógica no es de caracterización: cuentan aplicaciones, miden tiempos
 entre TOP y arman el semáforo de seguimiento. Cada uno necesita decidirse por
 separado si su unidad es el episodio o el registro. *2026-09-02*
 
+**Resuelto el 2026-09-10, pendiente de ejecución.** `metricas.py` y
+`kpis_centro.py` pasan a episodios, para que la tarjeta describa la misma
+población que los gráficos de abajo. `semaforo_seguimiento.py`, `tiempo_top.py` y
+`config.py::continuidad_por_centro` dejan de identificar el TOP2 por la etiqueta
+`etapa` y pasan a llamar a `seguimiento_core`. Los dos indicadores de seguimiento
+se conservan y se distinguen por su denominador, según la entrada de
+`DECISIONES.md` del 2026-09-10.
+
 
 **`auto_archivo_wide()` busca rutas de otro entorno.** `/mnt/user-data/uploads`
 y `/home/claude`, y se ejecuta al importar el módulo, no al llamarlo. Importar
@@ -78,3 +86,41 @@ a "primera medición".
 
 Reproducible con `python tools/comparar_panel_wide.py <respaldo.xlsx>`.
 *2026-09-02*
+
+
+---
+
+## Trabajo autorizado el 2026-09-10
+
+**Homologar el TOP2 en los tres módulos que lo reimplementan.**
+`semaforo_seguimiento.py`, `tiempo_top.py` y `config.py::continuidad_por_centro`
+pasan a `seguimiento_core`. Lo que distingue a los dos indicadores es el
+denominador, no la definición de TOP2.
+
+**Renombrar el indicador operativo.** Pasa a llamarse "% de aplicación del TOP de
+seguimiento", sobre todos los ingresos del centro. El nombre "% de seguimiento"
+queda reservado para la cobertura sobre los elegibles a 90 días, y en rigor
+tampoco se usa ahí: esa se rotula "% de cobertura de seguimiento". Hay que
+recorrer panel, Excel de avance y tarjetas de centro; el rótulo viejo aparece en
+más de un lugar.
+
+**`metricas.py` y `kpis_centro.py` pasan a episodios.** Hoy la tarjeta "Pacientes
+ingresados" cuenta personas únicas y los gráficos de la misma pantalla cuentan
+episodios. También hay que corregir el subtítulo "X ingresos + Y seguimientos",
+que ignora `en_tratamiento` y `egreso` y por eso no suma el total que muestra la
+misma tarjeta.
+
+**`sustancia.py:183` compara contra el literal `'Otras'`.** El clasificador
+devuelve `'Otra sustancia'`, así que ese filtro siempre sale vacío y el hover del
+gráfico nunca muestra el desglose. El archivo ya importa la constante
+`OTRA_SUSTANCIA` y la usa tres líneas más abajo. Se arregla cuando se toque otra
+cosa del panel, y de paso se buscan otros literales sueltos.
+
+**Prueba de humo de los reportes.** Ninguna de las 102 pruebas genera un reporte:
+verifican criterios de cálculo, no que el Word o el PPT se armen. Es la razón por
+la que los cuatro defectos del 9 de septiembre los encontró Ecuador y no la suite.
+
+**Monitoreo externo de las cuatro apps.** Sin él, la caída se entera cuando la
+reporta un país. La del 8 de septiembre estuvo seis días arriba.
+
+*2026-09-10*
