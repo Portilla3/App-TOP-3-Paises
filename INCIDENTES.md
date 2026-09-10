@@ -12,6 +12,60 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-09-10 · La app sirvió código viejo: los pushes no se despliegan solos
+
+**Nadie avisó.** Salió al verificar en vivo el cambio del mismo día.
+
+**Síntoma.** Se hicieron seis commits a `main` entre el 9 y el 10 de septiembre y
+ninguno llegó a la app. El código en producción seguía siendo el del 9 a las
+22:45. Durante todo el 10 de septiembre, la pestaña de migración y su botón de
+borrado por país siguieron vivos para cualquiera con la clave UNODC, varias horas
+después de que se eliminaran del repositorio.
+
+**Evidencia.** El log de Manage app registra una sola línea de
+`Pulling code changes from Github`, la del arranque del contenedor el 2026-09-09
+a las 22:45. Ninguna más, con el contenedor vivo y registrando actividad hasta
+las 16:21 del día siguiente.
+
+**Lo que no es la causa.** El webhook de GitHub existe, apunta a
+`https://share.streamlit.io/hook`, escucha `push` y declara "Last delivery was
+successful". GitHub entrega. El problema está del lado de Streamlit, que recibe
+el aviso y no actúa.
+
+**Causa, todavía sin confirmar.** La hipótesis en pie es el renombre del
+repositorio: la app está registrada en Streamlit Cloud como
+`portilla3/qalat-top-ecuador` y el payload del webhook viaja con
+`Portilla3/App-TOP-3-Paises`. Falta ver el historial de entregas del webhook, que
+exige reautenticación por correo en GitHub.
+
+**Arreglo aplicado.** Reboot manual desde Streamlit Cloud. El log muestra clon
+nuevo a las 17:05:34 del 10 de septiembre. Es un parche: despliega una vez y deja
+la causa intacta.
+
+**Por qué solo pasa en esta app.** De las cuatro, tres duermen por inactividad y
+una app dormida clona de cero al despertar, así que siempre sirve código fresco.
+Esta es la única en uso continuo y por eso la única donde el defecto se
+manifiesta. No es que las otras estén sanas: es que el problema no puede
+aparecer mientras nadie las use a diario.
+
+**Verificación posterior al reboot.** Cuatro pestañas y ninguna de migración.
+Panel de gestión con datos. Respaldos genera el Excel y crea el snapshot.
+CET021098 arma sus tres reportes de ingreso. SAI001021 responde con la nota
+informativa "No hay registros de ingreso (TOP1)" y no con un error rojo.
+
+**Lecciones.**
+
+- Commit no es despliegue. Entre `main` y lo que ve un país hay un paso que puede
+  fallar en silencio, y falló durante un día completo sin que nada lo indicara.
+- El incidente del 9 de septiembre anotó que "la app sigue sirviendo el commit
+  viejo" como consecuencia de un despliegue roto. Era más general que eso: puede
+  pasar con el despliegue sano.
+- Después de tocar código en producción, mirar la hora del último
+  `Pulling code changes` en el log. Es el único lugar donde se ve qué está
+  corriendo de verdad.
+
+---
+
 ## 2026-09-10 · Un registro de paciente completo se mostraba en pantalla
 
 **Nadie avisó.** Salió al revisar la pestaña de migración antes de eliminarla.
