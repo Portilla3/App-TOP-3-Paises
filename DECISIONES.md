@@ -229,12 +229,24 @@ con nombres que no se pueden confundir.
 | Numerador | Pacientes elegibles con un segundo TOP de fecha distinta | Pacientes con al menos un TOP de seguimiento |
 | Denominador | Pacientes cuyo primer TOP tiene 90 o más días | Todos los pacientes ingresados del centro |
 | De dónde sale | `pipeline/panel/seguimiento_core.py::calcular_seguimiento()` | `pipeline/panel/config.py::continuidad_por_centro()` |
-| Cómo se rotula | "% de cobertura de seguimiento" | "% de aplicación del TOP de seguimiento" |
+| Cómo se rotula | **"Con seguimiento (TOP2)"** | Pendiente de decidir, nunca "% de seguimiento" a secas |
 | Para qué se usa | Informes a los ministerios y comparación entre centros | Gestión: detectar centros que no aplican el instrumento |
 
-**El nombre "% de seguimiento" queda prohibido para los dos.** Es el nombre que
-tenían ambos, y por eso convivieron sin que nadie notara que daban cifras
-distintas para lo que parecía la misma pregunta.
+**Sobre el rótulo de la cobertura.** "Con seguimiento" se conserva porque en
+QALAT ya significa una cosa concreta y compartida: el paciente tiene al menos un
+TOP con fecha distinta a la del ingreso. No es la etiqueta `etapa` del formulario
+ni es el seguimiento clínico del caso, y los centros lo leen así. Se le agrega
+`(TOP2)` entre paréntesis para que quien llega nuevo al sistema no tenga que
+saberlo de antemano. Decidido por Rodrigo el 2026-09-10, sobre la propuesta de
+llamarlo "% de cobertura de seguimiento", que se descartó por introducir un
+término que nadie usa.
+
+**El nombre "% de seguimiento" a secas queda prohibido para los dos.** Es el
+nombre que tenían ambos, y por eso convivieron sin que nadie notara que daban
+cifras distintas para lo que parecía la misma pregunta. Lo que los distingue es
+el denominador, así que el rótulo de cada uno tiene que dejarlo ver: la tarjeta
+de cobertura muestra "34 de 209 elegibles" con su nota al pie, y el operativo
+tendrá que hacer lo equivalente sobre el total de ingresos.
 
 **Fundamento.** La cobertura es la medida correcta para juzgar desempeño: un
 centro que abrió hace dos meses no tiene a nadie a quien le corresponda todavía
@@ -257,6 +269,14 @@ rótulo completo, y toda visualización de cobertura lleva la nota fija de
 identifican hoy el TOP2 por la etiqueta `etapa`, que es exactamente lo que
 `seguimiento_core` prohíbe. Los tres pasan a llamar al core: lo que distingue a
 los dos indicadores es el denominador, no la definición de TOP2.
+
+**Lo que esta decisión deja abierto.** El denominador de la cobertura son todos
+los pacientes con 90 o más días desde su primer TOP, sigan o no en tratamiento,
+de modo que quien abandonó a la tercera semana entra igual. La cifra mezcla
+entonces cumplimiento del instrumento con retención. Excluir a quienes ya
+egresaron o abandonaron es una decisión distinta, que sube el porcentaje y que
+hay que tomar y fundamentar aparte. Mientras no se tome, el rótulo no debe
+prometer más de lo que mide, y por eso dice "Con seguimiento" y no "Cobertura".
 
 *2026-09-10*
 
