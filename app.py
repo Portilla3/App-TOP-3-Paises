@@ -334,21 +334,6 @@ def _cargar_supabase(pais=None):
         url += f"&pais=eq.{urllib.parse.quote(pais)}"
     return fetch_todo(url, _sb_headers())
 
-def _actualizar_registro(registro_id, campos):
-    import urllib.request, json
-    url  = _sb_url() + f'?id=eq.{registro_id}'
-    data = json.dumps(campos).encode('utf-8')
-    req  = urllib.request.Request(url, data=data, method='PATCH', headers=_sb_headers())
-    with urllib.request.urlopen(req) as r:
-        return r.status
-
-def _eliminar_registro(registro_id):
-    import urllib.request
-    url = _sb_url() + f'?id=eq.{registro_id}'
-    req = urllib.request.Request(url, method='DELETE', headers=_sb_headers())
-    with urllib.request.urlopen(req) as r:
-        return r.status
-
 def _verificar_login_centro(correo, clave):
     """
     Invoca la función RPC validar_login_centro() vía PostgREST.
@@ -368,27 +353,6 @@ def _verificar_login_centro(correo, clave):
     except Exception:
         return None, None
 
-def _insertar_lote_supabase(registros):
-    import urllib.request, urllib.error, json
-    url  = _sb_url()
-    hdrs = _sb_headers()
-    hdrs['Prefer'] = 'return=minimal'
-    data = json.dumps(registros).encode('utf-8')
-    req  = urllib.request.Request(url, data=data, method='POST', headers=hdrs)
-    try:
-        with urllib.request.urlopen(req) as r:
-            return r.status
-    except urllib.error.HTTPError as e:
-        detalle = e.read().decode('utf-8')
-        raise Exception(f'HTTP {e.code}: {detalle}')
-
-def _eliminar_por_pais(pais):
-    import urllib.request, urllib.parse
-    url  = _sb_url() + f'?pais=eq.{urllib.parse.quote(pais)}'
-    hdrs = _sb_headers()
-    req  = urllib.request.Request(url, method='DELETE', headers=hdrs)
-    with urllib.request.urlopen(req) as r:
-        return r.status
 
 # ══════════════════════════════════════════════════════════════════════════════
 # MÓDULO DE RESPALDOS · funciones helper
@@ -564,179 +528,6 @@ def _stats_backup():
         pass
 
     return stats
-
-
-def _migrar_excel_jotform(df, pais):
-    """Mapea columnas JotForm → campos Supabase y retorna lista de registros"""
-    import unicodedata
-
-    def _col(df, fragmentos, excluir=None):
-        excluir = excluir or []
-        for c in df.columns:
-            cn = unicodedata.normalize('NFD', str(c).lower()).encode('ascii','ignore').decode()
-            if all(f in cn for f in fragmentos) and not any(e in cn for e in excluir):
-                return c
-        return None
-
-    def _limpiar_fecha(val):
-        if pd.isna(val): return None
-        # Número serial de Excel (ej: 26904)
-        try:
-            num = float(val)
-            if num > 1000:
-                fecha = pd.Timestamp('1899-12-30') + pd.Timedelta(days=int(num))
-                return fecha.strftime('%Y-%m-%d')
-        except: pass
-        val = str(val).strip()
-        meses = {'ene':'01','feb':'02','mar':'03','abr':'04','may':'05','jun':'06',
-                 'jul':'07','ago':'08','sep':'09','oct':'10','nov':'11','dic':'12'}
-        parts = val.replace(',','').split()
-        if len(parts) == 3:
-            try:
-                mes = meses.get(parts[0].lower(), parts[0])
-                return f"{parts[2]}-{mes}-{parts[1].zfill(2)}"
-            except: pass
-        # Intentar parseo directo
-        try:
-            return pd.to_datetime(val).strftime('%Y-%m-%d')
-        except: pass
-        return None
-
-    def _bool(val):
-        if pd.isna(val): return None
-        return str(val).strip().lower() in ['sí','si','yes','true','1']
-
-    def _etapa(val):
-        if pd.isna(val): return None
-        v = str(val).strip().lower()
-        if 'ingreso' in v or 'top1' in v: return 'TOP1'
-        if 'seguimiento' in v or 'top2' in v: return 'TOP2'
-        return str(val).strip()
-
-    def _num(val, max_val=9999):
-        if pd.isna(val): return None
-        try:
-            v = float(val)
-            return min(v, max_val)
-        except: return None
-
-    def _int(val):
-        v = _num(val)
-        return int(v) if v is not None else None
-
-    def _get(row, col):
-        return row[col] if col and col in row.index else None
-
-    SUST_MAP = {
-        'alcohol':    ['alcohol'],
-        'marihuana':  ['marihuana'],
-        'pastabase':  ['pasta base'],
-        'cocaina':    ['coca'],
-        'sedantes':   ['sedante', 'tranquilizante'],
-        'otra_sust':  ['otra sustancia'],
-    }
-    SEM_MAP = {
-        's4': ['ltima semana','última semana','ultima semana'],
-        's3': ['semana 3'],
-        's2': ['semana 2'],
-        's1': ['semana 1'],
-    }
-
-    registros = []
-    errores   = []
-
-    for i, row in df.iterrows():
-        try:
-            r = {'pais': pais}
-
-            # Identificación
-            col = _col(df, ['centro']); r['centro'] = str(_get(row, col) or '').strip() or None
-            col = _col(df, ['codigo', 'identificacion']); r['codigo_paciente'] = str(_get(row, col) or '').strip() or None
-            col = _col(df, ['fecha', 'nacimiento']); r['fecha_nacimiento'] = _limpiar_fecha(_get(row, col))
-            col = _col(df, ['fecha', 'entrevista']); r['fecha_entrevista'] = _limpiar_fecha(_get(row, col))
-            col = _col(df, ['sexo']); r['sexo'] = str(_get(row, col) or '').strip() or None
-            col = _col(df, ['entrevistador']); r['nombre_entrevistador'] = str(_get(row, col) or '').strip() or None
-            col = _col(df, ['etapa']); r['etapa'] = _etapa(_get(row, col))
-            col = _col(df, ['sustancia', 'principal']); r['sustancia_principal'] = str(_get(row, col) or '').strip() or None
-            col = _col(df, ['nombre', 'otra']); r['otra_sust_nombre'] = str(_get(row, col) or '').strip() or None
-
-            # Sustancias
-            for sust, frags in SUST_MAP.items():
-                for sem, sem_frags in SEM_MAP.items():
-                    col = next(
-                        (c for c in df.columns if
-                         any(f in c.lower() for f in frags) and
-                         any(sf in unicodedata.normalize('NFD', c.lower()).encode('ascii','ignore').decode() for sf in sem_frags)),
-                        None
-                    )
-                    r[f'{sust}_{sem}'] = _int(_get(row, col))
-                # total
-                col = next((c for c in df.columns if any(f in c.lower() for f in frags) and 'total' in c.lower()), None)
-                r[f'{sust}_total'] = _int(_get(row, col))
-                # prom
-                col = next((c for c in df.columns if any(f in c.lower() for f in frags) and 'promedio' in c.lower()), None)
-                r[f'{sust}_prom'] = _num(_get(row, col))
-
-            # Transgresiones
-            for campo, frag in [('hurto','hurto'),('robo','robo'),('venta_droga','venta'),('rina_pelea','pelea')]:
-                col = next((c for c in df.columns if frag in c.lower()), None)
-                r[campo] = _bool(_get(row, col))
-            col = next((c for c in df.columns if 'otra acci' in c.lower() and '1' not in c), None)
-            r['otra_accion'] = _bool(_get(row, col))
-            col = next((c for c in df.columns if 'otra acci' in c.lower() and 'identifique' in c.lower()), None)
-            r['otra_accion_desc'] = str(_get(row, col) or '').strip() or None
-
-            # VIF
-            for sem, sem_frags in SEM_MAP.items():
-                col = next((c for c in df.columns if 'vif' in c.lower() or 'violencia intrafamiliar' in c.lower()
-                            and any(sf in unicodedata.normalize('NFD', c.lower()).encode('ascii','ignore').decode() for sf in sem_frags)), None)
-                if not col:
-                    col = next((c for c in df.columns if ('intrafamiliar' in c.lower() or 'vif' in c.lower())
-                                and any(sf in unicodedata.normalize('NFD', c.lower()).encode('ascii','ignore').decode() for sf in sem_frags)), None)
-                r[f'vif_{sem}'] = _int(_get(row, col))
-            col = next((c for c in df.columns if ('intrafamiliar' in c.lower() or 'vif' in c.lower()) and 'total' in c.lower()), None)
-            r['vif_total'] = _int(_get(row, col))
-
-            # Salud
-            col = next((c for c in df.columns if 'psicol' in c.lower()), None); r['salud_psicologica'] = _int(_get(row, col))
-            col = next((c for c in df.columns if 'salud f' in c.lower() or 'fisica' in c.lower()), None); r['salud_fisica'] = _int(_get(row, col))
-            col = next((c for c in df.columns if 'calidad' in c.lower()), None); r['calidad_vida'] = _int(_get(row, col))
-
-            # Trabajo
-            for sem, sem_frags in SEM_MAP.items():
-                col = next((c for c in df.columns if 'trabajo' in c.lower()
-                            and any(sf in unicodedata.normalize('NFD', c.lower()).encode('ascii','ignore').decode() for sf in sem_frags)), None)
-                r[f'dias_trabajo_{sem}'] = _int(_get(row, col))
-            col = next((c for c in df.columns if 'trabajo' in c.lower() and 'total' in c.lower()), None)
-            r['dias_trabajo_total'] = _int(_get(row, col))
-
-            # Educación
-            for sem, sem_frags in SEM_MAP.items():
-                col = next((c for c in df.columns if ('colegio' in c.lower() or 'educaci' in c.lower())
-                            and any(sf in unicodedata.normalize('NFD', c.lower()).encode('ascii','ignore').decode() for sf in sem_frags)), None)
-                r[f'dias_educacion_{sem}'] = _int(_get(row, col))
-            col = next((c for c in df.columns if ('colegio' in c.lower() or 'educaci' in c.lower()) and 'total' in c.lower()), None)
-            r['dias_educacion_total'] = _int(_get(row, col))
-
-            # Vivienda
-            col = next((c for c in df.columns if 'estable' in c.lower()), None); r['vivienda_estable'] = _bool(_get(row, col))
-            col = next((c for c in df.columns if 'b' in c.lower() and 'sica' in c.lower() and 'vivienda' in c.lower()), None); r['vivienda_basica'] = _bool(_get(row, col))
-
-            registros.append({k: v for k, v in r.items() if v is not None})
-        except Exception as e:
-            errores.append((i, str(e)))
-
-    # Normalizar: todos los registros deben tener exactamente las mismas claves
-    if registros:
-        todas_claves = set()
-        for r in registros:
-            todas_claves.update(r.keys())
-        for r in registros:
-            for k in todas_claves:
-                if k not in r:
-                    r[k] = None
-
-    return registros, errores
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1066,15 +857,14 @@ with st.sidebar:
 # PESTAÑAS
 # ══════════════════════════════════════════════════════════════════════════════
 if es_unodc:
-    tab_panel, tab_reportes, tab_correccion, tab_migracion, tab_respaldos = st.tabs(
+    tab_panel, tab_reportes, tab_correccion, tab_respaldos = st.tabs(
         ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros',
-         '📥 Migración JotForm (obsoleta)', '💾 Respaldos']
+         '💾 Respaldos']
     )
 else:
     tab_panel, tab_reportes, tab_correccion = st.tabs(
         ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros']
     )
-    tab_migracion = None
     tab_respaldos = None
 
 
@@ -1778,114 +1568,9 @@ with tab_correccion:
             use_container_width=True
         )
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TAB 3: MIGRACIÓN JOTFORM → SUPABASE (solo UNODC)
-# ══════════════════════════════════════════════════════════════════════════════
-if es_unodc and tab_migracion is not None:
-    with tab_migracion:
-        st.markdown(
-            '<div style="background:#FFF3E0;border-left:4px solid #E65100;'
-            'padding:.8rem 1.2rem;border-radius:6px;margin-bottom:1.2rem;font-size:.88rem;">'
-            '<b>⚠ Módulo exclusivo UNODC.</b> Permite cargar registros históricos desde un '
-            'Excel exportado de JotForm directamente a Supabase. Úsalo para pruebas de '
-            'migración y bórralo después si es necesario.</div>',
-            unsafe_allow_html=True
-        )
-
-        col_p, col_f = st.columns([1, 2])
-        with col_p:
-            pais_migra = st.selectbox('País de los datos', PAISES_ACTIVOS, key='migra_pais')
-        with col_f:
-            excel_migra = st.file_uploader(
-                'Sube el Excel exportado de JotForm',
-                type=['xlsx', 'xls'],
-                key='migra_file'
-            )
-
-        if excel_migra:
-            import io
-            df_migra = pd.read_excel(io.BytesIO(excel_migra.getvalue()))
-            st.success(f'✓ Archivo leído: {len(df_migra)} filas detectadas')
-
-            if st.button('🔄 Preparar registros para migración', key='btn_preparar_migra'):
-                with st.spinner('Mapeando columnas...'):
-                    registros_migra, errores_migra = _migrar_excel_jotform(df_migra, pais_migra)
-                st.session_state['migra_registros'] = registros_migra
-                st.session_state['migra_errores']   = errores_migra
-                st.session_state['migra_pais_sel']  = pais_migra
-                if registros_migra:
-                    st.markdown('**Primer registro construido (debug):**')
-                    st.json(registros_migra[0])
-
-            if 'migra_registros' in st.session_state:
-                regs  = st.session_state['migra_registros']
-                errs  = st.session_state['migra_errores']
-                pais_sel = st.session_state['migra_pais_sel']
-
-                st.markdown(f'**{len(regs)} registros listos para insertar** en Supabase (país: {pais_sel})')
-                if errs:
-                    st.warning(f'⚠ {len(errs)} filas con error de mapeo (no se insertarán)')
-
-                st.markdown('---')
-                st.markdown('**Confirmar inserción:**')
-
-                if st.button(f'✅ Insertar {len(regs)} registros en Supabase', key='btn_confirmar_migra',
-                             type='primary'):
-                    LOTE = 50
-                    total_ok = 0
-                    errores_insert = []
-                    progress = st.progress(0)
-                    for i in range(0, len(regs), LOTE):
-                        lote = regs[i:i+LOTE]
-                        try:
-                            _insertar_lote_supabase(lote)
-                            total_ok += len(lote)
-                        except Exception as e:
-                            err_str = str(e)
-                            # Mostrar detalle del error HTTP si está disponible
-                            if hasattr(e, 'read'):
-                                try: err_str += ' | ' + e.read().decode('utf-8')
-                                except: pass
-                            errores_insert.append(err_str)
-                            st.error(f'Error detallado: {err_str}')
-                            break
-                        progress.progress(min((i + LOTE) / len(regs), 1.0))
-
-                    if total_ok == len(regs):
-                        st.success(f'🎉 {total_ok} registros migrados correctamente a Supabase.')
-                    else:
-                        st.warning(f'⚠ {total_ok}/{len(regs)} insertados. Errores: {errores_insert[:3]}')
-
-                    st.session_state.pop('migra_registros', None)
-
-        st.markdown('---')
-        st.markdown('<div class="sec" style="background:#C00000;">🗑 Borrar registros de prueba</div>',
-                    unsafe_allow_html=True)
-        st.markdown(
-            '<div style="background:#FFEBEE;border-left:4px solid #C00000;'
-            'padding:.7rem 1.2rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem;">'
-            'Elimina <b>todos</b> los registros del país seleccionado en Supabase. '
-            'Usar solo después de una migración de prueba.</div>',
-            unsafe_allow_html=True
-        )
-        pais_borrar = st.selectbox('País a borrar', PAISES_ACTIVOS, key='borrar_pais')
-        confirmar_borrar = st.text_input(
-            f'Escribe BORRAR para confirmar la eliminación de todos los registros de {pais_borrar}',
-            key='confirmar_borrar'
-        )
-        if st.button('🗑 Eliminar todos los registros del país', key='btn_borrar', type='primary'):
-            if confirmar_borrar == 'BORRAR':
-                try:
-                    _eliminar_por_pais(pais_borrar)
-                    st.success(f'✓ Todos los registros de {pais_borrar} eliminados de Supabase.')
-                except Exception as e:
-                    st.error(f'Error al borrar: {e}')
-            else:
-                st.error('Debes escribir exactamente BORRAR para confirmar.')
-
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 4: RESPALDOS (solo UNODC)
+# TAB 3: RESPALDOS (solo UNODC)
 # ══════════════════════════════════════════════════════════════════════════════
 if es_unodc and tab_respaldos is not None:
     with tab_respaldos:
