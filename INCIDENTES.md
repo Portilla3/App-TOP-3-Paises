@@ -12,6 +12,48 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-09-10 · Un registro de paciente completo se mostraba en pantalla
+
+**Nadie avisó.** Salió al revisar la pestaña de migración antes de eliminarla.
+Por eso esta entrada existe: sin ella no queda constancia de que se detectó.
+
+**Qué pasaba.** En la pestaña "Migración JotForm", al subir un Excel y pulsar
+"Preparar registros para migración", la app imprimía en pantalla, bajo el rótulo
+"Primer registro construido (debug)", el diccionario completo del primer registro
+del archivo. Es decir: país, centro, código del paciente, fecha de nacimiento,
+fecha de entrevista, sexo, etapa, y todas sus respuestas de consumo de sustancias
+y del resto del TOP. Un registro clínico entero de una persona, con su fecha de
+nacimiento, que junto al centro y la fecha es un cuasi identificador.
+
+**Desde cuándo y quién lo veía.** Desde el commit `0c15228`, del 6 de abril de
+2026. Cinco meses. La pestaña estaba detrás de `es_unodc`, así que solo la veía
+quien tuviera la clave UNODC.
+
+**Lo que hay que decir para no exagerarlo.** Solo se imprimía después de que
+alguien subiera ese mismo Excel, así que el dato mostrado era un dato que la
+persona ya tenía en la mano. No hubo acceso de nadie a información que no
+tuviera. El riesgo real no era el acceso sino la superficie: quedaba en pantalla,
+en una sesión que se comparte en reuniones y de la que se sacan capturas, sin que
+hiciera falta para nada. Una línea de depuración que nunca debió salir del
+desarrollo.
+
+**Arreglo.** Desapareció con la pestaña completa, commit `c647b41`, 10 de
+septiembre de 2026. No se parchó: se eliminó el módulo entero por la decisión
+"La app no borra registros de producción" de `DECISIONES.md`.
+
+**Lecciones.**
+
+- Un `st.json` de depuración es una decisión de diseño mientras se desarrolla y
+  una exposición de datos en cuanto se despliega. La app no tiene ninguna
+  pantalla que necesite mostrar un registro individual completo, y no debería
+  tenerla.
+- Cinco meses sin que nadie lo notara mide lo que se mira una pestaña marcada
+  como obsoleta. Un módulo que se deja "por si acaso" no se revisa.
+- Esto no lo encontró una prueba ni un usuario. Lo encontró leer el código que se
+  iba a borrar. Ese es el argumento para borrar en vez de ocultar.
+
+---
+
 ## 2026-09-09 · Reportes caídos en Ecuador
 
 **Avisó** Belén Estrella, Ministerio de Salud de Ecuador, el 3 y de nuevo el 9
