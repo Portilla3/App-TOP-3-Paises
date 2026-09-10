@@ -270,13 +270,21 @@ identifican hoy el TOP2 por la etiqueta `etapa`, que es exactamente lo que
 `seguimiento_core` prohíbe. Los tres pasan a llamar al core: lo que distingue a
 los dos indicadores es el denominador, no la definición de TOP2.
 
-**Lo que esta decisión deja abierto.** El denominador de la cobertura son todos
-los pacientes con 90 o más días desde su primer TOP, sigan o no en tratamiento,
-de modo que quien abandonó a la tercera semana entra igual. La cifra mezcla
-entonces cumplimiento del instrumento con retención. Excluir a quienes ya
-egresaron o abandonaron es una decisión distinta, que sube el porcentaje y que
-hay que tomar y fundamentar aparte. Mientras no se tome, el rótulo no debe
-prometer más de lo que mide, y por eso dice "Con seguimiento" y no "Cobertura".
+**Lo que este indicador no puede medir, y no se va a intentar.** El denominador
+son todos los pacientes con 90 o más días desde su primer TOP, sigan o no en
+tratamiento, así que quien abandonó a la tercera semana entra igual. Nadie le
+aplica un TOP2 a alguien que no volvió, de modo que la cifra mezcla cumplimiento
+del instrumento con retención, y en esa mezcla el centro carga con la segunda.
+
+No se corrige desde QALAT. El instrumento tiene etapa `egreso`, pero casi no se
+registra, y sobre todo el abandono no deja rastro: quien deja de venir nunca
+recibe un TOP de egreso, por definición. Depurar el denominador con los datos del
+TOP produciría una cifra igual de sesgada y con apariencia de precisión.
+
+El cruce con altas y abandonos es trabajo del centro, con sus propios datos de
+admisión y egreso, y sirve para interpretar su cifra, no para recalcularla. Lo
+que sí le corresponde a QALAT es no prometer en el rótulo lo que no mide, y por
+eso dice "Con seguimiento" y no "Cobertura". Decidido con Rodrigo el 2026-09-10.
 
 *2026-09-10*
 
