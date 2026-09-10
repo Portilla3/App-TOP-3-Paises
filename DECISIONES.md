@@ -219,6 +219,47 @@ consumir no desaparece del reporte, aparece como una caída de la prevalencia.
 
 *2026-09-01*
 
+### Hay dos indicadores de seguimiento y no miden lo mismo
+**Regla.** El sistema muestra dos indicadores distintos y ambos se conservan,
+con nombres que no se pueden confundir.
+
+| | Cobertura de seguimiento | Aplicación del TOP de seguimiento |
+|---|---|---|
+| Qué mide | Si los pacientes a los que ya les corresponde la segunda medición la tienen | Si el centro está aplicando el instrumento de seguimiento |
+| Numerador | Pacientes elegibles con un segundo TOP de fecha distinta | Pacientes con al menos un TOP de seguimiento |
+| Denominador | Pacientes cuyo primer TOP tiene 90 o más días | Todos los pacientes ingresados del centro |
+| De dónde sale | `pipeline/panel/seguimiento_core.py::calcular_seguimiento()` | `pipeline/panel/config.py::continuidad_por_centro()` |
+| Cómo se rotula | "% de cobertura de seguimiento" | "% de aplicación del TOP de seguimiento" |
+| Para qué se usa | Informes a los ministerios y comparación entre centros | Gestión: detectar centros que no aplican el instrumento |
+
+**El nombre "% de seguimiento" queda prohibido para los dos.** Es el nombre que
+tenían ambos, y por eso convivieron sin que nadie notara que daban cifras
+distintas para lo que parecía la misma pregunta.
+
+**Fundamento.** La cobertura es la medida correcta para juzgar desempeño: un
+centro que abrió hace dos meses no tiene a nadie a quien le corresponda todavía
+la segunda medición, y medirlo sobre todos sus ingresos lo castiga por el
+calendario. Pero el indicador bruto responde una pregunta que la cobertura no
+puede responder, porque los pacientes recientes salen de su denominador: un
+centro que nunca aplicó ningún TOP de seguimiento no entendió el instrumento o
+no tiene el proceso montado, y eso es capacitación. Un centro que aplica algunos
+y pierde pacientes en el camino tiene un problema de seguimiento de casos, y esa
+es otra conversación con otra respuesta. Un solo indicador no distingue los dos
+casos.
+
+**Consecuencia asumida.** Los dos números conviven en el sistema y no coinciden,
+y el bruto es siempre igual o menor. Por eso ninguna pantalla muestra uno sin su
+rótulo completo, y toda visualización de cobertura lleva la nota fija de
+`NOTA_SEGUIMIENTO`.
+
+**Lo que esta decisión no autoriza.** Ninguna otra reimplementación del TOP2.
+`semaforo_seguimiento.py`, `tiempo_top.py` y `config.py::continuidad_por_centro`
+identifican hoy el TOP2 por la etiqueta `etapa`, que es exactamente lo que
+`seguimiento_core` prohíbe. Los tres pasan a llamar al core: lo que distingue a
+los dos indicadores es el denominador, no la definición de TOP2.
+
+*2026-09-10*
+
 ---
 
 ## Datos
@@ -298,6 +339,37 @@ abre el día que alguien agrega una de más sin darse cuenta. `top_registros` ti
 le agregó `deny_delete_irt`.
 
 *2026-09-02*
+
+### La app no borra registros de producción
+**Regla.** Ninguna pantalla de la app ofrece borrar registros de pacientes. El
+borrado masivo se hace desde el SQL Editor de Supabase, con respaldo previo,
+conteo con la misma condición del `WHERE` y `RETURNING`. Se eliminó la pestaña
+"Migración JotForm" completa, que era lo único que ofrecía borrado, junto con
+`_migrar_excel_jotform`, `_insertar_lote_supabase` y `_eliminar_por_pais`, y de
+paso las dos funciones muertas `_actualizar_registro` y `_eliminar_registro`.
+
+**Fundamento.** La pestaña era andamiaje de la migración desde JotForm: su
+propio aviso decía "úsalo para pruebas de migración y bórralo después", y su
+título ya llevaba "(obsoleta)". Lo que quedaba vivo era un botón que borraba
+todos los registros de un país entero, protegido solo por escribir la palabra
+BORRAR en una caja de texto y disponible para cualquiera con la clave UNODC, en
+la misma pantalla donde se trabaja todos los días. La protección correcta de una
+operación irreversible sobre datos de pacientes no es una confirmación mejor: es
+que la operación no esté ahí. Además, las tres funciones que se van devolvían el
+código HTTP y nadie lo miraba, de modo que el "✓ Todos los registros eliminados"
+aparecía igual aunque Supabase hubiera rechazado la llamada, el mismo patrón que
+se corrigió el 1 de septiembre en el formulario de corrección.
+
+**Verificado antes de sacarlo.** Búsqueda en todo el repositorio: las cinco
+funciones se llamaban únicamente desde dentro de esa pestaña, y
+`_actualizar_registro` y `_eliminar_registro` no se llamaban desde ningún lado
+desde `e176885`. Las 102 pruebas siguen pasando.
+
+**Consecuencia asumida.** Recargar datos históricos desde un Excel de JotForm ya
+no se puede hacer desde la app. Si vuelve a hacer falta, se recupera del
+historial de git; la migración de los cuatro países ya está hecha.
+
+*2026-09-10*
 
 ---
 
