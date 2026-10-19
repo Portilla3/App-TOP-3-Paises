@@ -64,11 +64,10 @@ se sincronizaron.
    tocar más de un archivo.
 4. Verificar contra datos antes de afirmar. La descripción de un problema puede
    estar equivocada, incluida la de Rodrigo.
-5. Claude no alcanza Supabase. Entregar el SQL exacto para que Rodrigo lo
-   ejecute, y especificar si es SQL Editor o Table Editor. **En revisión desde
-   el 2026-10-18:** con el conector de Supabase activo, Claude sí ejecuta SQL.
-   Mientras no se decida qué reemplaza esta regla (ver `PENDIENTES.md`), toda
-   escritura en la base sigue pasando por Rodrigo.
+5. Con el conector de Supabase activo, Claude puede leer por su cuenta.
+   **Cualquier modificación requiere permiso explícito de Rodrigo antes de
+   ejecutarse.** Sin el conector, entregar el SQL exacto para que Rodrigo lo
+   ejecute, indicando si es SQL Editor o Table Editor.
 6. Todo UPDATE va con respaldo previo, con un conteo que use la misma condición
    del WHERE, y envuelto en CTE con `RETURNING`. El SQL Editor responde
    "Success. No rows returned" a un UPDATE normal y esa ambigüedad ya provocó

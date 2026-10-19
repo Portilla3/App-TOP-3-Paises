@@ -26,11 +26,7 @@ frecuente y la que sigue sin arreglo. La solución propuesta es extraer el prime
 grupo alfanumérico de lo que escriban. Requiere su entrada en `DECISIONES.md`
 antes de implementarse, porque implica recortar la entrada del usuario.
 
-**Doce filas de prueba en `centro_bitacora`, ids 114 a 125.** Las generó Claude
-probando el login el 18 de octubre: diez `login_exitoso` y dos `login_fallido`.
-Inflan la métrica de uso por centro, sobre todo la de EESS34AS, que aparece con
-cinco ingresos sin haber entrado nunca de verdad. Decidir si se borran o se
-marcan. Si se borran, va con respaldo previo como cualquier otro borrado.
+**Resuelto el 2026-10-19 · filas de prueba en `centro_bitacora`.** Las doce (ids 114 a 125) se borraron con autorización de Rodrigo. Respaldo en `backup_bitacora_pruebas_20261019`, con RLS activo y permisos revocados.
 
 **Falta la restricción única sobre el código de centro normalizado.** Hoy no hay
 colisiones, pero nada impide insertar `csp` existiendo `CSP`. Con la comparación
@@ -44,12 +40,7 @@ un panel vacío porque no tienen registros todavía.
 **El resto de las funciones de la base sigue sin versionar.** `sql/` tiene solo
 `validar_login_centro.sql`. Falta inventariar cuáles hay y bajarlas.
 
-**La regla "Claude no alcanza Supabase" quedó obsoleta.** Con el conector MCP
-activo, Claude ejecuta SQL directamente, y así se hicieron los cambios del 18 de
-octubre. Las instrucciones del proyecto y `QALAT_ARRANQUE_CHAT.md` todavía dicen
-lo contrario. Hay que decidir qué reemplaza a esa regla: qué puede ejecutar
-Claude por su cuenta y qué sigue pasando por Rodrigo. Los respaldos previos y el
-`RETURNING` en los UPDATE no cambian; lo que cambia es quién aprieta el botón.
+**Resuelto el 2026-10-19 · la regla "Claude no alcanza Supabase".** Reemplazada en `DECISIONES.md`: Claude lee por su cuenta y pide permiso para cualquier modificación.
 
 ## Datos
 

@@ -6,6 +6,26 @@ se cambia con una entrada nueva que diga por qué.
 
 ---
 
+### Claude lee Supabase por su cuenta, pero no modifica sin permiso
+**Regla.** Con el conector de Supabase activo, Claude puede ejecutar consultas
+de lectura sin preguntar. Cualquier modificación de datos o de estructura
+(`INSERT`, `UPDATE`, `DELETE`, migraciones, funciones) requiere el permiso
+explícito de Rodrigo antes de ejecutarse, aunque el conector lo permita.
+
+Reemplaza a la regla anterior, "Claude no alcanza Supabase", que dejó de ser
+cierta cuando se activó el conector.
+
+**Fundamento.** El 18 de octubre se aplicaron en producción una migración y
+cinco credenciales desde el chat de correos, sin que estuviera decidido quién
+podía hacerlo. Leer no tiene riesgo y ahorra el ida y vuelta de copiar
+consultas. Escribir sí: la base es de cuatro países y no tiene espejo.
+
+**Lo que no cambia.** Todo cambio sigue con respaldo previo, conteo con la
+misma condición del `WHERE` y `RETURNING`. Lo que cambia es quién aprieta el
+botón, no cómo se aprieta.
+
+*2026-10-19*
+
 ### El usuario del login de centro es el código, y no distingue mayúsculas
 **Regla.** Los centros entran con su **código** (`SJA`, `EESS34AS`), no con un
 correo. La comparación no distingue mayúsculas ni espacios de borde: `sja`,
