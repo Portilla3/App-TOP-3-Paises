@@ -65,7 +65,10 @@ se sincronizaron.
 4. Verificar contra datos antes de afirmar. La descripción de un problema puede
    estar equivocada, incluida la de Rodrigo.
 5. Claude no alcanza Supabase. Entregar el SQL exacto para que Rodrigo lo
-   ejecute, y especificar si es SQL Editor o Table Editor.
+   ejecute, y especificar si es SQL Editor o Table Editor. **En revisión desde
+   el 2026-10-18:** con el conector de Supabase activo, Claude sí ejecuta SQL.
+   Mientras no se decida qué reemplaza esta regla (ver `PENDIENTES.md`), toda
+   escritura en la base sigue pasando por Rodrigo.
 6. Todo UPDATE va con respaldo previo, con un conteo que use la misma condición
    del WHERE, y envuelto en CTE con `RETURNING`. El SQL Editor responde
    "Success. No rows returned" a un UPDATE normal y esa ambigüedad ya provocó
@@ -78,6 +81,16 @@ se sincronizaron.
    chequeos en vivo los hace Rodrigo desde su navegador.
 10. Verificar que una app arranca no es verificar que funciona. Los reportes se
     prueban generándolos.
+11. En el contenedor de Claude, `git push` con el token dentro de la URL falla con
+    "unexpected disconnect while reading sideband packet". No es el token: el
+    proxy del contenedor hace que el `POST` final salga sin credencial y GitHub
+    responde 401. Se resuelve mandando la credencial como cabecera explícita:
+
+    ```
+    AUTH=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+    git -c http.extraHeader="Authorization: Basic $AUTH" \
+        push https://github.com/Portilla3/App-TOP-3-Paises.git HEAD:main
+    ```
 
 ### Cómo responder
 
