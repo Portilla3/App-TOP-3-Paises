@@ -6,6 +6,18 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-10-19
+
+### Cinco centros nuevos de Perú en el formulario TOP
+`index.html`, que es el formulario de Perú, suma EESS34AS, EESS35SG, EESS36IH,
+EESS37BA y EESS38BV a la lista de centros, que pasa de 33 a 38. Son centros que
+Rodrigo capacitó en octubre para cargar TOP.
+
+El 18 de octubre, desde el chat de correos, a esos cinco se les crearon claves
+de acceso a la plataforma en lugar de agregarlos al formulario. Eso los dejaba
+sin poder cargar ningún TOP y con un acceso que todavía no necesitan, porque
+no tienen datos que ver.
+
 ## 2026-10-18
 
 ### `validar_login_centro()` deja de distinguir mayúsculas en el código de centro
