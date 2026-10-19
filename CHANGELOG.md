@@ -6,6 +6,36 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-10-18
+
+### `validar_login_centro()` deja de distinguir mayúsculas en el código de centro
+Migración `login_centro_insensible_a_mayusculas`, aplicada en producción desde el
+chat de correos. La entrada y la columna se comparan con `upper(trim(...))`. La
+clave no se toca: bcrypt sigue comparando exacto.
+
+Verificado contra la base el 2026-10-19: la definición vigente coincide con lo
+declarado, y no hay dos credenciales que colisionen al normalizar.
+
+**Impacto real, medido sobre los 31 intentos fallidos que hubo antes del
+cambio:** resuelve 4. Los otros 27 se reparten en 12 que escribieron el código
+bien y fallaron por la clave, y 15 que pegaron texto desde WhatsApp. El arreglo
+es correcto y no hace daño, pero no es la causa principal de que los centros no
+entren.
+
+### Las funciones de la base pasan a estar versionadas
+`sql/validar_login_centro.sql`. Hasta ahora la única copia de las funciones era
+la de producción: un cambio hecho desde cualquier sesión se perdía sin rastro y
+sin forma de compararlo. Esta es la primera; faltan las demás.
+
+### Cuatro pruebas del login de centro
+`tests/test_login_centro.py`. No ejecutan la función, que vive en Supabase:
+verifican que el archivo versionado conserve las decisiones, que la clave no se
+normalice, que no se pierdan `SECURITY DEFINER` ni el `search_path` fijo, y que
+la bitácora siga guardando lo que la persona escribió. Esa última columna es la
+que permitió medir por qué fallan los logins.
+
+Ciento seis pruebas en total.
+
 ## 2026-09-10
 
 ### Se eliminó la pestaña de migración JotForm y el botón de borrado por país

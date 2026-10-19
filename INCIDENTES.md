@@ -12,6 +12,85 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-10-08 y anteriores · Centros que no logran entrar al sistema
+
+**Quién avisó:** nadie. Apareció al revisar `centro_bitacora` desde el chat de
+correos, buscando otra cosa.
+
+**Síntoma:** 31 intentos de login fallidos entre el 27 de agosto y el 8 de
+octubre, de seis centros de El Salvador y uno de Perú.
+
+**Causa:** son tres causas distintas, y conviene no confundirlas porque cada una
+se arregla de otra forma.
+
+| Qué pasó | Intentos | Textos |
+|---|---|---|
+| Escribieron el código bien y falló la clave | 12 | CJR, CMM, CSP, EESS09H, SCE, SJA |
+| Escribieron el código en minúscula | 4 | `csp`, `Csp`, `sja` |
+| Pegaron texto desde WhatsApp o escribieron a ciegas | 15 | `SJA🇸🇻  El Sa`, `CSPCCCSPSPSPCCSP` |
+
+El caso del 16 de septiembre es el más claro: SJA hizo catorce intentos pegando
+`SJA🇸🇻  El Sa`, que es una línea de WhatsApp con la bandera arrastrada.
+
+**Ningún centro quedó bloqueado.** Los siete que fallaron entraron después:
+
+| Centro | Fallos | Éxitos | Último fallo | Último ingreso |
+|---|---|---|---|---|
+| CSP | 5 | 10 | 8 oct | 15 oct |
+| CMM | 4 | 3 | 8 sep | 8 oct |
+| SJA | 2 | 11 | 8 oct | 8 oct |
+| SCE | 2 | 4 | 8 sep | 8 oct |
+| CJR | 2 | 6 | 31 ago | 8 oct |
+| EESS09H | 1 | 3 | 27 ago | 9 sep |
+
+Eso reordena la gravedad. Los doce fallos por clave son tropiezos normales de
+login: se equivocaron una o dos veces y acertaron. El único episodio con costo
+real es el del 16 de septiembre, cuando SJA perdió catorce intentos seguidos
+pegando texto de WhatsApp antes de dar con el formato correcto.
+
+**Arreglo:** parcial. La comparación del código dejó de distinguir mayúsculas
+(migración `login_centro_insensible_a_mayusculas`), lo que resuelve 4 de los 31.
+
+**Lo que no está arreglado, y es lo más frecuente:**
+
+Los 15 intentos con texto pegado siguen fallando. `trim()` quita espacios, no
+emojis ni palabras de más. La forma de resolverlos sería extraer el primer grupo
+alfanumérico de lo que escriban: `SJA🇸🇻  El Sa` se convertiría en `SJA`. Los
+códigos de centro son todos alfanuméricos, así que no hay riesgo de recortar uno
+legítimo. Eso resolvería 14 de esos 15.
+
+Los 12 fallos por clave no necesitan arreglo: los seis centros acertaron en el
+intento siguiente. Lo que sí conviene es mirar esta tabla cada cierto tiempo. Un
+centro que acumule fallos sin un éxito posterior sí estaría bloqueado, y hoy no
+hay ninguno, pero nadie se enteraría si lo hubiera.
+
+**Sobre el diagnóstico de "campo de texto invisible":** el CSS del login pinta el
+texto en blanco sobre el panel azul oscuro, y se arregló el 28 de agosto. Los
+fallos del 16 de septiembre ocurrieron cuando la app no se autodesplegaba, así
+que pudieron darse con la versión vieja. Pero `CSPCCCSPSPSPCCSP` es del 8 de
+octubre, con el despliegue ya arreglado, y ese mismo día el mismo usuario
+escribió `Csp` y `CSP` correctamente. El dato no alcanza para confirmar ni para
+descartar que el campo siga siendo ilegible en algún dispositivo. Hay que mirarlo
+en vivo, en el móvil de alguien de El Salvador.
+
+**Lecciones.**
+
+Contar fallos sin mirar si hubo un éxito después lleva a conclusiones falsas. La
+primera lectura de estos datos, hecha el 2026-10-19, concluyó que seis centros
+llevaban semanas sin poder entrar. La consulta siguiente mostró que los seis
+habían entrado, algunos el mismo día. El número de fallos no dice nada por sí
+solo: lo que importa es si el último intento de cada centro fue exitoso.
+
+Aun así, nadie estaba mirando esa bitácora. Si un centro quedara realmente
+bloqueado, no abriría un ticket: dejaría de intentar, y la única señal estaría
+ahí.
+
+Guardar lo que la persona escribió, y no solo que falló, es lo que permitió
+separar las tres causas. Sin esa columna, el diagnóstico habría sido "fallan los
+logins" y el arreglo habría apuntado al lugar equivocado.
+
+---
+
 ## 2026-09-10 · La app sirvió código viejo: los pushes no se despliegan solos
 
 **Nadie avisó.** Salió al verificar en vivo el cambio del mismo día.

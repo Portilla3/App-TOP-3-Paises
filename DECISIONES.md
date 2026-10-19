@@ -6,6 +6,50 @@ se cambia con una entrada nueva que diga por qué.
 
 ---
 
+### El usuario del login de centro es el código, y no distingue mayúsculas
+**Regla.** Los centros entran con su **código** (`SJA`, `EESS34AS`), no con un
+correo. La comparación no distingue mayúsculas ni espacios de borde: `sja`,
+`SJA` y `  Sja  ` son el mismo centro. **La clave sí distingue mayúsculas** y
+eso no se toca.
+
+**Fundamento.** Entre agosto y octubre de 2026 llegaron intentos fallidos con el
+código bien escrito pero en minúscula (`csp`, `Csp`, `sja`). Un código de centro
+es un identificador, no un secreto: que su capitalización decida si alguien entra
+no protege nada y deja gente afuera. La clave es otra cosa: normalizarla
+reduciría el espacio de contraseñas y debilitaría el login, así que bcrypt sigue
+comparando exacto.
+
+**Lo que esta decisión no autoriza.** No se normaliza la clave, ni se recorta la
+entrada más allá de espacios de borde. Si en el futuro se decide limpiar el texto
+pegado desde WhatsApp, que es el problema más frecuente, eso es una decisión
+aparte y con su propia entrada: implica recortar lo que la persona escribió, y
+conviene que quede explícito hasta dónde.
+
+**Dónde vive.** `sql/validar_login_centro.sql`, aplicada por la migración
+`login_centro_insensible_a_mayusculas`. Su prueba, en
+`tests/test_login_centro.py`.
+
+*2026-10-18*
+
+### Las funciones de la base se versionan en el repositorio
+**Regla.** Toda función de Supabase tiene su archivo en `sql/`, y se actualiza en
+el mismo commit que la migración que la cambia.
+
+**Fundamento.** Hasta octubre de 2026 la única copia de las funciones era la de
+producción. Un cambio aplicado desde cualquier sesión no dejaba rastro, no se
+podía comparar con lo anterior y no había forma de revisarlo después. La primera
+vez que eso importó fue con `validar_login_centro()`, cambiada desde un chat que
+no tenía el repositorio a mano.
+
+**Consecuencia asumida.** El archivo puede desincronizarse de la base si alguien
+aplica una migración y no lo actualiza. La prueba detecta que el archivo cambió
+de forma, no que la base haya cambiado. Verificar la base contra el archivo
+requiere el conector de Supabase y se hace a mano.
+
+*2026-10-18*
+
+---
+
 ### El formulario de Perú se llama `index.html` y no se renombra
 **Regla.** `index.html` es el formulario de ingreso de Perú. No se renombra a
 `index_peru.html` ni se convierte en portal, aunque rompa la convención de los
