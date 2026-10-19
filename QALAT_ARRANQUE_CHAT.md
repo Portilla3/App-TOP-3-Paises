@@ -54,6 +54,19 @@ se sincronizaron.
   entere.
 - Lo que falta o se descartó: `PENDIENTES.md`.
 
+### Dos accesos distintos, que no hay que confundir
+
+- **Formulario TOP:** el centro elige su código de una lista y carga pacientes.
+  No usa clave. La lista vive en el HTML de cada país; en Perú, `index.html`.
+  Un centro nuevo que va a cargar TOP se agrega ahí.
+- **Plataforma (Streamlit):** el centro entra con código y clave para ver su
+  panel y descargar reportes. Las claves viven en `centro_credenciales`. Solo
+  tiene sentido para centros que ya tienen datos.
+
+El 18 de octubre se confundieron: a cinco centros nuevos de Perú se les creó
+clave de plataforma en vez de agregarlos al formulario, y quedaron sin poder
+cargar nada.
+
 ### Reglas de trabajo
 
 1. Antes de tocar código, correr `python -m pytest tests/ -v`. Si algo ya falla,

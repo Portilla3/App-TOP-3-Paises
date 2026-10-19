@@ -8,6 +8,16 @@ sí; el orden es de aparición.
 
 ## Del 2026-10-18 · credenciales y login
 
+**Las cinco claves de plataforma del Grupo 4 de Perú sobran por ahora.** Esos
+centros recién empiezan y solo necesitan el formulario TOP, donde se agregaron
+el 2026-10-19. La recomendación es desactivarlas (`activo = false`), no
+borrarlas: falta el permiso de Rodrigo.
+
+**22 centros de Perú cargan TOP y no tienen acceso a la plataforma.** Solo
+EESS02SB y EESS09H lo tienen. Se le pidió a Miguel el correo institucional y el
+responsable de cada uno para crear sus claves. En Ecuador pasa lo mismo con 39
+centros y en México con 37.
+
 **Los cinco centros del Grupo 4 de Perú tienen datos provisionales.**
 `correo_institucional` quedó con `pendiente-XXXX@qalat.pe`, inventado porque la
 columna es NOT NULL y no se tenían los correos reales. Y `responsable_nombre`
