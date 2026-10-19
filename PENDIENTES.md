@@ -8,10 +8,12 @@ sí; el orden es de aparición.
 
 ## Del 2026-10-18 · credenciales y login
 
-**Las cinco claves de plataforma del Grupo 4 de Perú sobran por ahora.** Esos
-centros recién empiezan y solo necesitan el formulario TOP, donde se agregaron
-el 2026-10-19. La recomendación es desactivarlas (`activo = false`), no
-borrarlas: falta el permiso de Rodrigo.
+**Resuelto el 2026-10-19 · las cinco claves de plataforma del Grupo 4 de Perú.**
+Desactivadas con autorización de Rodrigo (`activo = false`), no borradas. Esos
+centros solo necesitan el formulario TOP, donde ya están. El estado previo quedó
+en `backup_credenciales_grupo4_20261019`, que guarda solo código y estado, sin
+las claves cifradas. Para reactivar una:
+`UPDATE centro_credenciales SET activo = TRUE WHERE centro = 'EESS34AS';`
 
 **22 centros de Perú cargan TOP y no tienen acceso a la plataforma.** Solo
 EESS02SB y EESS09H lo tienen. Se le pidió a Miguel el correo institucional y el
