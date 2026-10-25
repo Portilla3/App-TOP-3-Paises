@@ -59,8 +59,13 @@ sistema se quedaba con la primera copia, de modo que la corrección del centro s
 descartaba y los informes mostraban la versión vieja. Afectaba a 41 TOP, 37 de
 ellos de ingreso, en los cuatro países.
 
-**Consecuencia asumida.** Si alguna vez la segunda carga es la equivocada, se
-usa esa. Es mucho menos frecuente que el caso contrario.
+**Consecuencia asumida.** Si la segunda carga es la equivocada, se usa esa.
+Revisados los 45 grupos el mismo día, la última carga era igual o mejor en 36 y
+dudosa en 9 (perdió datos, cambió valores sin explicación o trae un error). Esos
+9 se corrigen a mano después de preguntar al centro; el detalle está en
+`PENDIENTES.md`. La alternativa de quedarse con la copia "más completa" falla
+peor: las copias del piloto parecen completas porque traen ceros que no son
+datos reales.
 
 **Lo que no cambia.** El contador "Total de registros" del panel sigue contando
 todas las filas, duplicados incluidos. Eliminar las copias sobrantes de la base

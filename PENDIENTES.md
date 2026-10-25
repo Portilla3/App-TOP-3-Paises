@@ -58,15 +58,37 @@ un panel vacío porque no tienen registros todavía.
 
 **Registros duplicados.** Al 2026-10-25 son 45 grupos, 94 registros y 49
 copias sobrantes (eran 34 grupos el 2 de septiembre: está creciendo). Desde el
-25 de octubre el panel y los informes usan la última carga de cada grupo, así
-que ya no afectan los resultados. Falta decidir si se borran las copias viejas
-de la base: antes hay que revisar con Rodrigo los seis grupos de tres centros
-(SAI000850, SAI001735 y SJA) donde las copias difieren en 30 a 57 campos. Son el
-mismo TOP: casi todas las diferencias son blancos del piloto contra ceros del
-formulario nuevo. Pero hay cuatro diferencias de contenido que el centro debe
-confirmar, y un tercer ingreso de ANBR20062002 con la fecha cambiada que hoy
-cuenta como un episodio aparte. El contador "Total de registros" del panel
-sigue inflado por esas copias mientras no se borren. *2026-10-25*
+25 de octubre el panel y los informes usan la última carga de cada grupo.
+Revisados los 45 grupos uno por uno el mismo día:
+
+- 36 grupos (39 copias viejas): la última carga es igual o mejor. Las
+  diferencias son blancos del piloto contra ceros, la columna `salud_mental` del
+  piloto, nombres del entrevistador o correcciones plausibles. Se pueden borrar
+  las copias viejas, con permiso de Rodrigo.
+- 9 grupos (10 copias viejas): la última carga no es claramente la correcta y
+  hay que preguntar al centro antes de borrar nada.
+  - La última carga perdió datos: NWH JOCO20011985 (tabaco 28 → 0), EESS03CA
+    mago06022008 (otra sustancia 17 → 0), CET045943 NESA25051997 (días de otras
+    actividades 14 → 0, dos copias viejas), SAI000850 BRSU09082000 (heroína
+    4 → 0 y se pierde la descripción de "otra acción").
+  - Cambio de contenido sin explicación: CMM SAGO12051974 (sexo H → M y tabaco
+    0 → 28), EESS29EL GISA06012013 (alcohol, calidad de vida, hurto y salud
+    psicológica), SAI001735 CROR11061997 (alcohol 0 → 2), CET045943
+    NICH30091972 (salud física 14 → 3).
+  - La última carga trae un error: SJA GUCH29081991 tiene nacimiento 1999 y los
+    demás registros del paciente dicen 1991.
+
+Aparte: SAI001735 ANBR20062002 tiene un segundo ingreso con fecha 20/04, cargado
+el 11/07, que no es duplicado por fecha y hoy abre un episodio aparte. Lo más
+probable es que la fecha esté mal. El contador "Total de registros" del panel
+sigue inflado mientras no se borren las copias. *2026-10-25*
+
+**Salud psicológica de los registros migrados del piloto.** Ver
+`INCIDENTES.md`, 2026-10-25. Falta decidir si se recupera del Excel original de
+JotForm o se deja en blanco en los 402 registros migrados. En la misma
+migración hay 9 registros (7 de El Salvador, 2 de Perú) con fecha de entrevista
+posterior al día en que se cargaron, imposible; lo más probable es día y mes
+invertidos. *2026-10-25*
 
 **Las columnas `_prom` no tienen validación de rango.** Hay valores de 1260,
 800, 700, 620 y un −2 en cantidad promedio por día. Las columnas de días sí

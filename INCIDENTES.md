@@ -12,6 +12,46 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-10-25 · La salud psicológica de los registros migrados no es la escala 0 a 20
+
+**Quién avisó:** nadie. Apareció al revisar los duplicados de SJA: la copia del
+piloto tenía salud psicológica 0 y la copia del formulario 15, 9, 20 y 10.
+
+**Síntoma:** en los registros que entraron por la migración de JotForm (Perú el
+19 de mayo, El Salvador el 5 de junio; 402 registros, 322 de ingreso), la salud
+psicológica casi siempre es 0 y, cuando no lo es, ronda 2.
+
+| Grupo | Registros | Salud psicológica en 0 | Promedio si no es 0 |
+|---|---|---|---|
+| El Salvador, migración | 319 | 85,9 % | 2,0 |
+| El Salvador, formulario | 584 | 1,1 % | 14,2 |
+| Perú, migración | 83 | 52,6 % | 2,6 |
+| Perú, formulario | 480 | 1,0 % | 10,7 |
+
+Salud física y calidad de vida de esos mismos registros están bien (menos de
+1,5 % en 0). Ecuador, migrado el 1 y 2 de junio, no tiene el problema.
+
+**Causa probable:** la función de migración, ya retirada (`_migrar_excel_jotform`,
+commit 631d2f8, `app.py` línea 331), tomaba la primera columna del Excel cuyo
+nombre contuviera "psicol". En los Excel de Perú y El Salvador esa primera
+columna no era la escala de 0 a 20. Cuál era exactamente no se puede saber sin
+el Excel original.
+
+**Efecto:** la línea base de salud psicológica sale más baja de lo real. En
+ingresos de El Salvador el promedio es 9,6 con los migrados y 13,4 sin ellos;
+en Perú, 9,1 y 10,0. Lo más delicado es el seguimiento: un paciente migrado con
+0 al ingreso y 14 en el seguimiento aparece con una mejoría que no existió.
+
+**Arreglo:** pendiente. Dos caminos: recuperar el valor correcto del Excel
+original de JotForm, o dejar la salud psicológica en blanco en esos 402
+registros para que no entre al cálculo. Cualquiera de los dos modifica la base
+y requiere el permiso de Rodrigo, respaldo previo y conteo.
+
+**Lección:** una migración se verifica comparando la distribución de cada
+variable contra los datos que entran por el formulario, no solo contando filas.
+
+---
+
 ## 2026-10-08 y anteriores · Centros que no logran entrar al sistema
 
 **Quién avisó:** nadie. Apareció al revisar `centro_bitacora` desde el chat de
