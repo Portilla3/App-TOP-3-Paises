@@ -193,6 +193,19 @@ población: un centro que atiende más alcohólicos mostraría menos consumo de
 cocaína aunque sus consumidores de cocaína consuman igual. Quien deja de
 consumir no desaparece del reporte, aparece como una caída de la prevalencia.
 
+### Una semana en blanco vale cero
+
+Al registrar los días de consumo de una sustancia, una semana en blanco cuenta
+como cero. Basta un solo 0 en cualquier semana para registrar que no hubo
+consumo (el atajo), y si hubo consumo solo en algunas semanas, se pueden anotar
+esas y dejar las demás en blanco. El formulario no bloquea el envío por eso.
+
+**Por qué.** Cuando hubo consumo, el 94 % completa las cuatro semanas; el resto
+anota solo la semana en que consumió. Exigir las cuatro contradiría el atajo.
+Solo rige para sustancias: VIF y trabajo o educación están sin decidir.
+
+`calcSustancia()` en los formularios · DECISIONES.md, 2026-10-25
+
 ### No se distingue abstinencia de nunca consumió al ingreso
 
 El TOP mide consumo en las últimas cuatro semanas, no historia de consumo, así
@@ -302,6 +315,15 @@ crack en Perú no es un faltante, es una sustancia que su formulario no pregunta
 
 El `LIKE` es necesario porque conviven México, México CIJ, México Mahanaim y
 México Monte Fénix.
+
+### Si un TOP se cargó dos veces, vale la última carga
+
+Cuando hay más de un registro con el mismo centro, paciente, etapa y fecha, se
+usa el cargado más recientemente. Casi siempre es la corrección del centro.
+Hasta octubre de 2026 se usaba el primero, y las correcciones no llegaban a los
+informes.
+
+`quedarse_con_ultima_version()`
 
 ### El residuo de trabajo y educación se asume como ausente
 

@@ -26,7 +26,7 @@ _MES_ES = {'ene':'Jan','feb':'Feb','mar':'Mar','abr':'Apr','may':'May','jun':'Ju
            'nov':'Nov','dic':'Dec'}
 _EXCEL_ORIGEN = pd.Timestamp('1899-12-30')
 
-from pipeline.validacion_top import construir_episodios, fecha_nacimiento_valida, dias_validos_semana, dias_validos_mes
+from pipeline.validacion_top import construir_episodios, quedarse_con_ultima_version, fecha_nacimiento_valida, dias_validos_semana, dias_validos_mes
 
 _SUST_KEYS_NORM = [_norm_str(x) for x in [
     'sustancia principal', 'cual considera', 'cuál considera',
@@ -262,8 +262,12 @@ def procesar_wide(input_path: str,
     # delante el TOP de ingreso de un paciente cuyos tres registros venían con la
     # fecha en nulo, y ese episodio desaparecía de los reportes pero no del panel.
     # El df original se conserva intacto para el reporte de duplicados más abajo.
+    #
+    # Desde el 2026-10-25 se conserva la copia cargada más recientemente, no la
+    # primera: los duplicados reales son casi siempre TOP vueltos a cargar para
+    # corregirlos, y quedarse con la primera descartaba la corrección.
     _clave_dedup = [c for c in [COL_CODIGO, COL_CENTRO, COL_FECHA, COL_ETAPA] if c]
-    df_wide = df.drop_duplicates(subset=_clave_dedup, keep='first').reset_index(drop=True)
+    df_wide = quedarse_con_ultima_version(df, _clave_dedup).reset_index(drop=True)
 
     # La unidad es el episodio de tratamiento: cada TOP con etapa de ingreso abre
     # uno, y los TOP siguientes del mismo paciente en el mismo centro le

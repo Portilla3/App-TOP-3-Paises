@@ -56,11 +56,17 @@ un panel vacío porque no tienen registros todavía.
 
 ## Datos
 
-**Registros duplicados.** 34 grupos, 71 registros, 37 sobrantes. Rodrigo
-autorizó eliminar el menos completo de cada grupo. Falta correr el diagnóstico
-que separa los duplicados reales de los que el `GROUP BY` juntó por tener
-`fecha_entrevista` en nulo. Requiere respaldo, suspender `deny_delete_all` y
-restituirla. *2026-09-02*
+**Registros duplicados.** Al 2026-10-25 son 45 grupos, 94 registros y 49
+copias sobrantes (eran 34 grupos el 2 de septiembre: está creciendo). Desde el
+25 de octubre el panel y los informes usan la última carga de cada grupo, así
+que ya no afectan los resultados. Falta decidir si se borran las copias viejas
+de la base: antes hay que revisar con Rodrigo los seis grupos de tres centros
+(SAI000850, SAI001735 y SJA) donde las copias difieren en 30 a 57 campos. Son el
+mismo TOP: casi todas las diferencias son blancos del piloto contra ceros del
+formulario nuevo. Pero hay cuatro diferencias de contenido que el centro debe
+confirmar, y un tercer ingreso de ANBR20062002 con la fecha cambiada que hoy
+cuenta como un episodio aparte. El contador "Total de registros" del panel
+sigue inflado por esas copias mientras no se borren. *2026-10-25*
 
 **Las columnas `_prom` no tienen validación de rango.** Hay valores de 1260,
 800, 700, 620 y un −2 en cantidad promedio por día. Las columnas de días sí
@@ -84,6 +90,15 @@ El clasificador actual los resuelve bien y el texto original está en
 ---
 
 ## Código
+
+**Semanas en blanco en VIF y en días de trabajo y educación.** Los formularios
+las suman como cero, igual que en sustancias, pero la regla no está decidida.
+En trabajo y educación, además, convive con la casilla "No aplica". *2026-10-25*
+
+**Opcional: rellenar con 0 las semanas en blanco al enviar.** En sustancias el
+cálculo ya las toma como cero; rellenarlas dejaría el dato explícito en la base
+sin bloquear a nadie. No se decidió hacerlo. *2026-10-25*
+
 
 **Ocho módulos del panel siguen filtrando la etapa a mano.** `config.py`,
 `kpis_centro.py`, `metricas.py`, `semaforo_seguimiento.py` y `tiempo_top.py`

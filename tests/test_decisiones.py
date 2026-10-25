@@ -381,3 +381,75 @@ def test_un_centro_sin_top_de_ingreso_no_revienta_el_pipeline():
         src = fh.read()
     assert 'if not top1_rows:' in src
     assert 'df_top1 = pd.DataFrame(columns=list(df_wide.columns))' in src
+
+
+# ── Duplicados: vale la última carga ───────────────────────────────────────
+
+def _dup(**extra):
+    base = dict(pais='El Salvador', centro='CMM', codigo_paciente='AAAA01011990',
+                fecha_entrevista='2026-04-07', etapa='ingreso')
+    base.update(extra)
+    return base
+
+
+def test_de_dos_copias_se_conserva_la_cargada_despues():
+    """Los duplicados reales son TOP vueltos a cargar para corregirlos."""
+    from pipeline.validacion_top import quedarse_con_ultima_version
+    df = pd.DataFrame([
+        _dup(id=10, created_at='2026-07-10 10:00:00+00', alcohol_total=5),
+        _dup(id=25, created_at='2026-07-24 15:00:00+00', alcohol_total=20),
+    ])
+    r = quedarse_con_ultima_version(df, ['codigo_paciente', 'centro', 'fecha_entrevista', 'etapa'])
+    assert len(r) == 1 and r.iloc[0]['alcohol_total'] == 20
+
+
+def test_manda_la_fecha_de_carga_aunque_el_id_diga_otra_cosa():
+    from pipeline.validacion_top import quedarse_con_ultima_version
+    df = pd.DataFrame([
+        _dup(id=99, created_at='2026-06-01 10:00:00+00', alcohol_total=5),
+        _dup(id=12, created_at='2026-08-01 10:00:00+00', alcohol_total=20),
+    ])
+    r = quedarse_con_ultima_version(df, ['codigo_paciente', 'etapa'])
+    assert r.iloc[0]['alcohol_total'] == 20
+
+
+def test_sin_fecha_de_carga_desempata_el_id():
+    from pipeline.validacion_top import quedarse_con_ultima_version
+    df = pd.DataFrame([_dup(id=30, alcohol_total=20), _dup(id=10, alcohol_total=5)])
+    r = quedarse_con_ultima_version(df, ['codigo_paciente', 'etapa'])
+    assert r.iloc[0]['alcohol_total'] == 20
+
+
+def test_sin_fecha_de_carga_ni_id_se_conserva_la_primera():
+    """Sin información de cuándo se cargó, no hay base para elegir otra."""
+    from pipeline.validacion_top import quedarse_con_ultima_version
+    df = pd.DataFrame([_dup(alcohol_total=5), _dup(alcohol_total=20)])
+    r = quedarse_con_ultima_version(df, ['codigo_paciente', 'etapa'])
+    assert r.iloc[0]['alcohol_total'] == 5
+
+
+def test_el_orden_de_las_filas_no_cambia():
+    from pipeline.validacion_top import quedarse_con_ultima_version
+    df = pd.DataFrame([
+        _dup(id=1, codigo_paciente='Z', created_at='2026-01-01'),
+        _dup(id=2, codigo_paciente='A', created_at='2026-01-02'),
+        _dup(id=3, codigo_paciente='M', created_at='2026-01-03'),
+    ])
+    r = quedarse_con_ultima_version(df, ['codigo_paciente'])
+    assert list(r['codigo_paciente']) == ['Z', 'A', 'M']
+
+
+def test_lineas_base_usa_la_ultima_carga_del_ingreso():
+    df = pd.DataFrame([
+        _dup(id=10, created_at='2026-07-10', sexo='H'),
+        _dup(id=25, created_at='2026-07-24', sexo='M'),
+    ])
+    lb = lineas_base(df)
+    assert len(lb) == 1 and lb.iloc[0]['sexo'] == 'M'
+
+
+def test_el_wide_deduplica_con_la_funcion_compartida():
+    with open(os.path.join(RAIZ, 'pipeline', 'wide_top.py'), encoding='utf-8') as fh:
+        src = fh.read()
+    assert 'quedarse_con_ultima_version(df, _clave_dedup)' in src
+    assert "drop_duplicates(subset=_clave_dedup, keep='first')" not in src

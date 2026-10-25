@@ -6,6 +6,68 @@ se cambia con una entrada nueva que diga por qué.
 
 ---
 
+### En sustancias, una semana en blanco vale cero
+**Regla.** Al registrar los días de consumo de una sustancia, una semana que
+queda en blanco cuenta como cero. Dos usos de lo mismo:
+
+- **El atajo del cero:** basta escribir un 0 en cualquiera de las cuatro semanas
+  para registrar que no hubo consumo. Las otras tres pueden quedar en blanco y
+  el total es 0. Rodrigo lo diseñó así a propósito, para agilizar el tipeo: la
+  mayoría de las sustancias de la lista son de no consumo.
+- **Consumo en algunas semanas:** si se escribe consumo solo en las semanas en
+  que lo hubo (por ejemplo, un 3 en la última semana) y las demás quedan en
+  blanco, esas semanas cuentan como cero y el total es 3.
+
+El formulario no bloquea el envío por semanas en blanco. Es lo que ya hacían
+`calcSustancia()` y el cálculo de totales; esta entrada lo deja escrito.
+
+**Fundamento.** Medido sobre los bloques de sustancias cargados entre el 3 de
+septiembre y el 25 de octubre de 2026: cuando hubo consumo, el 94 % completó las
+cuatro semanas (797 bloques). De los 53 que no lo hicieron, 42 escribieron una
+sola semana y dejaron las otras tres en blanco, y ninguno mezcló un cero escrito
+con semanas en blanco. Es el mismo razonamiento que enseña el atajo: se anota lo
+que hubo y lo demás queda vacío porque fue nada.
+
+**Lo que se descartó.** Exigir las cuatro semanas cuando hay consumo en alguna,
+bloqueando el envío si falta una. Se propuso el 25 de octubre y no se adoptó:
+contradice el atajo, porque enseña que "un cero y el resto en blanco" vale pero
+"un tres y el resto en blanco" es un error, y agrega fricción para corregir 53
+bloques en dos meses.
+
+**Consecuencia asumida.** Si alguien de verdad no preguntó por una semana, queda
+registrada como cero y el consumo puede quedar algo subestimado. Es el mismo
+riesgo que existía, y afecta a menos del 1 % de los bloques.
+
+**Alcance.** Solo sustancias. Violencia intrafamiliar y días de trabajo y
+educación suman igual en el formulario, pero la regla para sus semanas en blanco
+no está decidida; ver `PENDIENTES.md`.
+
+*2026-10-25*
+
+### Si un TOP se cargó dos veces, vale la última carga
+**Regla.** Cuando hay más de un registro con el mismo centro, paciente, etapa y
+fecha de entrevista, se usa el que se cargó más recientemente: el de
+`created_at` mayor y, como desempate, el de `id` mayor. Rige para el panel y
+para los informes, a través de `quedarse_con_ultima_version()`.
+
+**Fundamento.** Al 25 de octubre de 2026 había 45 grupos así, con 94 registros.
+Casi ninguno era un doble clic: en 41 las copias tenían contenido distinto y la
+mayoría se cargó semanas después. Eran TOP vueltos a cargar para corregirlos,
+porque los formularios de corrección están en pausa, o TOP que ya habían entrado
+por la migración del piloto y el centro volvió a cargar. Hasta esa fecha el
+sistema se quedaba con la primera copia, de modo que la corrección del centro se
+descartaba y los informes mostraban la versión vieja. Afectaba a 41 TOP, 37 de
+ellos de ingreso, en los cuatro países.
+
+**Consecuencia asumida.** Si alguna vez la segunda carga es la equivocada, se
+usa esa. Es mucho menos frecuente que el caso contrario.
+
+**Lo que no cambia.** El contador "Total de registros" del panel sigue contando
+todas las filas, duplicados incluidos. Eliminar las copias sobrantes de la base
+es una decisión aparte, pendiente de revisar con Rodrigo.
+
+*2026-10-25*
+
 ### Claude lee Supabase por su cuenta, pero no modifica sin permiso
 **Regla.** Con el conector de Supabase activo, Claude puede ejecutar consultas
 de lectura sin preguntar. Cualquier modificación de datos o de estructura

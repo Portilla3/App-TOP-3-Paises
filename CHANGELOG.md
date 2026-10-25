@@ -6,6 +6,28 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-10-25
+
+### Con los TOP cargados dos veces se usa la última versión, no la primera
+`quedarse_con_ultima_version()` en `pipeline/validacion_top.py`, usada por
+`procesar_wide()` al deduplicar y por `lineas_base()` al elegir el TOP de
+ingreso de cada episodio. Conserva la copia de `created_at` mayor, con `id` como
+desempate. Sin ninguna de las dos columnas, conserva la primera, como antes.
+
+Había 45 grupos de registros con el mismo centro, paciente, etapa y fecha. En 41
+las copias eran distintas: centros que volvieron a cargar un TOP para corregirlo
+y TOP que habían entrado por la migración del piloto y se cargaron de nuevo. Se
+conservaba la primera copia, así que la corrección no llegaba a los informes.
+Cambian 41 TOP, 37 de ingreso.
+
+Siete pruebas nuevas, 113 en total.
+
+### Queda escrita la regla de las semanas en blanco en sustancias
+El atajo del cero ya funcionaba en los formularios pero no estaba en ningún
+documento. Entra en `DECISIONES.md` y en `QALAT_REGLAS_DE_CALCULO.md`, junto con
+el descarte de exigir las cuatro semanas cuando hay consumo. Sin cambios de
+código.
+
 ## 2026-10-19
 
 ### Cinco centros nuevos de Perú en el formulario TOP

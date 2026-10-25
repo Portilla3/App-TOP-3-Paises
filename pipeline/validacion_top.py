@@ -432,7 +432,9 @@ def lineas_base(df, col_codigo='codigo_paciente', col_centro='centro',
         return df.iloc[0:0]
     d = construir_episodios(df, col_codigo, col_centro, col_fecha, col_etapa)
     d = d[d['_episodio'].notna() & d[col_etapa].apply(es_etapa_ingreso)]
-    return d.drop_duplicates(subset='_episodio', keep='first')
+    # Si el TOP de ingreso se cargó dos veces, vale la última carga: suele ser
+    # la corrección que hizo el centro.
+    return quedarse_con_ultima_version(d, ['_episodio'])
 
 
 # Palabras que identifican la columna de días de cada categoría, sirvan los
@@ -502,3 +504,41 @@ def rango_etario(edad, sufijo=''):
 def rangos_etarios(serie, sufijo=''):
     """Versión vectorizada de rango_etario() para una Serie."""
     return pd.Series(serie).apply(lambda v: rango_etario(v, sufijo))
+
+
+# ── Duplicados: se conserva la versión más reciente ─────────────────────────
+# Al 2026-10-25 había 45 grupos de registros con el mismo centro, paciente,
+# etapa y fecha. Casi ninguno era un doble clic: eran TOP vueltos a cargar
+# semanas después, para corregirlos o porque ya habían entrado por la migración
+# del piloto. Hasta esa fecha el sistema conservaba la primera copia, así que la
+# corrección del centro se descartaba y los informes mostraban la versión vieja.
+
+def quedarse_con_ultima_version(df, clave):
+    """
+    Elimina los duplicados según `clave` conservando la copia cargada más
+    recientemente: la de `created_at` mayor y, como desempate, la de `id` mayor.
+
+    Si el DataFrame no trae ni `created_at` ni `id` no hay forma de saber cuál
+    es la más reciente, y se conserva la primera, como antes.
+
+    Devuelve las filas en el mismo orden en que venían.
+    """
+    if df.empty:
+        return df.copy()
+    tiene_carga = 'created_at' in df.columns or 'id' in df.columns
+    if not tiene_carga:
+        return df.drop_duplicates(subset=clave, keep='first')
+
+    d = df.copy()
+    d['_pos_original'] = range(len(d))
+    if 'created_at' in d.columns:
+        d['_carga_ts'] = pd.to_datetime(d['created_at'], errors='coerce', utc=True)
+    else:
+        d['_carga_ts'] = pd.NaT
+    d['_carga_id'] = pd.to_numeric(d['id'], errors='coerce') if 'id' in d.columns else float('nan')
+
+    d = d.sort_values(['_carga_ts', '_carga_id', '_pos_original'],
+                      na_position='first', kind='mergesort')
+    d = d.drop_duplicates(subset=clave, keep='last')
+    d = d.sort_values('_pos_original', kind='mergesort')
+    return d.drop(columns=['_pos_original', '_carga_ts', '_carga_id'])
