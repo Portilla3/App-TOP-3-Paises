@@ -97,6 +97,23 @@ el 11/07, que no es duplicado por fecha y hoy abre un episodio aparte. Lo más
 probable es que la fecha esté mal. El contador "Total de registros" del panel
 sigue inflado mientras no se borren las copias. *2026-10-25*
 
+**De dónde vienen los duplicados, y la vía para corregir.** Clasificadas el
+26 de octubre, las 49 copias de más son: 28 TOP del piloto vueltos a cargar en
+la Plataforma (CMM 12, todas el 10 de julio), 10 TOP de la Plataforma vueltos a
+cargar con cambios, 8 vueltos a cargar iguales y 3 que ya venían duplicados de
+JotForm. 21 cambian algún dato: lo más probable es que el centro estuviera
+corrigiendo, porque los formularios de corrección están en pausa. Siguen
+apareciendo (12 en septiembre y octubre). Falta decidir qué vía tiene el centro
+para corregir: avisar a Rodrigo, que corrige en Supabase, o reactivar los
+formularios de corrección. *2026-10-26*
+
+**Correcciones que no aparecen como duplicado.** CJR ROGA05111971 (7/9, de en
+tratamiento a ingreso) y EESS02SB GIPO13121982 (18/8, de seguimiento1 a ingreso)
+se volvieron a cargar con la etapa corregida y la copia vieja sigue en la base.
+Además hay 10 pacientes con dos ingresos en el mismo centro a menos de 60 días;
+algunos pueden ser la misma carga con la fecha cambiada. Confirmar con los
+centros. *2026-10-26*
+
 **Salud psicológica de los registros migrados del piloto.** Ver
 `INCIDENTES.md`, 2026-10-25. Falta decidir si se recupera del Excel original de
 JotForm o se deja en blanco en los 402 registros migrados. En la misma
