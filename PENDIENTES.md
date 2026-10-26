@@ -56,6 +56,20 @@ un panel vacío porque no tienen registros todavía.
 
 ## Datos
 
+**Bloquear el código que no coincide con la fecha de nacimiento en Perú,
+Ecuador y El Salvador.** Los formularios de México ya lo bloquean al guardar
+(`validarCruceCodigoFecha(false)`); los otros tres solo muestran un aviso. Es el
+error grave más frecuente (78 de 89 al 26 de octubre). Falta la autorización de
+Rodrigo. *2026-10-26*
+
+**Prueba del criterio de error grave.** Vive en `tools/errores_graves.sql`. Si
+algún día pasa al panel, se mueve a `validacion_top.py` con su prueba.
+*2026-10-26*
+
+**Los 78 TOP con código distinto de la fecha de nacimiento y los 16 seguimientos
+con otro código.** Hay que corregirlos hacia atrás, preguntando al centro cuál
+dato es el correcto. Nada se corrige sin permiso. *2026-10-26*
+
 **Registros duplicados.** Al 2026-10-25 son 45 grupos, 94 registros y 49
 copias sobrantes (eran 34 grupos el 2 de septiembre: está creciendo). Desde el
 25 de octubre el panel y los informes usan la última carga de cada grupo.

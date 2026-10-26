@@ -6,6 +6,47 @@ se cambia con una entrada nueva que diga por qué.
 
 ---
 
+### Qué es un error grave de registro
+**Regla.** Un TOP tiene un error grave de registro cuando le pasa alguna de estas
+tres cosas:
+
+1. La fecha que va dentro del código (DDMMAAAA) no coincide con la fecha de
+   nacimiento. Uno de los dos está mal escrito.
+2. Es un TOP de seguimiento, en tratamiento o egreso que no se une a su ingreso
+   porque se cargó con otro código. Se detecta por centro, sexo y fecha de
+   nacimiento o partes del código, así que es una estimación y cada caso se
+   revisa antes de corregirlo.
+3. La fecha de entrevista es imposible: posterior al día de carga, anterior a
+   2020 o anterior al nacimiento.
+
+No son error grave las semanas en blanco (el atajo del cero, ver "En sustancias,
+una semana en blanco vale cero") ni que el primer TOP de una persona sea "en
+tratamiento". Lo segundo es una pregunta para el centro y se muestra aparte.
+
+El universo son los TOP cargados por los formularios de la Plataforma, una vez
+cada uno (vale la última carga). Los TOP migrados desde JotForm quedan fuera:
+sus errores son de JotForm y se tratan aparte.
+
+**Fundamento.** Son los errores que hacen perder un dato que no se recupera
+después: si el código cambia entre una medición y otra, el seguimiento no se une
+al ingreso; si la fecha es imposible, el TOP cae en otro período. Al 26 de octubre
+de 2026 había 89 TOP con error grave de 1.724 (5,2 %). Casi todos son del tipo
+1, y aparecen solo en Ecuador, El Salvador y Perú. Los formularios de México no
+dejan guardar si el código no coincide con la fecha de nacimiento, y México no
+tiene errores graves desde agosto. Los de los otros tres países solo muestran un
+aviso. La fecha imposible está en cero porque los siete formularios la bloquean.
+
+La lámina anterior contaba "código distinto de la fecha" como si significara que
+se perdió el seguimiento. No es lo mismo: de los 78 TOP con código y fecha
+distintos, solo 5 perdieron el seguimiento, y 11 de los 16 seguimientos perdidos
+tienen el código coherente con su fecha. Por eso el tipo 2 se mide aparte.
+
+**Dónde vive.** `tools/errores_graves.sql`, por grupo y por mes de carga. La
+prueba en `tests/` queda pendiente mientras el criterio viva en SQL y no en
+`validacion_top.py`.
+
+*2026-10-26*
+
 ### En sustancias, una semana en blanco vale cero
 **Regla.** Al registrar los días de consumo de una sustancia, una semana que
 queda en blanco cuenta como cero. Dos usos de lo mismo:

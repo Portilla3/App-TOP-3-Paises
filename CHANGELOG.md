@@ -6,6 +6,12 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-10-26
+
+- `tools/errores_graves.sql`: consulta de errores graves de registro por grupo y
+  por mes de carga, con el criterio de DECISIONES.md. Solo lee. Excluye las dos
+  migraciones de JotForm y cuenta la última carga de cada TOP.
+
 ## 2026-10-25
 
 ### Con los TOP cargados dos veces se usa la última versión, no la primera
