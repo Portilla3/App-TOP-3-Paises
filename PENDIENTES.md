@@ -54,6 +54,15 @@ un panel vacío porque no tienen registros todavía.
 
 **Resuelto el 2026-10-19 · la regla "Claude no alcanza Supabase".** Reemplazada en `DECISIONES.md`: Claude lee por su cuenta y pide permiso para cualquier modificación.
 
+**Próximo desarrollo: abrir la Plataforma a todos los centros.** Plan de
+Rodrigo, en este orden: (1) al menos dos centros por país con acceso completo;
+(2) encuesta de Rodrigo a esos centros sobre el uso; (3) módulo de gestión para
+que cada gobierno asigne y administre las claves de sus centros, con
+capacitación; (4) acceso para todos los centros. El objetivo es que cada centro
+vea la lista de sus pacientes con TOP aplicado. Rodrigo lo considera urgente:
+sin acceso, los centros vuelven a cargar TOP que ya estaban y se mantienen
+errores. *2026-10-26*
+
 ## Datos
 
 **Bloquear el código que no coincide con la fecha de nacimiento en Perú,
