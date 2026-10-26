@@ -123,10 +123,11 @@ Además hay 10 pacientes con dos ingresos en el mismo centro a menos de 60 días
 algunos pueden ser la misma carga con la fecha cambiada. Confirmar con los
 centros. *2026-10-26*
 
-**Salud psicológica de los registros migrados del piloto.** Ver
-`INCIDENTES.md`, 2026-10-25. Falta decidir si se recupera del Excel original de
-JotForm o se deja en blanco en los 402 registros migrados. En la misma
-migración hay 9 registros (7 de El Salvador, 2 de Perú) con fecha de entrevista
+**Resuelto el 2026-10-26 · salud psicológica de los registros migrados.** Ver
+`INCIDENTES.md`. Queda por comparar el resto de los campos de los 402 registros
+contra los Excel de JotForm: si la migración tomó mal esta columna, puede haber
+tomado mal otras (en SJA los días de trabajo aparecen en blanco en la copia
+migrada). En la misma migración hay 9 registros (7 de El Salvador, 2 de Perú) con fecha de entrevista
 posterior al día en que se cargaron, imposible; lo más probable es día y mes
 invertidos. *2026-10-25*
 

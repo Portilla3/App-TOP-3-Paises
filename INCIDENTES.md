@@ -45,7 +45,7 @@ iguales en los siete. No se revisó todo lo demás.
 
 ---
 
-## 2026-10-25 · La salud psicológica de los registros migrados no es la escala 0 a 20
+## 2026-10-25 · La salud psicológica de los registros migrados no es la escala 0 a 20 · cerrado el 2026-10-26
 
 **Quién avisó:** nadie. Apareció al revisar los duplicados de SJA: la copia del
 piloto tenía salud psicológica 0 y la copia del formulario 15, 9, 20 y 10.
@@ -64,21 +64,35 @@ psicológica casi siempre es 0 y, cuando no lo es, ronda 2.
 Salud física y calidad de vida de esos mismos registros están bien (menos de
 1,5 % en 0). Ecuador, migrado el 1 y 2 de junio, no tiene el problema.
 
-**Causa probable:** la función de migración, ya retirada (`_migrar_excel_jotform`,
+**Causa:** la función de migración, ya retirada (`_migrar_excel_jotform`,
 commit 631d2f8, `app.py` línea 331), tomaba la primera columna del Excel cuyo
-nombre contuviera "psicol". En los Excel de Perú y El Salvador esa primera
-columna no era la escala de 0 a 20. Cuál era exactamente no se puede saber sin
-el Excel original.
+nombre contuviera "psicol". En los Excel de JotForm esa columna es "4) Violencia
+Intrafamiliar (Maltrato físico o psicológico) >> Última Semana (0-7)", no "6)
+Calificar el estado de salud psicológica". Confirmado el 26 de octubre con los
+Excel originales: en los 402 registros el valor de la base era exactamente el de
+la semana 4 de violencia intrafamiliar.
 
 **Efecto:** la línea base de salud psicológica sale más baja de lo real. En
 ingresos de El Salvador el promedio es 9,6 con los migrados y 13,4 sin ellos;
 en Perú, 9,1 y 10,0. Lo más delicado es el seguimiento: un paciente migrado con
 0 al ingreso y 14 en el seguimiento aparece con una mejoría que no existió.
 
-**Arreglo:** pendiente. Dos caminos: recuperar el valor correcto del Excel
-original de JotForm, o dejar la salud psicológica en blanco en esos 402
-registros para que no entre al cálculo. Cualquiera de los dos modifica la base
-y requiere el permiso de Rodrigo, respaldo previo y conteo.
+**Arreglo:** 26 de octubre de 2026, con autorización de Rodrigo. Se recuperó el
+valor correcto de los Excel originales (`TOP_Perú2026-04-22_19_43_54.xlsx`, 83
+filas, y `TOP_ElSalvador_LIMPIA.xlsx`, 319 filas). Los ids de cada lote siguen
+el orden de las filas del Excel (Perú 374 a 456, El Salvador 545 a 863), y se
+comprobó con una huella md5 de id, código y valor anterior antes de tocar nada;
+10 registros con la fecha corregida después de la migración quedaron
+identificados igual. Respaldo en `backup_salud_psicologica_migracion_20261026`
+(402 filas, RLS activo, sin permisos para anon ni authenticated). El UPDATE
+devolvió 402 filas, la huella posterior coincide con la esperada y cambiaron 400
+valores (2 ya coincidían). La consulta está en
+`sql/correcciones/2026-10-26_salud_psicologica_migracion.sql`.
+
+Resultado: los registros migrados pasan a tener 0,3 % de ceros en El Salvador y
+0 % en Perú, con promedios de 14,1 y 11,7, en línea con los cargados por
+formulario (14,0 y 10,6). El promedio al ingreso sube de 9,6 a 13,5 en El
+Salvador y de 9,1 a 10,2 en Perú.
 
 **Lección:** una migración se verifica comparando la distribución de cada
 variable contra los datos que entran por el formulario, no solo contando filas.

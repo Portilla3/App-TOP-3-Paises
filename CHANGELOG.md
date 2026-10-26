@@ -8,6 +8,11 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-26
 
+- Datos: corregida la salud psicológica de los 402 TOP migrados desde JotForm,
+  que tenían los días de violencia intrafamiliar de la última semana. Respaldo,
+  conteo y huella antes y después; detalle en INCIDENTES.md. SQL en
+  `sql/correcciones/2026-10-26_salud_psicologica_migracion.sql`.
+
 - `tools/errores_graves.sql`: consulta de errores graves de registro por grupo y
   por mes de carga, con el criterio de DECISIONES.md. Solo lee. Excluye las dos
   migraciones de JotForm y cuenta la última carga de cada TOP.
