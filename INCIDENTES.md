@@ -45,7 +45,7 @@ iguales en los siete. No se revisó todo lo demás.
 
 ---
 
-## 2026-10-25 · La salud psicológica de los registros migrados no es la escala 0 a 20 · cerrado el 2026-10-26
+## 2026-10-25 · La migración de JotForm tomó mal cuatro campos · cerrado el 2026-10-26
 
 **Quién avisó:** nadie. Apareció al revisar los duplicados de SJA: la copia del
 piloto tenía salud psicológica 0 y la copia del formulario 15, 9, 20 y 10.
@@ -94,8 +94,40 @@ Resultado: los registros migrados pasan a tener 0,3 % de ceros en El Salvador y
 formulario (14,0 y 10,6). El promedio al ingreso sube de 9,6 a 13,5 en El
 Salvador y de 9,1 a 10,2 en Perú.
 
+**Los otros campos, revisados el 26 de octubre.** Se volvió a ejecutar sobre los
+Excel la función de migración tal como estaba ese día (commit 27db6a6 para Perú,
+01c86c4 para El Salvador) y se comparó campo por campo con lo que dicen las
+columnas correctas. Aparecieron tres errores más; el resto (sustancias, VIF,
+salud física, calidad de vida, vivienda, hurto, venta, peleas, otra acción,
+sustancia principal) coincide.
+
+- Días de educación: la función buscaba "colegio" o "educación", palabras que
+  también están en el enunciado de las columnas de trabajo, y copió los días de
+  trabajo en educación en los 402. El 2 de septiembre se anularon ambos en 302
+  registros creyendo que era un defecto de JotForm, lo que borró los días
+  trabajados de todos los que trabajaban.
+- Robo: la función tomó la primera columna que contenía "robo", que era la de
+  hurto ("hurtos, robos…"). Robo era idéntico a hurto en los 402.
+- El texto "nan" quedó escrito en 215 nombres de otra sustancia y 336
+  descripciones de otra acción.
+
+**Arreglo de los tres, 26 de octubre, con autorización de Rodrigo.** Respaldo en
+`backup_migracion_trabajo_robo_20261026` (402 filas, RLS activo, sin permisos).
+UPDATE de trabajo, educación y robo: 402 filas, huella posterior igual a la
+esperada; cambiaron 310 registros en trabajo o educación y 13 en robo (12 de
+Perú, 1 de El Salvador). Los bloques con valores imposibles quedaron en blanco:
+29 de trabajo y 1 de educación, todos de El Salvador. Los "nan" pasaron a NULL
+(215 y 336). El porcentaje que trabajaba al ingreso queda en 77,1 % en El
+Salvador (era 69,0 %) y 72,8 % en Perú (era 68,2 %). SQL en
+`sql/correcciones/2026-10-26_migracion_trabajo_educacion_robo.sql`. La regla del
+2 de septiembre sobre días duplicados quedó reemplazada en `DECISIONES.md`.
+
 **Lección:** una migración se verifica comparando la distribución de cada
 variable contra los datos que entran por el formulario, no solo contando filas.
+Y buscar columnas por palabras sueltas es frágil cuando los enunciados repiten
+palabras: tres de los cuatro errores salieron de ahí. Antes de corregir un dato
+"raro", hay que mirar la fuente original: la anulación de septiembre partió de
+un supuesto que el Excel de JotForm desmentía.
 
 ---
 

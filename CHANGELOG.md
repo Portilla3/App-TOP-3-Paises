@@ -8,6 +8,11 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-26
 
+- Datos: corregidos días de trabajo, días de educación y robo de los 402 TOP
+  migrados desde JotForm, y los textos "nan" pasados a NULL. Bloques con valores
+  imposibles quedan en blanco. Detalle en INCIDENTES.md; SQL en
+  `sql/correcciones/2026-10-26_migracion_trabajo_educacion_robo.sql`.
+
 - Datos: corregida la salud psicológica de los 402 TOP migrados desde JotForm,
   que tenían los días de violencia intrafamiliar de la última semana. Respaldo,
   conteo y huella antes y después; detalle en INCIDENTES.md. SQL en

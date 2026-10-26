@@ -499,18 +499,33 @@ capacitación.
 
 *2026-09-02*
 
-### Los días de trabajo y educación duplicados se anulan
-**Regla.** En los 300 registros donde ambos campos tenían el mismo valor, se
-anularon los dos. No se conservó ninguno.
+### Los días de trabajo y educación de los TOP migrados vienen de JotForm, no de la copia
+**Regla.** En los 402 TOP migrados desde JotForm, los días de trabajo y de
+educación se toman de los Excel originales de JotForm, cada bloque por separado.
+Un bloque con valores imposibles (una semana fuera de 0 a 7 o un total fuera de
+0 a 28) queda en blanco entero y no entra al cálculo. Si las cuatro semanas
+están vacías, el total también queda en blanco, porque JotForm escribía un 0
+automático que no es un dato.
 
-**Fundamento.** El formulario de JotForm del pilotaje escribía en las dos tablas
-a la vez: en el Excel original hay 303 registros con ambos valores y los 303
-coinciden, sin una sola excepción. El perfil estadístico sugería que el valor
-capturado era el de trabajo, pero un formulario mal configurado al punto de
-escribir en dos tablas distintas no ofrece garantía sobre qué capturó
-realmente. Un nulo declarado es preferible a un dato dudoso.
+**Fundamento.** El 2 de septiembre se anularon ambos campos en unos 300
+registros, porque tenían el mismo valor en trabajo y en educación y se supuso
+que el formulario de JotForm escribía en las dos tablas a la vez. El supuesto era
+falso. El 26 de octubre, con los Excel originales de JotForm, se comprobó que la
+duplicación la causó la migración: buscaba la columna de educación por las
+palabras "colegio" o "educación", que también están en el enunciado de las
+columnas de trabajo, y copió trabajo en educación en los 402 registros. En
+JotForm los dos campos son distintos. La anulación de septiembre borró los días
+trabajados de todos los que trabajaban y dejó solo los ceros, y con eso el
+porcentaje que trabajaba al ingreso bajaba de 77 a 69 % en El Salvador.
 
-*2026-09-02*
+En El Salvador, 29 registros tienen días de trabajo imposibles en JotForm (8,
+12 y hasta 100 por semana, probablemente horas) y uno de educación; esos quedan
+en blanco, como pidió Rodrigo.
+
+**Dónde vive.** `sql/correcciones/2026-10-26_migracion_trabajo_educacion_robo.sql`
+y `INCIDENTES.md`, 2026-10-25.
+
+*2026-10-26, reemplaza la regla del 2026-09-02*
 
 ---
 

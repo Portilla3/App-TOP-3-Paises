@@ -331,12 +331,14 @@ Quedan en nulo. No se piden a los centros ni se rellenan. Lo accionable no es el
 dato sino la capacitación: los vacíos se concentran en EESS28CI con 85,7 %,
 CET042967 con 53,3 %, SCE con 52,4 % y CJR con 36,8 %.
 
-### Los días de trabajo y educación duplicados se anulan
+### En los TOP migrados, trabajo y educación vienen de JotForm
 
-En los 300 registros donde ambos campos tenían el mismo valor, se anularon los
-dos. El formulario de JotForm del pilotaje escribía en las dos tablas a la vez, y
-un formulario mal configurado a ese punto no ofrece garantía sobre qué capturó.
-Un nulo declarado es preferible a un dato dudoso.
+La duplicación entre días de trabajo y de educación no era de JotForm sino de la
+migración, que copió trabajo en educación. Desde el 26 de octubre de 2026 los dos
+campos de los 402 TOP migrados se toman de los Excel originales de JotForm. Un
+bloque con valores imposibles (semana fuera de 0 a 7, total fuera de 0 a 28)
+queda en blanco y no entra al cálculo; si las cuatro semanas están vacías, el
+total también queda en blanco. Reemplaza la anulación del 2 de septiembre.
 
 ---
 
