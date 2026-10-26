@@ -12,6 +12,39 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-07-01 (detectado 2026-10-26) · Los formularios dejaron de tener las mismas reglas
+
+**Quién avisó:** nadie. Apareció al comparar los errores graves por país: México
+en cero y los otros tres países entre 4 y 7 %.
+
+**Síntoma:** en Perú, Ecuador y El Salvador se pueden guardar TOP cuyo código no
+coincide con la fecha de nacimiento. En los cuatro formularios de México, no.
+
+**Causa:** el 1 de julio de 2026 se agregó la validación cruzada entre código y
+fecha de nacimiento. En México quedó como bloqueo al guardar
+(`validarCruceCodigoFecha(false)` en la validación del envío, commits 34c78b4 y
+c1f5220). En Perú, Ecuador y El Salvador quedó solo como aviso al salir del campo
+(commits c564eaf, 8510ee4 y a90d8f5). Monte Fénix y Mahanaim se copiaron del
+formulario de México el 14 y el 16 de julio y heredaron el bloqueo. De fondo: hay
+siete copias del formulario en dos familias de código distintas, y cada regla se
+escribe siete veces.
+
+**Efecto:** 78 TOP con el código distinto de la fecha de nacimiento entre junio y
+octubre, todos en los tres países que solo avisan, salvo 2 de IMSS-Bienestar
+cargados antes del bloqueo.
+
+**Arreglo:** pendiente de autorización. Paso inmediato: el mismo bloqueo en
+`index.html`, `index_ecuador.html` e `index_elsalvador.html`. Paso de fondo: las
+validaciones en un solo archivo que carguen los siete formularios.
+
+**Lección:** una regla del formulario se cambia en los siete a la vez, o no se
+cambia. Revisado el 26 de octubre: el formato del código, los campos
+obligatorios, las fechas (no futura, no anterior a 2020, nacimiento antes de la
+entrevista), la edad de 5 a 100 años y "al menos una semana por sustancia" son
+iguales en los siete. No se revisó todo lo demás.
+
+---
+
 ## 2026-10-25 · La salud psicológica de los registros migrados no es la escala 0 a 20
 
 **Quién avisó:** nadie. Apareció al revisar los duplicados de SJA: la copia del
