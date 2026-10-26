@@ -137,6 +137,14 @@ están validadas, estas no. *2026-09-02*
 valores en vez de `seguimiento`, y el panel filtra por igualdad exacta de texto,
 así que quedan fuera. *2026-08-28*
 
+Revisado el 2026-10-26: no todos son seguimientos. Hasta el 27 de agosto el
+formulario de Perú ofrecía Admisión, Seguimiento 1, Seguimiento 2 y Egreso, sin
+"en tratamiento", así que quien aplicaba el TOP a un paciente que ya estaba en
+tratamiento marcaba Seguimiento 1. Solo 7 tienen un ingreso antes: esos pasan a
+`seguimiento`. Los otros 26 (24 son el primer TOP del paciente, EESS28CI
+concentra 16) se le preguntan al centro; si no responde en el plazo, pasan a
+`en_tratamiento`. Propuesta presentada a la mesa el 26 de octubre.
+
 **Los 1.115 valores de sustancias sin completar con cero.** Decisión tomada el
 2026-09-02, pendiente de ejecución. Mientras no se ejecute, el denominador de
 sustancias incluye registros cuyo cero es inferido. *2026-09-02*
