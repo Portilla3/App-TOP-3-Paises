@@ -1194,6 +1194,14 @@ async function enviarFormulario() {
   const errFechas = validarFechas();
   if (errFechas.length > 0) { ok=false; errMsg = errMsg.concat(errFechas); }
 
+  // El código y la fecha de nacimiento deben coincidir: mismo bloqueo que los formularios de México.
+  // Como la fecha de nacimiento viene de un selector de fecha, esto también impide códigos con fechas que no existen.
+  if (!validarCruceCodigoFecha(false)) {
+    document.getElementById('codigo_paciente').classList.add('error');
+    document.getElementById('fecha_nacimiento').classList.add('error');
+    ok=false; errMsg.push('La fecha de nacimiento no coincide con el código del paciente');
+  }
+
   if(!ok){
     mostrarToast('⚠ ' + (errMsg.length ? errMsg[0] : 'Complete los campos obligatorios (*)'), true);
     return;

@@ -6,6 +6,24 @@ se cambia con una entrada nueva que diga por qué.
 
 ---
 
+### Los siete formularios TOP validan igual al guardar
+**Regla.** Una regla de validación del formulario TOP rige en los siete
+formularios a la vez o en ninguno. Hoy los siete bloquean el envío si el código
+no coincide con la fecha de nacimiento, exigen el formato de 4 letras y 8
+números, no aceptan fechas de entrevista futuras ni anteriores a 2020 y limitan
+la edad a 5 a 100 años.
+
+**Fundamento.** El 1 de julio de 2026 la validación del código quedó como
+bloqueo en México y como simple aviso en Perú, Ecuador y El Salvador. Ese desfase
+explica 76 de los 78 códigos que no coinciden con la fecha de nacimiento entre
+junio y octubre: México, que bloqueaba, no tuvo ninguno desde entonces. El mismo
+bloqueo impide códigos con fechas que no existen, porque la fecha de nacimiento
+sale de un selector de fecha.
+
+**Prueba.** `tests/test_formularios.py`.
+
+*2026-10-27*
+
 ### Qué es un error grave de registro
 **Regla.** Un TOP tiene un error grave de registro cuando le pasa alguna de estas
 tres cosas:

@@ -12,7 +12,7 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
-## 2026-07-01 (detectado 2026-10-26) · Los formularios dejaron de tener las mismas reglas
+## 2026-07-01 (detectado 2026-10-26) · Los formularios dejaron de tener las mismas reglas · cerrado el 2026-10-27
 
 **Quién avisó:** nadie. Apareció al comparar los errores graves por país: México
 en cero y los otros tres países entre 4 y 7 %.
@@ -33,9 +33,11 @@ escribe siete veces.
 octubre, todos en los tres países que solo avisan, salvo 2 de IMSS-Bienestar
 cargados antes del bloqueo.
 
-**Arreglo:** pendiente de autorización. Paso inmediato: el mismo bloqueo en
-`index.html`, `index_ecuador.html` e `index_elsalvador.html`. Paso de fondo: las
-validaciones en un solo archivo que carguen los siete formularios.
+**Arreglo:** 27 de octubre de 2026, con autorización de Rodrigo. El mismo bloqueo
+quedó en `index.html`, `index_ecuador.html` e `index_elsalvador.html`, y
+`tests/test_formularios.py` falla si alguno de los siete formularios deja de
+bloquear. Paso de fondo, pendiente: las validaciones en un solo archivo que
+carguen los siete formularios.
 
 **Lección:** una regla del formulario se cambia en los siete a la vez, o no se
 cambia. Revisado el 26 de octubre: el formato del código, los campos

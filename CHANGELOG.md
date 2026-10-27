@@ -8,6 +8,13 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Formularios de Perú (`index.html`), Ecuador y El Salvador: no dejan guardar si
+  el código no coincide con la fecha de nacimiento, igual que los cuatro de México.
+  Como la fecha de nacimiento viene de un selector de fecha, también impide códigos
+  con fechas que no existen (como DDDD12345678). Nueva prueba
+  `tests/test_formularios.py`: los siete formularios deben bloquear igual y tener el
+  mismo formato de código y las mismas reglas de fecha.
+
 - Datos: borrado el registro de prueba DDDD12345678 (id 955, SRIMB000931, entrevistador
   "PACO LACO", cargado el 22 de junio), con autorización de Rodrigo. Respaldo en
   `backup_registro_prueba_dddd_20261027` (RLS activo, sin permisos para anon ni

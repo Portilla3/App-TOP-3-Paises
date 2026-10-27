@@ -65,14 +65,13 @@ errores. *2026-10-26*
 
 ## Datos
 
-**Bloquear el código que no coincide con la fecha de nacimiento en Perú,
-Ecuador y El Salvador.** Los formularios de México ya lo bloquean al guardar
-(`validarCruceCodigoFecha(false)`); los otros tres solo muestran un aviso. Es el
-error grave más frecuente (78 de 89 al 26 de octubre). Falta la autorización de
-Rodrigo. *2026-10-26*
+**Resuelto el 2026-10-27 · bloqueo del código distinto de la fecha de nacimiento
+en Perú, Ecuador y El Salvador.** Ver `DECISIONES.md`. Falta avisar a esos tres
+países que el formulario ya no deja guardar si no coinciden.
 
-**La fecha dentro del código no se valida como fecha.** El formulario acepta
-cualquier combinación de 4 letras y 8 números. Al 27 de octubre hay 12 registros
+**La fecha dentro del código no se validaba como fecha.** Desde el 27 de octubre
+lo impide el bloqueo del cruce con la fecha de nacimiento en los siete
+formularios. Quedan los registros antiguos. Al 27 de octubre hay 12 registros
 reales con un código cuya fecha no existe (mes 13, 19 o 90; día 00; año 1013 o
 2200), por ejemplo EDOC12191996 o MACR08131982. Agregar esa validación junto con
 el bloqueo del cruce código-fecha de nacimiento. *2026-10-27*
