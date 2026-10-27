@@ -30,3 +30,23 @@ Una prueba está en `xfail(strict=True)`: la del clasificador duplicado. Eso
 significa que hoy se espera que falle, y que el día que se pague la deuda la
 prueba va a pasar y el `strict=True` va a exigir quitar el marcador. No es una
 prueba apagada, es un recordatorio que se apaga solo.
+
+## Prueba de humo de los reportes
+
+`test_reportes.py` arma la base wide y los seis reportes (Excel, Word y
+PowerPoint de ingreso y de seguimiento) con una base sintética de Perú, Ecuador,
+El Salvador y México, por el mismo camino que la app. También prueba el camino
+de un centro, el filtro de periodo, un centro donde nadie consume otra cosa que
+alcohol, un centro sin TOP de ingreso y una base sin ningún seguimiento: las
+condiciones del incidente del 2026-09-09.
+
+No revisa cifras, revisa que cada reporte se arme y traiga contenido. Tarda
+alrededor de un minuto y medio. Para correr solo las rápidas:
+
+```
+python -m pytest tests/ -v --ignore=tests/test_reportes.py
+```
+
+Antes de subir un cambio en `pipeline/` hay que correrlas todas. La base
+sintética está en `datos_sinteticos.py`: pacientes inventados con semilla fija,
+sin datos de nadie.

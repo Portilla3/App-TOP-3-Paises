@@ -8,6 +8,14 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Prueba de humo de los reportes: `tests/test_reportes.py`, con la base
+  sintética de `tests/datos_sinteticos.py`. Arma la wide y los seis reportes en
+  Perú, Ecuador, El Salvador y México, el camino del centro, el filtro de periodo
+  y los tres casos del incidente del 2026-09-09 (sustancia sin consumidores,
+  centro sin ingreso, base sin seguimiento). 43 pruebas, un minuto y medio. Se
+  comprobó que fallan si se reintroduce un error en el PowerPoint de ingreso o el
+  `max()` sobre `None` del defecto 1.
+
 - Panel: las tarjetas cuentan con el mismo criterio que los gráficos, y el segundo
   TOP se identifica en un solo lugar. Es el trabajo autorizado el 2026-09-10.
   - `seguimiento_core.top2_por_paciente()`: una fila por paciente con su TOP1 y su

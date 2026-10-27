@@ -239,7 +239,8 @@ Reproducible con `python tools/comparar_panel_wide.py <respaldo.xlsx>`.
 
 **Hecho el 2026-10-27:** homologar el TOP2, renombrar el indicador operativo,
 pasar las tarjetas a episodios y el literal `'Otras'` de `sustancia.py`. Ver
-CHANGELOG. Quedan la prueba de humo de los reportes y el monitoreo externo.
+CHANGELOG. La prueba de humo de los reportes quedó el mismo día. Queda el
+monitoreo externo.
 
 **Lo que dejó a la vista.** El semáforo y el % de aplicación cuentan a todos los
 pacientes con un primer TOP, como la cobertura; la tarjeta "Pacientes
@@ -277,7 +278,7 @@ gráfico nunca muestra el desglose. El archivo ya importa la constante
 `OTRA_SUSTANCIA` y la usa tres líneas más abajo. Se arregla cuando se toque otra
 cosa del panel, y de paso se buscan otros literales sueltos.
 
-**Prueba de humo de los reportes.** Ninguna de las 102 pruebas genera un reporte:
+**Resuelto el 2026-10-27 · prueba de humo de los reportes.** Ver `tests/README.md`. Ninguna de las 102 pruebas generaba un reporte:
 verifican criterios de cálculo, no que el Word o el PPT se armen. Es la razón por
 la que los cuatro defectos del 9 de septiembre los encontró Ecuador y no la suite.
 
