@@ -1,5 +1,5 @@
 """
-pipeline.panel.continuidad — % de seguimiento por centro (HOMOLOGADO).
+pipeline.panel.continuidad — Con seguimiento (TOP2) por centro (HOMOLOGADO).
 
 Muestra, por centro, el porcentaje de pacientes ELEGIBLES (con 90 o más días
 desde su primer TOP) que ya cuentan con un segundo TOP (TOP2).
@@ -136,7 +136,7 @@ def render(df, pais, centro_id=None):
 
         st.markdown(
             titulo_seccion(
-                '🔄', 'Seguimiento por centro',
+                '🔄', 'Con seguimiento (TOP2) por centro',
                 f'Del total de personas con 90+ días, cuántas tienen un segundo TOP · promedio nacional {prom_nac:.1f}%'.replace('.', ',')
             ),
             unsafe_allow_html=True

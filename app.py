@@ -995,7 +995,7 @@ with tab_panel:
                 '<div style="font-size:.92rem;font-weight:600;color:#1F1F1F;'
                 'padding:.02rem .1rem .18rem .1rem;">📊&nbsp;&nbsp;Reporte de avance por centro</div>'
                 '<div style="font-size:.72rem;color:#777;padding:0 .1rem .3rem .1rem;">'
-                'Excel consolidado · una fila por centro con ingresos, continuidad y actividad'
+                'Excel consolidado · una fila por centro con ingresos, aplicación del TOP de seguimiento y actividad'
                 '</div>',
                 unsafe_allow_html=True,
             )

@@ -8,7 +8,8 @@ Columnas del Excel (rediseño aprobado por Rodrigo):
   - Egreso (n)
   - Seguimiento (n)
   - Total registros TOP (suma de fases, en celda azul claro)
-  - % Continuidad
+  - % aplicación del TOP de seguimiento (pacientes con segundo TOP / todos los
+    pacientes del centro; ver config.continuidad_por_centro)
   - Último TOP (formato "06 jul 2026")
   - Días sin registro
   - Estado (Verde=Al día / Amarillo=Con rezago / Rojo=Inactivo)
@@ -73,7 +74,7 @@ def _calcular_avance(df):
     Calcula tabla de avance por centro con columnas de fase separadas.
     Retorna DataFrame con columnas:
       Código de centro, Ingreso, En tratamiento, Egreso, Seguimiento,
-      Total, % Continuidad, Último TOP, Días sin registro, Estado
+      Total, % aplicación TOP de seguimiento, Último TOP, Días sin registro, Estado
     """
     if df is None or df.empty or 'centro' not in df.columns:
         return pd.DataFrame()
@@ -103,7 +104,7 @@ def _calcular_avance(df):
         seg  = int(conteos['seguimiento'].get(c, 0))
         tot  = ing + trat + egr + seg
 
-        pct  = round(cont.loc[c, 'pct_continuidad'], 1) if c in cont.index else 0.0
+        pct  = round(cont.loc[c, 'pct_aplicacion'], 1) if c in cont.index else 0.0
         ult_f = act.loc[c, 'ultima_fecha'] if c in act.index else pd.NaT
         dias  = act.loc[c, 'dias']         if c in act.index else None
 
@@ -123,7 +124,7 @@ def _calcular_avance(df):
             'Egreso':            egr,
             'Seguimiento':       seg,
             'Total':             tot,
-            '% Continuidad':     f"{pct}%",
+            '% aplicación TOP de seguimiento': f"{pct}%",
             'Último TOP':        _fmt_fecha(ult_f),
             'Días sin registro': int(dias) if dias is not None and dias == dias else '—',
             'Estado':            estado,
@@ -140,7 +141,7 @@ _COLUMNAS = [
     ('Egreso',            10, 'center'),
     ('Seguimiento',       13, 'center'),
     ('Total',             10, 'center'),   # celda azul claro
-    ('% Continuidad',     13, 'center'),
+    ('% aplicación TOP de seguimiento', 18, 'center'),
     ('Último TOP',        14, 'center'),
     ('Días sin registro', 16, 'center'),
     ('Estado',            13, 'center'),
@@ -211,7 +212,7 @@ def _generar_excel(df_avance, pais):
             row['Egreso'],
             row['Seguimiento'],
             row['Total'],
-            row['% Continuidad'],
+            row['% aplicación TOP de seguimiento'],
             row['Último TOP'],
             row['Días sin registro'],
             row['Estado'],

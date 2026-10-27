@@ -29,11 +29,65 @@ DIAS_UMBRAL_DEFAULT = 90
 NOTA_SEGUIMIENTO = "Calculado sobre pacientes con 90 o más días desde su primer TOP."
 
 
+def top2_por_paciente(df, hoy=None, col_cod='codigo_paciente',
+                      col_fecha='fecha_entrevista', col_centro='centro'):
+    """
+    Una fila por paciente con su TOP1 y, si lo tiene, su TOP2.
+
+    Es la base de todo lo que se calcula sobre el segundo TOP: la cobertura de
+    `calcular_seguimiento()`, el % de aplicación del TOP de seguimiento, el
+    semáforo y el tiempo entre TOP1 y TOP2. Ninguno de ellos vuelve a buscar el
+    TOP2 por su cuenta.
+
+    Columnas: codigo, centro (el del TOP1), primer, segundo (NaT si no hay),
+    n_top, tiene_top2, dias_top1.
+    """
+    cols = ['codigo', 'centro', 'primer', 'segundo', 'n_top', 'tiene_top2', 'dias_top1']
+    if df is None or len(df) == 0 or col_cod not in df.columns or col_fecha not in df.columns:
+        return pd.DataFrame(columns=cols)
+
+    hoy = pd.Timestamp(hoy).normalize() if hoy is not None else pd.Timestamp.now().normalize()
+
+    d = df.copy()
+    d[col_cod] = d[col_cod].astype(str).str.strip()
+    d = d[d[col_cod] != '']
+    d[col_fecha] = pd.to_datetime(d[col_fecha], errors='coerce')
+    d = d.dropna(subset=[col_fecha])
+    # Ignorar fechas futuras (errores de captura)
+    d = d[d[col_fecha] <= hoy]
+    if d.empty:
+        return pd.DataFrame(columns=cols)
+
+    # 1) dedup exacto: mismo paciente + misma fecha = un solo TOP
+    d = d.drop_duplicates(subset=[col_cod, col_fecha])
+
+    # 2) por paciente: primer TOP, segundo TOP, nº de TOP distintos, centro del TOP1
+    d = d.sort_values([col_cod, col_fecha])
+    d['_orden'] = d.groupby(col_cod).cumcount()
+    per = d.groupby(col_cod).agg(n_top=(col_fecha, 'nunique'),
+                                 primer=(col_fecha, 'min')).reset_index()
+    segundo = d[d['_orden'] == 1][[col_cod, col_fecha]].rename(columns={col_fecha: 'segundo'})
+    per = per.merge(segundo, on=col_cod, how='left')
+    if col_centro in d.columns:
+        centro_top1 = d[d['_orden'] == 0][[col_cod, col_centro]]
+        per = per.merge(centro_top1, on=col_cod, how='left')
+    else:
+        per[col_centro] = 'N/D'
+
+    per = per.rename(columns={col_cod: 'codigo', col_centro: 'centro'})
+    per['tiene_top2'] = per['n_top'] >= 2
+    per['dias_top1'] = (hoy - per['primer']).dt.days
+    return per[cols]
+
+
 def calcular_seguimiento(df, hoy=None, dias_umbral=DIAS_UMBRAL_DEFAULT,
                          col_cod='codigo_paciente', col_fecha='fecha_entrevista',
                          col_centro='centro'):
     """
     Retorna un dict con los números canónicos de seguimiento.
+
+    Con `dias_umbral=0` el denominador son todos los pacientes: es el % de
+    aplicación del TOP de seguimiento (ver DECISIONES.md, 2026-09-10).
 
     Claves:
       dias_umbral       int   umbral usado
@@ -51,37 +105,10 @@ def calcular_seguimiento(df, hoy=None, dias_umbral=DIAS_UMBRAL_DEFAULT,
         'nota': _nota(dias_umbral),
         'por_centro': pd.DataFrame(columns=['centro', 'elegibles', 'con_top2', 'sin_top2', 'pct']),
     }
-    if df is None or len(df) == 0 or col_cod not in df.columns or col_fecha not in df.columns:
+    per = top2_por_paciente(df, hoy, col_cod, col_fecha, col_centro)
+    if per.empty:
         return vacio
 
-    hoy = pd.Timestamp(hoy).normalize() if hoy is not None else pd.Timestamp.now().normalize()
-
-    d = df.copy()
-    d[col_cod] = d[col_cod].astype(str).str.strip()
-    d = d[d[col_cod] != '']
-    d[col_fecha] = pd.to_datetime(d[col_fecha], errors='coerce')
-    d = d.dropna(subset=[col_fecha])
-    # Ignorar fechas futuras (errores de captura)
-    d = d[d[col_fecha] <= hoy]
-    if d.empty:
-        return vacio
-
-    # 1) dedup exacto: mismo paciente + misma fecha = un solo TOP
-    d = d.drop_duplicates(subset=[col_cod, col_fecha])
-
-    # 2) por paciente: primer TOP, nº de TOP distintos, centro del TOP1
-    d = d.sort_values([col_cod, col_fecha])
-    tiene_centro = col_centro in d.columns
-    agg_kwargs = {'n_top': (col_fecha, 'nunique'), 'primer': (col_fecha, 'min')}
-    per = d.groupby(col_cod).agg(**agg_kwargs).reset_index()
-    if tiene_centro:
-        centro_top1 = d.groupby(col_cod).first()[col_centro].reset_index()
-        per = per.merge(centro_top1, on=col_cod, how='left')
-    else:
-        per[col_centro] = 'N/D'
-
-    per['tiene_top2'] = per['n_top'] >= 2
-    per['dias_top1'] = (hoy - per['primer']).dt.days
     per['elegible'] = per['dias_top1'] >= dias_umbral
 
     elig = per[per['elegible']]
@@ -90,10 +117,10 @@ def calcular_seguimiento(df, hoy=None, dias_umbral=DIAS_UMBRAL_DEFAULT,
     pct = round(100 * n_top2 / n_elig, 1) if n_elig else 0.0
 
     if n_elig:
-        pc = elig.groupby(col_centro).agg(
+        pc = elig.groupby('centro').agg(
             elegibles=('tiene_top2', 'size'),
             con_top2=('tiene_top2', 'sum'),
-        ).reset_index().rename(columns={col_centro: 'centro'})
+        ).reset_index()
         pc['con_top2'] = pc['con_top2'].astype(int)
         pc['sin_top2'] = pc['elegibles'] - pc['con_top2']
         pc['pct'] = (100 * pc['con_top2'] / pc['elegibles']).round(1)

@@ -517,7 +517,7 @@ def build_pptx(d):
     add_txt(sl, 'TOP1 vs TOP2', 0.25, 2.3, 3.2, 0.5, size=12, color=C_LIGHT)
     add_txt(sl, NOMBRE_SERVICIO.upper(), 0.25, 3.1, 3.2, 0.6, size=13, bold=True, color=C_WHITE)
     add_txt(sl, PERIODO, 0.25, 3.75, 3.2, 0.4, size=11, color=C_LIGHT)
-    add_txt(sl, f'N ingreso: {d["N_total"]}  ·  Cobertura TOP2: {pct_seg}% ({d.get("n_elig",0)} elegibles)',
+    add_txt(sl, f'N ingreso: {d["N_total"]}  ·  Con seguimiento (TOP2): {pct_seg}% ({d.get("n_elig",0)} elegibles)',
             0.25, 4.3, 3.2, 0.4, size=10, color=C_LIGHT)
     add_txt(sl, d.get('nota_cob',''), 0.25, 4.68, 3.2, 0.4, size=7, color=C_LIGHT)
     add_txt(sl, 'Monitoreo de Resultados\nde Tratamiento', 4.5, 2.2, 5.2, 1.0,

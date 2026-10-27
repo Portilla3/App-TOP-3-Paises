@@ -346,7 +346,7 @@ def build_seguimiento(wb, seg, N_total, N_seg, DC, seg_tiempo=None):
     for r, txt, bg, sz, bold, tc in [
         (1, 'INFORME DE SEGUIMIENTO  ·  TOP',                                       C_DARK, 16, True,  C_WHITE),
         (2, f'Comparación TOP 1 (Ingreso) vs TOP 2 (Seguimiento)  ·  {N_seg} pacientes con ambas evaluaciones', C_MID, 10, False, C_WHITE),
-        (3, f'Total en base: {N_total}  ·  Cobertura seguimiento: {seg_tiempo.get("pct_cob",0)}% ({seg_tiempo.get("n_elig",0)} elegibles)  ·  {seg_tiempo.get("nota_cob","")}', C_LIGHT, 9, False, C_DARK),
+        (3, f'Total en base: {N_total}  ·  Con seguimiento (TOP2): {seg_tiempo.get("pct_cob",0)}% ({seg_tiempo.get("n_elig",0)} elegibles)  ·  {seg_tiempo.get("nota_cob","")}', C_LIGHT, 9, False, C_DARK),
         (4, txt_tiempo, 'E2EFDA', 9, False, '375623'),
     ]:
         ws.merge_cells(f'B{r}:G{r}')

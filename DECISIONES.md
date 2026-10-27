@@ -419,7 +419,7 @@ con nombres que no se pueden confundir.
 | Numerador | Pacientes elegibles con un segundo TOP de fecha distinta | Pacientes con al menos un TOP de seguimiento |
 | Denominador | Pacientes cuyo primer TOP tiene 90 o más días | Todos los pacientes ingresados del centro |
 | De dónde sale | `pipeline/panel/seguimiento_core.py::calcular_seguimiento()` | `pipeline/panel/config.py::continuidad_por_centro()` |
-| Cómo se rotula | **"Con seguimiento (TOP2)"** | Pendiente de decidir, nunca "% de seguimiento" a secas |
+| Cómo se rotula | **"Con seguimiento (TOP2)"** | **"Aplicación del TOP de seguimiento"** (autorizado el 2026-09-10), nunca "% de seguimiento" a secas |
 | Para qué se usa | Informes a los ministerios y comparación entre centros | Gestión: detectar centros que no aplican el instrumento |
 
 **Sobre el rótulo de la cobertura.** "Con seguimiento" se conserva porque en

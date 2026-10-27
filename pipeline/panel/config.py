@@ -193,61 +193,48 @@ def ingresos_por_centro(df):
     return agg.sort_values('n_ingresos', ascending=False).reset_index(drop=True)
 
 
-def continuidad_por_centro(df):
+def continuidad_por_centro(df, hoy=None):
     """
-    Para cada centro calcula el % de pacientes con ingreso que también
-    tienen al menos un segundo registro TOP (cualquier etapa distinta de ingreso).
+    % de aplicación del TOP de seguimiento, por centro.
 
-    Definición operativa (aprobada por Rodrigo, sesión 3):
-      Numerador  = pacientes del centro con etapa='ingreso' que aparecen
-                   además con etapa in {en_tratamiento, egreso, seguimiento}
-      Denominador = pacientes del centro con etapa='ingreso'
+    Es el indicador operativo de DECISIONES.md (2026-09-10): de todos los
+    pacientes del centro, cuántos tienen ya un segundo TOP. Sirve para detectar
+    centros que no están aplicando el instrumento. No es la cobertura: esa se
+    calcula solo sobre los pacientes con 90 o más días.
+
+    El segundo TOP se identifica en `seguimiento_core`, igual que en la
+    cobertura, el semáforo y el tiempo entre TOP: el TOP con fecha distinta que
+    sigue al primero, sin mirar la etiqueta `etapa`. Lo que distingue a este
+    indicador de la cobertura es solo el denominador.
 
     Args:
-        df: DataFrame con columnas 'centro', 'etapa', 'codigo_paciente'
+        df: DataFrame con columnas 'centro', 'codigo_paciente', 'fecha_entrevista'
 
     Returns:
-        pd.DataFrame con columnas: centro, n_ingresos, n_con_continuidad,
-        pct_continuidad (float 0-100). Ordenado descendente por pct_continuidad.
+        pd.DataFrame con columnas: centro, n_pacientes, n_con_top2,
+        pct_aplicacion (float 0-100). Ordenado descendente por pct_aplicacion.
     """
-    cols_req = {'centro', 'etapa', 'codigo_paciente'}
-    if df is None or df.empty or not cols_req.issubset(df.columns):
-        return pd.DataFrame(columns=[
-            'centro', 'n_ingresos', 'n_con_continuidad', 'pct_continuidad'
-        ])
+    from pipeline.panel.seguimiento_core import calcular_seguimiento
+
+    columnas = ['centro', 'n_pacientes', 'n_con_top2', 'pct_aplicacion']
+    if df is None or df.empty or 'centro' not in df.columns:
+        return pd.DataFrame(columns=columnas)
 
     tmp = df.copy()
-    tmp['centro']          = tmp['centro'].astype(str).str.strip()
-    tmp['etapa']           = tmp['etapa'].fillna('').astype(str)
-    tmp['codigo_paciente'] = tmp['codigo_paciente'].astype(str).str.strip()
-    tmp = tmp[(tmp['centro'] != '') & (tmp['codigo_paciente'] != '')]
+    tmp['centro'] = tmp['centro'].astype(str).str.strip()
+    tmp = tmp[tmp['centro'] != '']
 
-    filas = []
-    ETAPAS_SEGUNDA = {'en_tratamiento', 'egreso', 'seguimiento'}
-    for centro, grupo in tmp.groupby('centro'):
-        pacientes_ingreso = set(
-            grupo.loc[grupo['etapa'] == 'ingreso', 'codigo_paciente']
-        )
-        pacientes_segunda = set(
-            grupo.loc[grupo['etapa'].isin(ETAPAS_SEGUNDA), 'codigo_paciente']
-        )
-        n_ing  = len(pacientes_ingreso)
-        n_cont = len(pacientes_ingreso & pacientes_segunda)
-        pct    = (n_cont / n_ing * 100) if n_ing > 0 else 0.0
-        filas.append({
-            'centro':            centro,
-            'n_ingresos':        n_ing,
-            'n_con_continuidad': n_cont,
-            'pct_continuidad':   pct,
-        })
+    pc = calcular_seguimiento(tmp, hoy=hoy, dias_umbral=0)['por_centro']
+    if pc.empty:
+        return pd.DataFrame(columns=columnas)
 
-    if not filas:
-        return pd.DataFrame(columns=[
-            'centro', 'n_ingresos', 'n_con_continuidad', 'pct_continuidad'
-        ])
-
-    out = pd.DataFrame(filas)
-    return out.sort_values('pct_continuidad', ascending=False).reset_index(drop=True)
+    out = pd.DataFrame({
+        'centro':         pc['centro'],
+        'n_pacientes':    pc['elegibles'].astype(int),
+        'n_con_top2':     pc['con_top2'].astype(int),
+        'pct_aplicacion': (100 * pc['con_top2'] / pc['elegibles']).astype(float),
+    })
+    return out.sort_values('pct_aplicacion', ascending=False).reset_index(drop=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

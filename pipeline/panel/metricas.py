@@ -2,9 +2,11 @@
 pipeline.panel.metricas — Métricas superiores del Panel de gestión.
 
 Cuatro tarjetas en fila horizontal:
-  1. Total de registros (con desglose "X ingresos + Y seguimientos")
-  2. Pacientes ingresados (personas únicas con al menos un registro etapa=ingreso)
-  3. Con seguimiento (% de ingresados que tienen al menos un seguimiento)
+  1. Total de registros, con el desglose por etapa (las partes suman el total)
+  2. Pacientes ingresados: episodios con TOP de ingreso, igual que los gráficos
+     del perfil al ingreso (`lineas_base()`). Un reingreso cuenta aparte.
+  3. Con seguimiento (TOP2): cobertura sobre los pacientes con 90+ días
+     (`seguimiento_core`)
   4. Centros activos (X / N total)
 
 Función expuesta:
@@ -19,6 +21,16 @@ import streamlit as st
 import pandas as pd
 
 from pipeline.panel.seguimiento_core import calcular_seguimiento, NOTA_SEGUIMIENTO
+from pipeline.validacion_top import lineas_base
+
+
+# Etapas del instrumento, en el orden en que se muestran en la tarjeta.
+ETAPAS_DESGLOSE = [
+    ('ingreso',        'ingreso'),
+    ('en_tratamiento', 'en tratamiento'),
+    ('egreso',         'egreso'),
+    ('seguimiento',    'seguimiento'),
+]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -35,15 +47,14 @@ def _calcular_metricas(df):
 
     Returns:
         dict con claves:
-            total_registros, n_ingresos, n_seguimientos,
-            pacientes_ingresados, pacientes_con_seguimiento,
+            total_registros, desglose_etapas [(n, rótulo)],
+            pacientes_ingresados, pacientes_con_seguimiento, seg_elegibles,
             pct_con_seguimiento, centros_activos, centros_totales
     """
     if df.empty:
         return {
             'total_registros':          0,
-            'n_ingresos':               0,
-            'n_seguimientos':           0,
+            'desglose_etapas':          [],
             'pacientes_ingresados':     0,
             'pacientes_con_seguimiento': 0,
             'seg_elegibles':            0,
@@ -53,27 +64,24 @@ def _calcular_metricas(df):
             'centros_totales':          0,
         }
 
-    etapa = df.get('etapa', pd.Series(dtype=str)).fillna('').astype(str)
-
-    n_ingresos     = int((etapa == 'ingreso').sum())
-    n_seguimientos = int((etapa == 'seguimiento').sum())
     total_registros = len(df)
 
-    # Pacientes ingresados: códigos únicos con etapa=ingreso
-    if 'codigo_paciente' in df.columns:
-        pac_ingresados = set(
-            df.loc[etapa == 'ingreso', 'codigo_paciente']
-              .dropna().astype(str).str.strip()
-        ) - {''}
-        pac_seguimiento = set(
-            df.loc[etapa == 'seguimiento', 'codigo_paciente']
-              .dropna().astype(str).str.strip()
-        ) - {''}
-    else:
-        pac_ingresados  = set()
-        pac_seguimiento = set()
+    # Desglose por etapa. Lo que no es una de las cuatro etapas del instrumento
+    # (por ejemplo `seguimiento1` del formulario antiguo de Perú, o un vacío)
+    # va a "otra etiqueta", para que las partes sumen el total de la tarjeta.
+    etapa = df.get('etapa', pd.Series(index=df.index, dtype=str)).fillna('').astype(str).str.strip().str.lower()
+    desglose = []
+    for valor, rotulo in ETAPAS_DESGLOSE:
+        n = int((etapa == valor).sum())
+        if n:
+            desglose.append((n, rotulo))
+    n_otra = total_registros - sum(n for n, _ in desglose)
+    if n_otra:
+        desglose.append((n_otra, 'otra etiqueta'))
 
-    pacientes_ingresados = len(pac_ingresados)
+    # Pacientes ingresados: un episodio por cada TOP de ingreso, con la misma
+    # función que usan los gráficos del perfil al ingreso.
+    pacientes_ingresados = int(len(lineas_base(df)))
 
     # ── Cobertura de seguimiento: DEFINICIÓN HOMOLOGADA (fuente única) ──────────
     # NO se cuenta por etiqueta de etapa. Un paciente "tiene seguimiento" si tiene
@@ -100,8 +108,7 @@ def _calcular_metricas(df):
 
     return {
         'total_registros':          total_registros,
-        'n_ingresos':               n_ingresos,
-        'n_seguimientos':           n_seguimientos,
+        'desglose_etapas':          desglose,
         'pacientes_ingresados':     pacientes_ingresados,
         'pacientes_con_seguimiento': pacientes_con_seguimiento,
         'seg_elegibles':            seg_elegibles,
@@ -110,6 +117,15 @@ def _calcular_metricas(df):
         'centros_activos':          centros_activos,
         'centros_totales':          centros_totales,
     }
+
+
+def _miles(n):
+    return f'{n:,}'.replace(',', '.')
+
+
+def _texto_desglose(desglose):
+    """'399 ingreso · 52 en tratamiento · 3 seguimiento', con punto de miles."""
+    return ' · '.join(f'{_miles(n)} {rotulo}' for n, rotulo in desglose)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -145,9 +161,9 @@ def render(df, pais, centro_id=None):
         st.markdown(
             f'''<div class="kpi">
                 <div style="{S_LBL}">Total de registros</div>
-                <div style="{S_VAL}">{m["total_registros"]:,}</div>
-                <div style="{S_SUB}">{m["n_ingresos"]:,} ingresos + {m["n_seguimientos"]:,} seguimientos</div>
-            </div>'''.replace(',', '.'),
+                <div style="{S_VAL}">{_miles(m["total_registros"])}</div>
+                <div style="{S_SUB}">{_texto_desglose(m["desglose_etapas"])}</div>
+            </div>''',
             unsafe_allow_html=True
         )
 
@@ -156,7 +172,7 @@ def render(df, pais, centro_id=None):
             f'''<div class="kpi">
                 <div style="{S_LBL}">Pacientes ingresados</div>
                 <div style="{S_VAL}">{m["pacientes_ingresados"]:,}</div>
-                <div style="{S_SUB}">primera evaluación aplicada</div>
+                <div style="{S_SUB}">con TOP de ingreso</div>
             </div>'''.replace(',', '.'),
             unsafe_allow_html=True
         )
@@ -165,7 +181,7 @@ def render(df, pais, centro_id=None):
         color_class = 'green' if m['pct_con_seguimiento'] >= 10 else ('orange' if m['pct_con_seguimiento'] >= 3 else 'red')
         st.markdown(
             f'''<div class="kpi {color_class}">
-                <div style="{S_LBL}">Con seguimiento</div>
+                <div style="{S_LBL}">Con seguimiento (TOP2)</div>
                 <div style="{S_VAL}">{m["pct_con_seguimiento"]:.1f}%</div>
                 <div style="{S_SUB}">{m["pacientes_con_seguimiento"]:,} de {m["seg_elegibles"]:,} elegibles</div>
             </div>'''.replace(',', '.'),

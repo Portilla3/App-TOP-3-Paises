@@ -1,15 +1,17 @@
 """
 pipeline.panel.tiempo_top — Tiempo promedio entre TOP1 y TOP2 por centro.
 
-Para cada paciente con etapa='ingreso' que tenga además al menos un registro
-posterior con etapa en {en_tratamiento, egreso, seguimiento}, calcula los días
-entre ambas fechas. Si hay un segundo ingreso posterior, ese paciente se trata
-como reingreso y el episodio original se cierra ahí (no se mezclan episodios).
+Para cada paciente con TOP2 calcula los días entre su TOP1 y su TOP2. Ambos
+vienen de `seguimiento_core.top2_por_paciente()`, la misma fuente de la
+cobertura y del semáforo: el primer TOP del paciente y el siguiente con fecha
+distinta, sin mirar la etiqueta `etapa`.
+
+Hoy este gráfico no se muestra en la app: ningún módulo lo importa.
 
 Muestra barras horizontales por centro ordenadas de menor a mayor días,
 con línea vertical de promedio nacional como referencia.
 
-Columnas Supabase usadas: codigo_paciente, centro, etapa, fecha_entrevista
+Columnas Supabase usadas: codigo_paciente, centro, fecha_entrevista
 
 Función expuesta:
   render(df, pais, centro_id=None)
@@ -19,80 +21,49 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from pipeline.panel.config import titulo_seccion
+from pipeline.panel.seguimiento_core import top2_por_paciente
 
 COLOR_BARRA  = '#7B68EE'   # morado
 COLOR_REF    = '#7B68EE'   # línea promedio nacional
 COLOR_FONDO  = '#E5E5E5'
 COLOR_TEXTO  = '#534AB7'
-ETAPAS_TOP2  = {'en_tratamiento', 'egreso', 'seguimiento'}
 
 
-def _calcular_tiempo(df):
+def _calcular_tiempo(df, hoy=None):
     """
     Retorna DataFrame con columnas: centro, promedio_dias, n_pacientes.
     Solo incluye centros con al menos 1 paciente con TOP1 y TOP2.
     Centros sin TOP2 se retornan en lista separada.
     """
-    cols_req = {'codigo_paciente', 'centro', 'etapa', 'fecha_entrevista'}
-    if df is None or df.empty or not cols_req.issubset(df.columns):
+    per = top2_por_paciente(df, hoy=hoy)
+    if per.empty:
         return pd.DataFrame(), []
+    per['centro'] = per['centro'].astype(str).str.strip()
+    per = per[per['centro'] != '']
 
-    tmp = df.copy()
-    tmp['centro']          = tmp['centro'].astype(str).str.strip()
-    tmp['etapa']           = tmp['etapa'].fillna('').astype(str).str.strip()
-    tmp['codigo_paciente'] = tmp['codigo_paciente'].astype(str).str.strip()
-    tmp['fecha']           = pd.to_datetime(tmp['fecha_entrevista'], errors='coerce')
-    tmp = tmp[tmp['centro'] != ''].dropna(subset=['fecha'])
+    con = per[per['tiene_top2']].copy()
+    if con.empty:
+        return pd.DataFrame(), _centros_sin_top2(per)
 
-    filas = []
-    for paciente, grupo in tmp.groupby('codigo_paciente'):
-        grupo = grupo.sort_values('fecha').reset_index(drop=True)
-        # Encontrar primer ingreso
-        ingresos = grupo[grupo['etapa'] == 'ingreso']
-        if ingresos.empty:
-            continue
-        primer_ingreso = ingresos.iloc[0]
-        fecha_ing = primer_ingreso['fecha']
-        centro    = primer_ingreso['centro']
-        # Buscar primer TOP2 válido posterior al ingreso (antes de reingreso)
-        posteriores = grupo[grupo['fecha'] > fecha_ing].copy()
-        for _, reg in posteriores.iterrows():
-            if reg['etapa'] == 'ingreso':
-                break  # reingreso: cerrar episodio sin TOP2
-            if reg['etapa'] in ETAPAS_TOP2:
-                dias = (reg['fecha'] - fecha_ing).days
-                if dias >= 0:
-                    filas.append({'centro': centro, 'dias': dias})
-                break
-
-    if not filas:
-        return pd.DataFrame(), _centros_sin_top2(tmp)
-
-    df_dias = pd.DataFrame(filas)
-    resultado = (df_dias.groupby('centro')
+    con['dias'] = (con['segundo'] - con['primer']).dt.days
+    resultado = (con.groupby('centro')
                  .agg(promedio_dias=('dias', 'mean'), n_pacientes=('dias', 'count'))
                  .reset_index())
     resultado['promedio_dias'] = resultado['promedio_dias'].round(0).astype(int)
     resultado = resultado.sort_values('promedio_dias').reset_index(drop=True)
 
-    centros_con = set(resultado['centro'])
-    sin_top2    = _centros_sin_top2(tmp, excluir=centros_con)
-
+    sin_top2 = _centros_sin_top2(per, excluir=set(resultado['centro']))
     return resultado, sin_top2
 
 
-def _centros_sin_top2(df, excluir=None):
-    """Lista de centros que tienen ingresos pero ningún TOP2."""
-    ing = df[df['etapa'] == 'ingreso']['centro'].unique()
+def _centros_sin_top2(per, excluir=None):
+    """Lista de centros que tienen pacientes pero ninguno con TOP2."""
     resultado = []
-    for c in ing:
+    for c, grupo in per.groupby('centro'):
         if excluir and c in excluir:
             continue
-        grupo = df[df['centro'] == c]
-        tiene_top2 = grupo['etapa'].isin(ETAPAS_TOP2).any()
-        if not tiene_top2:
-            n_ing = (grupo['etapa'] == 'ingreso').sum()
-            resultado.append({'centro': c, 'n_ingresos': n_ing})
+        if not grupo['tiene_top2'].any():
+            resultado.append({'centro': c, 'n_ingresos': int(len(grupo))})
     return resultado
 
 
@@ -158,7 +129,7 @@ def render(df, pais, centro_id=None):
     with st.container(border=True):
         st.markdown(
             titulo_seccion('⏱', 'Tiempo entre TOP1 y TOP2',
-                           'promedio de días entre ingreso y segunda evaluación'),
+                           'promedio de días entre el primer y el segundo TOP'),
             unsafe_allow_html=True
         )
 
@@ -213,12 +184,9 @@ def render(df, pais, centro_id=None):
         with st.expander('ℹ Cómo se calcula este indicador', expanded=False):
             st.markdown(
                 '<div style="font-size:.75rem;color:#555;line-height:1.6;">'
-                '<b>TOP1</b> = fecha de la primera evaluación al ingreso del paciente.<br>'
-                '<b>TOP2</b> = fecha de la siguiente evaluación en cualquier fase posterior '
-                '(en tratamiento, egreso o seguimiento).<br>'
+                '<b>TOP1</b> = fecha del primer TOP del paciente.<br>'
+                '<b>TOP2</b> = fecha del siguiente TOP con fecha distinta, en cualquier etapa.<br>'
                 'Se calcula la diferencia en días entre ambas fechas y se promedia por centro.<br>'
-                '<b>Reingresos:</b> si un paciente tiene un segundo ingreso antes de su TOP2, '
-                'ese episodio se cierra sin contabilizar (el reingreso inicia un nuevo cálculo).<br>'
                 'Los centros sin ningún TOP2 registrado aparecen listados al pie, no en el gráfico.'
                 '</div>',
                 unsafe_allow_html=True

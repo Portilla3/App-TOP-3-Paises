@@ -179,8 +179,22 @@ def _calcular_sustancias(df):
     # Conteos por categoría
     conteos = tmp.groupby('categoria').size().to_dict()
 
-    # Desglose interno de "Otras" (para hover)
-    otras = tmp[tmp['categoria'] == 'Otras']
+    # Desglose interno de "Otra sustancia" (para hover). La categoría viene de
+    # clasificar_sustancia(), que devuelve OTRA_SUSTANCIA; comparar contra el
+    # literal 'Otras' del clasificador antiguo dejaba el desglose siempre vacío.
+    # Lo que el clasificador antiguo reconoce pero el país no mide (Tusi,
+    # Ketamina...) también es una droga específica fuera de la lista.
+    def _norm_local(v):
+        if v is None or (isinstance(v, float) and pd.isna(v)):
+            return ''
+        return unicodedata.normalize('NFD', str(v).strip().lower()).encode('ascii','ignore').decode()
+
+    otras = tmp[tmp['categoria'] == OTRA_SUSTANCIA].copy()
+    otras['subclase'] = otras['subclase'].replace({'canonico': 'sin_reconocer'})
+    # Quien escribió solo "otra" no nombró una droga: va aparte en el hover.
+    escribio_otra = otras['sustancia_principal'].apply(_norm_local).isin(
+        {'otra', 'otras', 'otro', 'otros', 'otra sustancia'})
+    otras.loc[escribio_otra, 'subclase'] = 'no_informativo'
     otras_desglose = otras.groupby('subclase').size().to_dict()
 
     # Además: detalle textual de las sustancias sin reconocer específicas
@@ -188,10 +202,6 @@ def _calcular_sustancias(df):
     sin_reconocer_detalle = {}
     if 'sin_reconocer' in otras_desglose:
         sr = otras[otras['subclase'] == 'sin_reconocer']
-        def _norm_local(v):
-            if v is None or (isinstance(v, float) and pd.isna(v)):
-                return ''
-            return unicodedata.normalize('NFD', str(v).strip().lower()).encode('ascii','ignore').decode()
         sr_norm = sr['sustancia_principal'].apply(_norm_local)
         for v in sr_norm.value_counts().items():
             sin_reconocer_detalle[v[0]] = int(v[1])

@@ -19,7 +19,7 @@ from pipeline.panel import sustancia as panel_sustancia
 from pipeline.panel import dias_consumo as panel_dias_consumo
 from pipeline.panel import transgresion as panel_transgresion
 from pipeline.panel import salud as panel_salud
-from pipeline.validacion_top import normalizar_sexo_valor
+from pipeline.validacion_top import normalizar_sexo_valor, lineas_base
 
 
 def _kpi_card(col, label, valor, sub=None, tono=''):
@@ -31,6 +31,39 @@ def _kpi_card(col, label, valor, sub=None, tono=''):
         f'<div class="kpi-val">{valor}</div>{sub_html}</div>',
         unsafe_allow_html=True,
     )
+
+
+def _calcular_kpis(d, hoy=None):
+    """
+    Números de las tarjetas del centro, sin Streamlit.
+
+    Pacientes ingresados e ingresos del mes salen de `lineas_base()`, igual que
+    los gráficos del perfil al ingreso de la misma pantalla: un episodio por cada
+    TOP de ingreso, y si el ingreso se cargó dos veces cuenta una sola.
+
+    La aplicación del TOP de seguimiento sale de `continuidad_por_centro()`,
+    que identifica el segundo TOP en `seguimiento_core`.
+    """
+    hoy = pd.Timestamp(hoy) if hoy is not None else pd.Timestamp.now()
+    out = {'total_registros': 0, 'pacientes_ingresados': 0, 'ingresos_mes': 0,
+           'con_seguimiento': 0, 'base': 0, 'tasa': 0.0}
+    if d is None or d.empty:
+        return out
+    out['total_registros'] = int(len(d))
+
+    base = lineas_base(d)
+    out['pacientes_ingresados'] = int(len(base))
+    if not base.empty and 'fecha_entrevista' in base.columns:
+        f = pd.to_datetime(base['fecha_entrevista'], errors='coerce')
+        out['ingresos_mes'] = int(((f.dt.month == hoy.month) & (f.dt.year == hoy.year)).sum())
+
+    cont = continuidad_por_centro(d, hoy=hoy)
+    if not cont.empty:
+        fila = cont.iloc[0]  # ya viene filtrado a un solo centro
+        out['con_seguimiento'] = int(fila['n_con_top2'])
+        out['base']            = int(fila['n_pacientes'])
+        out['tasa']            = float(fila['pct_aplicacion'])
+    return out
 
 
 def render(df, centro, pais=None, df_pais=None):
@@ -49,41 +82,13 @@ def render(df, centro, pais=None, df_pais=None):
     if 'fecha_entrevista' in d.columns:
         d['fecha_entrevista'] = pd.to_datetime(d['fecha_entrevista'], errors='coerce')
 
-    hoy = pd.Timestamp.now()
-    total_registros = len(d)
-    if 'etapa' in d.columns and 'codigo_paciente' in d.columns:
-        pacientes_unicos = d.loc[d['etapa'] == 'ingreso', 'codigo_paciente'].nunique()
-    else:
-        pacientes_unicos = d['codigo_paciente'].nunique() if 'codigo_paciente' in d.columns else 0
-
-    if 'codigo_paciente' in d.columns and 'fecha_entrevista' in d.columns and 'etapa' in d.columns:
-        ingresos_df = d[d['etapa'] == 'ingreso'].dropna(subset=['fecha_entrevista'])
-        ingresos_mes = ingresos_df[
-            (ingresos_df['fecha_entrevista'].dt.month == hoy.month) &
-            (ingresos_df['fecha_entrevista'].dt.year == hoy.year)
-        ].shape[0]
-    elif 'codigo_paciente' in d.columns and 'fecha_entrevista' in d.columns:
-        # Fallback si no hay columna 'etapa': usar la primera fila cronológica por paciente
-        primeras = d.dropna(subset=['fecha_entrevista']).sort_values('fecha_entrevista') \
-                     .groupby('codigo_paciente').first().reset_index()
-        ingresos_mes = primeras[
-            (primeras['fecha_entrevista'].dt.month == hoy.month) &
-            (primeras['fecha_entrevista'].dt.year == hoy.year)
-        ].shape[0]
-    else:
-        ingresos_mes = 0
-
-    if 'codigo_paciente' in d.columns and 'etapa' in d.columns and 'centro' in d.columns:
-        cont = continuidad_por_centro(d)
-        if not cont.empty:
-            fila = cont.iloc[0]  # ya viene filtrado a un solo centro
-            con_seguimiento = int(fila['n_con_continuidad'])
-            base_ingresos   = int(fila['n_ingresos'])
-            tasa            = float(fila['pct_continuidad'])
-        else:
-            con_seguimiento, base_ingresos, tasa = 0, 0, 0.0
-    else:
-        con_seguimiento, base_ingresos, tasa = 0, 0, 0.0
+    k = _calcular_kpis(d)
+    total_registros  = k['total_registros']
+    pacientes_unicos = k['pacientes_ingresados']
+    ingresos_mes     = k['ingresos_mes']
+    con_seguimiento  = k['con_seguimiento']
+    base_ingresos    = k['base']
+    tasa             = k['tasa']
 
     tono = 'green' if tasa >= 50 else ('orange' if tasa >= 20 else 'red')
 
@@ -100,20 +105,20 @@ def render(df, centro, pais=None, df_pais=None):
     _kpi_card(c1, 'Total de registros', total_registros)
     _kpi_card(c2, 'Pacientes ingresados', pacientes_unicos)
     _kpi_card(c3, 'TOP de ingreso (este mes)', ingresos_mes)
-    _kpi_card(c4, 'Con al menos un seguimiento', f'{tasa:.1f}%',
-               sub=f'{con_seguimiento} de {base_ingresos} con TOP de ingreso', tono=tono)
+    _kpi_card(c4, 'Aplicación del TOP de seguimiento', f'{tasa:.1f}%',
+               sub=f'{con_seguimiento} de {base_ingresos} pacientes con algún TOP', tono=tono)
     _kpi_card(c5, 'Días desde el último registro', dias_lbl, tono=tono_dias)
 
     if tasa < 20 and base_ingresos > 0:
-        st.warning(f'⚠️ Solo {con_seguimiento} de {base_ingresos} pacientes con TOP de ingreso tienen '
-                    f'seguimiento registrado ({tasa:.1f}%). Revisa la pestaña de Seguimientos para ver el detalle.')
+        st.warning(f'⚠️ Solo {con_seguimiento} de {base_ingresos} pacientes tienen un segundo TOP '
+                    f'registrado ({tasa:.1f}%). Revisa la pestaña de Seguimientos para ver el detalle.')
 
     # ── Comparación con promedio nacional (sin exponer otros centros) ───────
     if df_pais is not None and not df_pais.empty:
         cont_nac = continuidad_por_centro(df_pais)
         if not cont_nac.empty:
-            total_ing_nac  = int(cont_nac['n_ingresos'].sum())
-            total_cont_nac = int(cont_nac['n_con_continuidad'].sum())
+            total_ing_nac  = int(cont_nac['n_pacientes'].sum())
+            total_cont_nac = int(cont_nac['n_con_top2'].sum())
             prom_nac = (total_cont_nac / total_ing_nac * 100) if total_ing_nac > 0 else 0.0
             diff = tasa - prom_nac
             comp_txt = 'por encima' if diff > 0 else ('por debajo' if diff < 0 else 'igual')
@@ -121,7 +126,7 @@ def render(df, centro, pais=None, df_pais=None):
             st.markdown(
                 f'<div style="background:#F8FAFD;border:1px solid #E5E5E5;border-radius:8px;'
                 f'padding:.7rem 1rem;margin:.4rem 0 .8rem 0;font-size:.85rem;">'
-                f'📍 Tu centro: <b>{tasa:.1f}%</b> de continuidad &nbsp;·&nbsp; '
+                f'📍 Aplicación del TOP de seguimiento en tu centro: <b>{tasa:.1f}%</b> &nbsp;·&nbsp; '
                 f'Promedio nacional ({pais}): <b>{prom_nac:.1f}%</b> &nbsp;·&nbsp; '
                 f'<span style="color:{comp_color};font-weight:600;">{abs(diff):.1f} puntos {comp_txt}</span>'
                 f'</div>',
@@ -187,13 +192,14 @@ def _es_s(v):
 
 
 def _indicadores_ingreso(df):
-    """Calcula los mismos indicadores que los graficos individuales, sobre etapa='ingreso'."""
+    """Calcula los mismos indicadores que los gráficos individuales, sobre la misma
+    población: una fila por episodio, el TOP de ingreso que lo abre (`lineas_base()`)."""
     out = {'pct_hombres': None, 'edad_prom': None, 'sust_top': None,
            'pct_transgresion': None, 'salud_psic': None,
            'salud_fis': None, 'calidad_vida': None, 'n': 0}
     if df is None or df.empty or 'etapa' not in df.columns:
         return out
-    d_ing = df[df['etapa'] == 'ingreso'].copy()
+    d_ing = lineas_base(df).copy()
     out['n'] = len(d_ing)
     if d_ing.empty:
         return out

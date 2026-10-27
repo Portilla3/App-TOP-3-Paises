@@ -8,6 +8,32 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Panel: las tarjetas cuentan con el mismo criterio que los gráficos, y el segundo
+  TOP se identifica en un solo lugar. Es el trabajo autorizado el 2026-09-10.
+  - `seguimiento_core.top2_por_paciente()`: una fila por paciente con su TOP1 y su
+    TOP2. `calcular_seguimiento()` la usa por dentro; da los mismos números que
+    antes en los siete países con umbral 90, 60 y 0 (comparado con datos reales).
+  - Semáforo de seguimiento, tiempo entre TOP1 y TOP2 y
+    `config.continuidad_por_centro()` dejan de buscar el TOP2 por la etiqueta
+    `etapa` y llaman al core. El semáforo incluye ahora a los pacientes cuyo primer
+    TOP no es de ingreso y lo dice en su nota; sus urgentes son exactamente los
+    elegibles sin TOP2 de la tarjeta "Con seguimiento (TOP2)".
+  - `continuidad_por_centro()` devuelve `n_pacientes`, `n_con_top2` y
+    `pct_aplicacion`: es el % de aplicación del TOP de seguimiento, sobre todos los
+    pacientes del centro.
+  - Tarjeta "Pacientes ingresados" del panel de país y del centro, e ingresos del
+    mes: salen de `lineas_base()` (episodios), como el perfil al ingreso. La tabla
+    "Tu centro frente al promedio nacional" usa la misma población.
+  - Tarjeta "Total de registros": el desglose muestra las cuatro etapas y "otra
+    etiqueta", y suma el total. Antes decía "X ingresos + Y seguimientos".
+  - Rótulos: "Con seguimiento (TOP2)" en la tarjeta, el gráfico por centro, el Excel
+    y el PPT de seguimiento; "Aplicación del TOP de seguimiento" en la tarjeta del
+    centro y en el Excel de avance (antes "% Continuidad").
+  - Gráfico de sustancia principal: el desglose de "Otra sustancia" al pasar el
+    mouse comparaba contra el literal 'Otras' y salía siempre vacío. Quien escribió
+    solo "otra" va aparte del detalle de drogas.
+  - 10 pruebas nuevas en `tests/test_decisiones.py`.
+
 - Datos, con autorización de Rodrigo y respaldo en `backup_limpieza_20261027` (48
   filas, RLS activo, sin permisos): borradas las 39 copias viejas de TOP duplicados
   ya reemplazadas por la última carga (el borrado exige que exista una copia más

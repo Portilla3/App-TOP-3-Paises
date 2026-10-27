@@ -453,3 +453,132 @@ def test_el_wide_deduplica_con_la_funcion_compartida():
         src = fh.read()
     assert 'quedarse_con_ultima_version(df, _clave_dedup)' in src
     assert "drop_duplicates(subset=_clave_dedup, keep='first')" not in src
+
+
+# ── Hay dos indicadores de seguimiento y un solo TOP2 (2026-09-10) ──────────
+
+@pytest.fixture
+def seguimientos():
+    """Un TOP2 con etiqueta de ingreso, uno sin etiqueta de seguimiento, un
+    duplicado del mismo día y pacientes de 30, 70 y 120 días sin TOP2."""
+    return pd.DataFrame([
+        ('A', 'C1', '2026-05-01', 'ingreso'),
+        ('A', 'C1', '2026-08-01', 'en_tratamiento'),
+        ('B', 'C1', '2026-05-01', 'ingreso'),
+        ('B', 'C1', '2026-06-15', 'ingreso'),
+        ('C', 'C1', '2026-05-01', 'ingreso'),
+        ('C', 'C1', '2026-05-01', 'en_tratamiento'),
+        ('D', 'C2', '2026-06-29', 'ingreso'),
+        ('E', 'C2', '2026-08-18', 'en_tratamiento'),
+        ('F', 'C2', '2026-09-27', 'ingreso'),
+    ], columns=['codigo_paciente', 'centro', 'fecha_entrevista', 'etapa'])
+
+
+HOY = '2026-10-27'
+
+
+def test_el_top2_se_identifica_por_fecha_y_no_por_etiqueta(seguimientos):
+    from pipeline.panel.seguimiento_core import top2_por_paciente
+    per = top2_por_paciente(seguimientos, hoy=HOY).set_index('codigo')
+    assert per.loc['A', 'tiene_top2'] and per.loc['B', 'tiene_top2']
+    assert not per.loc['C', 'tiene_top2'], 'dos TOP el mismo día son uno solo'
+
+
+def test_los_modulos_de_seguimiento_no_buscan_el_top2_por_su_cuenta():
+    """Semáforo, tiempo entre TOP y continuidad llaman al core."""
+    culpables = []
+    for nombre, fuente in [('semaforo_seguimiento', 'top2_por_paciente'),
+                           ('tiempo_top', 'top2_por_paciente'),
+                           ('config', 'calcular_seguimiento')]:
+        with open(os.path.join(RAIZ, 'pipeline', 'panel', nombre + '.py'), encoding='utf-8') as fh:
+            src = fh.read()
+        if 'ETAPAS_TOP2' in src or 'ETAPAS_SEGUNDA' in src or fuente not in src:
+            culpables.append(nombre)
+    assert not culpables, 'reimplementan el TOP2: ' + ', '.join(culpables)
+
+
+def test_los_dos_indicadores_solo_difieren_en_el_denominador(seguimientos):
+    pytest.importorskip('streamlit')
+    from pipeline.panel.config import continuidad_por_centro
+    from pipeline.panel.seguimiento_core import calcular_seguimiento
+    aplic = continuidad_por_centro(seguimientos, hoy=HOY)
+    cob = calcular_seguimiento(seguimientos, hoy=HOY)
+    assert aplic['n_pacientes'].sum() == 6          # todos los pacientes
+    assert aplic['n_con_top2'].sum() == 2            # A y B
+    assert cob['n_elegibles'] == 4 and cob['n_con_top2'] == 2   # 90+ días: A, B, C, D
+
+
+def test_el_semaforo_cuadra_con_la_tarjeta_con_seguimiento(seguimientos):
+    pytest.importorskip('streamlit')
+    from pipeline.panel.semaforo_seguimiento import _calcular_semaforo
+    from pipeline.panel.seguimiento_core import calcular_seguimiento
+    s = _calcular_semaforo(seguimientos, hoy=HOY)
+    cob = calcular_seguimiento(seguimientos, hoy=HOY)
+    assert (s['completado'], s['al_dia'], s['rezago'], s['urgente']) == (2, 1, 1, 2)
+    assert s['sin_ingreso'] == 1   # E solo tiene un TOP en tratamiento
+    assert s['urgente'] == cob['n_elegibles'] - cob['n_con_top2']
+
+
+def test_el_tiempo_entre_top_usa_el_mismo_top2(seguimientos):
+    pytest.importorskip('streamlit')
+    from pipeline.panel.tiempo_top import _calcular_tiempo
+    res, sin_top2 = _calcular_tiempo(seguimientos, hoy=HOY)
+    assert res.set_index('centro').loc['C1', 'promedio_dias'] == round((92 + 45) / 2)
+    assert [c['centro'] for c in sin_top2] == ['C2']
+
+
+def test_nadie_rotula_porcentaje_de_seguimiento_a_secas():
+    import glob
+    culpables = []
+    rutas = glob.glob(os.path.join(RAIZ, 'pipeline', '**', '*.py'), recursive=True)
+    rutas.append(os.path.join(RAIZ, 'app.py'))
+    for ruta in rutas:
+        with open(ruta, encoding='utf-8') as fh:
+            for linea in fh:
+                if linea.lstrip().startswith('#'):
+                    continue
+                if re.search(r"['\"][^'\"]*(% de seguimiento|% Continuidad|Cobertura seguimiento|Cobertura TOP2)", linea):
+                    culpables.append(os.path.basename(ruta))
+    assert not culpables, 'rótulo prohibido en: ' + ', '.join(sorted(set(culpables)))
+
+
+# ── Las tarjetas cuentan con el mismo criterio que los gráficos ────────────
+
+def test_la_tarjeta_pacientes_ingresados_cuenta_episodios(registros):
+    pytest.importorskip('streamlit')
+    from pipeline.panel.metricas import _calcular_metricas
+    from pipeline.panel.kpis_centro import _calcular_kpis
+    assert _calcular_metricas(registros)['pacientes_ingresados'] == len(lineas_base(registros))
+    c1 = registros[registros['centro'] == 'C1']
+    assert _calcular_kpis(c1, hoy=HOY)['pacientes_ingresados'] == len(lineas_base(c1))
+
+
+def test_el_desglose_de_la_tarjeta_suma_el_total(registros):
+    pytest.importorskip('streamlit')
+    from pipeline.panel.metricas import _calcular_metricas
+    df = pd.concat([registros, pd.DataFrame([('G', 'C1', '2026-04-01', 'seguimiento1'),
+                                             ('H', 'C1', '2026-04-01', 'egreso')],
+                                            columns=registros.columns)])
+    m = _calcular_metricas(df)
+    assert sum(n for n, _ in m['desglose_etapas']) == m['total_registros'] == len(df)
+    assert (1, 'otra etiqueta') in m['desglose_etapas']
+
+
+def test_las_tarjetas_del_centro_no_filtran_la_etapa_a_mano():
+    for nombre in ('metricas', 'kpis_centro'):
+        with open(os.path.join(RAIZ, 'pipeline', 'panel', nombre + '.py'), encoding='utf-8') as fh:
+            src = fh.read()
+        assert "== 'ingreso'" not in src, nombre + ' filtra la etapa a mano'
+        assert 'lineas_base' in src, nombre + ' no usa lineas_base()'
+
+
+def test_el_hover_de_otra_sustancia_muestra_el_desglose():
+    pytest.importorskip('streamlit')
+    from pipeline.panel.sustancia import _calcular_sustancias
+    df = pd.DataFrame([
+        ('A', 'C1', '2026-05-01', 'ingreso', 'Perú', 'Tusi'),
+        ('B', 'C1', '2026-05-01', 'ingreso', 'Perú', 'Alcohol'),
+    ], columns=['codigo_paciente', 'centro', 'fecha_entrevista', 'etapa', 'pais', 'sustancia_principal'])
+    r = _calcular_sustancias(df)
+    assert r['otras_desglose'].get('sin_reconocer') == 1
+    assert r['otras_desglose']['_sin_reconocer_detalle'] == {'tusi': 1}

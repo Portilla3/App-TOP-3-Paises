@@ -1,13 +1,18 @@
 """
 pipeline.panel.semaforo_seguimiento — Dona de seguimiento de pacientes.
 
-Para cada paciente con etapa='ingreso' clasifica su estado de seguimiento:
-  - Completado: tiene al menos un registro posterior (en_tratamiento/egreso/seguimiento)
-  - Al día (<60 días): solo tiene TOP1, lleva menos de 60 días desde el ingreso
+Para cada paciente clasifica el estado de su segundo TOP:
+  - Completado: ya tiene TOP2
+  - Al día (<60 días): solo tiene TOP1, lleva menos de 60 días desde él
   - Con rezago (60-89 días): lleva entre 60 y 89 días sin TOP2
   - Urgente (90+ días): lleva 90 o más días sin TOP2
 
-Fuente: df_panel de Supabase (columnas: codigo_paciente, etapa, fecha_entrevista)
+TOP1 y TOP2 vienen de `seguimiento_core.top2_por_paciente()`, la misma fuente
+de la tarjeta "Con seguimiento (TOP2)": el primer TOP del paciente y el
+siguiente con fecha distinta, sin mirar la etiqueta `etapa`. Por eso los
+urgentes son exactamente los elegibles de esa tarjeta que todavía no tienen TOP2.
+
+Fuente: df_panel de Supabase (columnas: codigo_paciente, fecha_entrevista, centro)
 
 Función expuesta:
   render(df, pais, centro_id=None)
@@ -18,6 +23,8 @@ import plotly.graph_objects as go
 from datetime import datetime
 
 from pipeline.panel.config import titulo_seccion
+from pipeline.panel.seguimiento_core import top2_por_paciente, DIAS_UMBRAL_DEFAULT
+from pipeline.validacion_top import es_etapa_ingreso
 
 COLOR_COMPLETADO = '#1D9E75'   # verde
 COLOR_AL_DIA     = '#8BC34A'   # verde claro
@@ -26,7 +33,7 @@ COLOR_URGENTE    = '#E15D5D'   # rojo
 TEXTO_OSCURO     = '#1F3864'
 
 UMBRAL_ATRASO  = 60
-UMBRAL_URGENTE = 90
+UMBRAL_URGENTE = DIAS_UMBRAL_DEFAULT   # el mismo umbral de la cobertura
 
 
 def _calcular_semaforo(df, hoy=None):
@@ -34,59 +41,38 @@ def _calcular_semaforo(df, hoy=None):
     Retorna dict con n por categoría y total.
     """
     vacio = {
-        'completado': 0, 'al_dia': 0, 'rezago': 0, 'urgente': 0, 'total': 0
+        'completado': 0, 'al_dia': 0, 'rezago': 0, 'urgente': 0, 'total': 0,
+        'sin_ingreso': 0,
     }
-    cols_req = {'codigo_paciente', 'etapa', 'fecha_entrevista'}
-    if df is None or df.empty or not cols_req.issubset(df.columns):
+    per = top2_por_paciente(df, hoy=hoy)
+    if per.empty:
         return vacio
 
-    if hoy is None:
-        hoy = pd.Timestamp.now().normalize()
-
-    tmp = df.copy()
-    tmp['etapa']           = tmp['etapa'].fillna('').astype(str).str.strip()
-    tmp['codigo_paciente'] = tmp['codigo_paciente'].astype(str).str.strip()
-    tmp['fecha']           = pd.to_datetime(tmp['fecha_entrevista'], errors='coerce')
-    tmp = tmp[tmp['codigo_paciente'] != ''].dropna(subset=['fecha'])
-
-    ETAPAS_TOP2 = {'en_tratamiento', 'egreso', 'seguimiento'}
-
-    completado = 0
-    al_dia     = 0
-    rezago     = 0
-    urgente    = 0
-
-    # Pacientes con al menos un ingreso
-    pacientes_ingreso = tmp[tmp['etapa'] == 'ingreso']['codigo_paciente'].unique()
-
-    for pac in pacientes_ingreso:
-        grupo = tmp[tmp['codigo_paciente'] == pac].sort_values('fecha')
-        # Primer ingreso
-        ingresos = grupo[grupo['etapa'] == 'ingreso']
-        if ingresos.empty:
-            continue
-        fecha_ing = ingresos.iloc[0]['fecha']
-        # ¿Tiene TOP2?
-        posteriores = grupo[grupo['fecha'] > fecha_ing]
-        tiene_top2  = posteriores['etapa'].isin(ETAPAS_TOP2).any()
-        if tiene_top2:
-            completado += 1
-        else:
-            dias = (hoy - fecha_ing).days
-            if dias < UMBRAL_ATRASO:
-                al_dia += 1
-            elif dias < UMBRAL_URGENTE:
-                rezago += 1
-            else:
-                urgente += 1
+    sin_top2 = per[~per['tiene_top2']]
+    completado = int(per['tiene_top2'].sum())
+    al_dia  = int((sin_top2['dias_top1'] < UMBRAL_ATRASO).sum())
+    rezago  = int(((sin_top2['dias_top1'] >= UMBRAL_ATRASO) &
+                   (sin_top2['dias_top1'] < UMBRAL_URGENTE)).sum())
+    urgente = int((sin_top2['dias_top1'] >= UMBRAL_URGENTE).sum())
 
     total = completado + al_dia + rezago + urgente
+
+    # Pacientes sin ningún TOP marcado como ingreso: entran al semáforo porque
+    # tienen TOP1, pero no a la tarjeta "Pacientes ingresados". Se informan para
+    # que la diferencia entre las dos cifras no parezca un error.
+    sin_ingreso = 0
+    if 'etapa' in df.columns:
+        cod = df['codigo_paciente'].astype(str).str.strip()
+        con_ingreso = set(cod[df['etapa'].apply(es_etapa_ingreso)])
+        sin_ingreso = int((~per['codigo'].isin(con_ingreso)).sum())
+
     return {
-        'completado': completado,
-        'al_dia':     al_dia,
-        'rezago':     rezago,
-        'urgente':    urgente,
-        'total':      total,
+        'completado':  completado,
+        'al_dia':      al_dia,
+        'rezago':      rezago,
+        'urgente':     urgente,
+        'total':       total,
+        'sin_ingreso': sin_ingreso,
     }
 
 
@@ -175,8 +161,9 @@ def render(df, pais, centro_id=None):
 
         st.markdown(
             f'<div style="font-size:.68rem;color:#999;margin-top:.3rem;">'
-            f'N total: {total} pacientes con TOP1 · '
-            f'días calculados desde fecha de ingreso hasta hoy'
+            f'N total: {total} pacientes con TOP1'
+            + (f', de ellos {datos["sin_ingreso"]} sin TOP de ingreso' if datos['sin_ingreso'] else '')
+            + ' · días calculados desde el primer TOP hasta hoy'
             f'</div>',
             unsafe_allow_html=True
         )

@@ -82,11 +82,18 @@ confirmar la etapa a 6 centros (39 pacientes: Neuman SLP 16, Sinaloa 7, Orizaba
 los centros ambulatorios, que se enviarán después. Neuman sigue registrando
 primeros TOP "en tratamiento" en octubre. *2026-10-27*
 
-**Solicitud de confirmación a los países.** El 27 de octubre quedaron listos un
-Word por país (Perú 98 casos en 19 centros, Ecuador 64 en 24, El Salvador 120 en
-7, México 74 en 15) y un Excel por centro con sus casos, la pregunta y la regla
-si no responde en 15 días desde que lo recibe. Falta enviarlos y, con las
-respuestas, aplicar las correcciones con respaldo previo. *2026-10-27*
+**Solicitud de confirmación a los países.** Enviada el 27 de octubre a Perú (98
+casos en 19 centros), Ecuador (64 en 24), El Salvador (120 en 7) y México CIJ (1),
+con plazo al 11 de noviembre. IMSS-Bienestar recibe una versión aparte con solo 4
+casos nuevos (dos ingresos a 35 días, código distinto de la fecha de nacimiento,
+ingreso fechado en enero, seguimiento 8 días después de un TOP en tratamiento),
+porque los 53 de etapa del primer TOP ya los está consultando Cinthia. Con las
+respuestas, aplicar las correcciones con respaldo previo.
+
+Dos revisiones no entraron en los Excel enviados: dos ingresos en el mismo centro
+a menos de 60 días (6 en Ecuador, 1 en Perú) y seguimiento sin egreso registrado
+(6 en El Salvador, 4 en Perú). Se suman en la segunda vuelta, cuando lleguen las
+respuestas. *2026-10-27*
 
 **Prueba del criterio de error grave.** Vive en `tools/errores_graves.sql`. Si
 algún día pasa al panel, se mueve a `validacion_top.py` con su prueba.
@@ -175,14 +182,14 @@ cálculo ya las toma como cero; rellenarlas dejaría el dato explícito en la ba
 sin bloquear a nadie. No se decidió hacerlo. *2026-10-25*
 
 
-**Ocho módulos del panel siguen filtrando la etapa a mano.** `config.py`,
+**Resuelto el 2026-10-27, salvo `ranking.py`.** Ocho módulos del panel filtraban la etapa a mano. `config.py`,
 `kpis_centro.py`, `metricas.py`, `semaforo_seguimiento.py` y `tiempo_top.py`
 comparan `etapa == 'ingreso'` por su cuenta. No se homologaron con el resto
 porque su lógica no es de caracterización: cuentan aplicaciones, miden tiempos
 entre TOP y arman el semáforo de seguimiento. Cada uno necesita decidirse por
 separado si su unidad es el episodio o el registro. *2026-09-02*
 
-**Resuelto el 2026-09-10, pendiente de ejecución.** `metricas.py` y
+**Ejecutado el 2026-10-27.** `metricas.py` y
 `kpis_centro.py` pasan a episodios, para que la tarjeta describa la misma
 población que los gráficos de abajo. `semaforo_seguimiento.py`, `tiempo_top.py` y
 `config.py::continuidad_por_centro` dejan de identificar el TOP2 por la etiqueta
@@ -229,6 +236,22 @@ Reproducible con `python tools/comparar_panel_wide.py <respaldo.xlsx>`.
 ---
 
 ## Trabajo autorizado el 2026-09-10
+
+**Hecho el 2026-10-27:** homologar el TOP2, renombrar el indicador operativo,
+pasar las tarjetas a episodios y el literal `'Otras'` de `sustancia.py`. Ver
+CHANGELOG. Quedan la prueba de humo de los reportes y el monitoreo externo.
+
+**Lo que dejó a la vista.** El semáforo y el % de aplicación cuentan a todos los
+pacientes con un primer TOP, como la cobertura; la tarjeta "Pacientes
+ingresados" cuenta episodios con TOP de ingreso, como el perfil al ingreso. Donde
+hay muchos primeros TOP "en tratamiento" las cifras se separan: en México el
+semáforo tiene 150 pacientes y la tarjeta 98. El semáforo lo explica en su nota
+("de ellos 53 sin TOP de ingreso"). Si se prefiere que el seguimiento cuente solo
+a quienes tienen TOP de ingreso, es una decisión nueva para `DECISIONES.md`.
+
+`ranking.py` sigue contando registros con `etapa == 'ingreso'` (ranking de
+ingresos por centro), y el "Total" del Excel de avance suma solo las cuatro
+etapas, así que no incluye los `seguimiento1/2` de Perú. *2026-10-27*
 
 **Homologar el TOP2 en los tres módulos que lo reimplementan.**
 `semaforo_seguimiento.py`, `tiempo_top.py` y `config.py::continuidad_por_centro`
