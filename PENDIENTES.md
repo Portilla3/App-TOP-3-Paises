@@ -296,11 +296,16 @@ cosa del panel, y de paso se buscan otros literales sueltos.
 verifican criterios de cálculo, no que el Word o el PPT se armen. Es la razón por
 la que los cuatro defectos del 9 de septiembre los encontró Ecuador y no la suite.
 
-**Los pushes no se despliegan solos en la app TOP.** Causa confirmada el 27 de
-octubre (ver INCIDENTES.md, 2026-09-10): la app está registrada con el nombre viejo
-del repositorio. Arreglo pendiente: volver a crear la app desde
-`App-TOP-3-Paises`, con la misma dirección y los secretos copiados antes. Mientras
-tanto, cada cambio en la app necesita Reboot manual. *2026-10-27*
+**Resuelto el 2026-10-27 · los pushes no se desplegaban solos en la app TOP.** La
+app se volvió a crear desde `App-TOP-3-Paises`; ver INCIDENTES.md.
+
+**Rotar la llave secreta de Supabase.** La app TOP usa una llave `sb_secret_`, con
+acceso total a la base (se salta RLS), y no la publicable como se creía. El 27 de
+octubre quedó a la vista en una captura dentro del chat. Hay que crear una llave
+secreta nueva en Supabase, pegarla en los secretos de la app y borrar la vieja.
+Evaluar además si la app puede funcionar con la llave publicable. Las claves de
+país también quedaron a la vista y varias son fáciles de adivinar; cambiarlas
+obliga a avisar a cada gobierno. *2026-10-27*
 
 **Monitoreo externo de las cuatro apps.** Sin él, la caída se entera cuando la
 reporta un país. La del 8 de septiembre estuvo seis días arriba.

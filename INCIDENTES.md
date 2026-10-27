@@ -12,7 +12,7 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
-## 2026-10-27 · La dirección oficial de la app TOP no carga después de recrear la app · en curso
+## 2026-10-27 · La dirección oficial de la app TOP no carga después de recrear la app · cerrado el mismo día
 
 **Contexto.** Para arreglar el despliegue automático (incidente del 2026-09-10),
 la app TOP se volvió a crear desde `App-TOP-3-Paises`. Se hizo con la app nueva
@@ -30,9 +30,16 @@ queda vacío. Un Reboot no lo cambió.
 UTC. El problema está solo en la dirección oficial. Los datos, el código y los
 formularios no se vieron afectados; los centros siguieron pudiendo cargar TOP.
 
-**Causa probable, sin confirmar.** Streamlit no terminó de soltar la dirección
-de la app borrada. Falta descartar caché del navegador de Rodrigo probando desde
-otro dispositivo.
+**Causa.** No era Streamlit: era el navegador. Desde el celular de Rodrigo, con
+datos móviles, la dirección oficial cargó la pantalla de ingreso. En su Chrome de
+escritorio, que también usa Claude, la página quedó guardando datos de la app
+borrada. Se arregla borrando los datos de ese sitio en Chrome. Un país que
+hubiera entrado hoy desde un navegador que conservara la app vieja podría ver
+lo mismo; la solución es la misma.
+
+**Lección.** Antes de concluir que un servicio está caído, probar desde otro
+dispositivo y otra red. Se perdió media hora suponiendo un problema de Streamlit
+que era del navegador.
 
 
 ## 2026-07-01 (detectado 2026-10-26) · Los formularios dejaron de tener las mismas reglas · cerrado el 2026-10-27
@@ -282,6 +289,11 @@ registra ningún "Pulling code changes". El arreglo de fondo es volver a crear l
 app desde `App-TOP-3-Paises` con la misma dirección y los mismos secretos; no se
 puede cambiar el repositorio de una app ya creada. Renombrar el repositorio de
 vuelta no sirve: rompería la dirección de los formularios en GitHub Pages.
+
+**Cerrado el 2026-10-27.** La app se volvió a crear desde `App-TOP-3-Paises`
+(aparece en Streamlit como `app-top-3-paises`) con la misma dirección y los
+mismos secretos. Prueba: un push a las 19:52:59 UTC se desplegó solo, con
+"Pulling code changes" a las 19:53:00 y "Updated app!" a las 19:53:02.
 
 **Por qué solo pasa en esta app.** De las cuatro, tres duermen por inactividad y
 una app dormida clona de cero al despertar, así que siempre sirve código fresco.
