@@ -6,6 +6,14 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-10-27
+
+- Datos: borrado el registro de prueba DDDD12345678 (id 955, SRIMB000931, entrevistador
+  "PACO LACO", cargado el 22 de junio), con autorización de Rodrigo. Respaldo en
+  `backup_registro_prueba_dddd_20261027` (RLS activo, sin permisos para anon ni
+  authenticated). Pasó porque el formulario solo exige 4 letras y 8 números, y el
+  cruce con la fecha de nacimiento de México todavía no bloqueaba en junio.
+
 ## 2026-10-26
 
 - Datos: corregidos días de trabajo, días de educación y robo de los 402 TOP

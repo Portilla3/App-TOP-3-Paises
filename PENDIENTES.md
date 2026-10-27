@@ -71,6 +71,18 @@ Ecuador y El Salvador.** Los formularios de México ya lo bloquean al guardar
 error grave más frecuente (78 de 89 al 26 de octubre). Falta la autorización de
 Rodrigo. *2026-10-26*
 
+**La fecha dentro del código no se valida como fecha.** El formulario acepta
+cualquier combinación de 4 letras y 8 números. Al 27 de octubre hay 12 registros
+reales con un código cuya fecha no existe (mes 13, 19 o 90; día 00; año 1013 o
+2200), por ejemplo EDOC12191996 o MACR08131982. Agregar esa validación junto con
+el bloqueo del cruce código-fecha de nacimiento. *2026-10-27*
+
+**IMSS-Bienestar, primer TOP "en tratamiento".** El 26 de octubre Cinthia pidió
+confirmar la etapa a 6 centros (39 pacientes: Neuman SLP 16, Sinaloa 7, Orizaba
+6, Veracruzano 6, Sonora 2, Ixtlahuacan 2). Las respuestas no han llegado. Faltan
+los centros ambulatorios, que se enviarán después. Neuman sigue registrando
+primeros TOP "en tratamiento" en octubre. *2026-10-27*
+
 **Prueba del criterio de error grave.** Vive en `tools/errores_graves.sql`. Si
 algún día pasa al panel, se mueve a `validacion_top.py` con su prueba.
 *2026-10-26*
