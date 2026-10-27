@@ -193,3 +193,12 @@ def test_un_pais_sin_formulario_no_ofrece_codigos():
     pytest.importorskip('streamlit')
     from pipeline.panel.gestion_claves import codigos_del_formulario
     assert codigos_del_formulario('México Monte Fénix') == []
+
+
+def test_las_claves_nuevas_son_solo_mayusculas_y_numeros():
+    """Decidido el 2026-10-27: se escriben en el celular y la clave distingue
+    mayúsculas. Sin 0/O ni 1/I, que se confunden al dictarlas."""
+    alfabeto = re.search(r"v_alfabeto text := '([^']+)'", _cuerpo('_clave_aleatoria')).group(1)
+    assert re.fullmatch(r'[A-Z2-9]+', alfabeto)
+    assert not set('01IO') & set(alfabeto)
+    assert 256 % len(alfabeto) == 0, 'con este largo de alfabeto algunas letras salen más que otras'

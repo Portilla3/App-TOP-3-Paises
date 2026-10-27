@@ -57,3 +57,22 @@ def test_la_bitacora_guarda_lo_que_la_persona_escribio(fuente):
     intentos eran texto pegado desde WhatsApp, no códigos mal escritos."""
     assert re.search(r"left\(coalesce\(p_correo", fuente)
     assert "'login_fallido'" in fuente
+
+
+def test_el_codigo_se_busca_dentro_del_texto_pegado(fuente):
+    """Decidido el 2026-10-27: SJA perdió 14 intentos pegando 'SJA🇸🇻  El Sa'.
+    Solo se acepta una palabra que sea el código de un centro con clave activa."""
+    assert "regexp_matches(upper(coalesce(p_correo, '')), '[A-Z0-9_]+', 'g')" in fuente
+    bloque = fuente.split('regexp_matches', 1)[1].split('END IF;', 1)[0]
+    assert 'cc.activo' in bloque, 'la búsqueda dentro del texto acepta códigos de centros desactivados'
+
+
+def test_la_clave_solo_se_limpia_de_espacios_en_el_borde(fuente):
+    """Se prueba primero tal cual y después sin los espacios del borde. Nunca se
+    cambian letras ni se quitan espacios del medio."""
+    assert re.search(r'crypt\(p_password,\s*cc\.password_hash\)', fuente)
+    assert re.search(r'crypt\(btrim\(coalesce\(p_password, \'\'\), v_blancos\)', fuente)
+    assert not re.search(r'replace\s*\(\s*p_password', fuente)
+    blancos = re.search(r"v_blancos text := (.*?);", fuente).group(1)
+    assert re.fullmatch(r"E' \\t\\r\\n'( \|\| chr\(\d+\))+", blancos), \
+        'v_blancos solo puede tener espacios y caracteres invisibles'

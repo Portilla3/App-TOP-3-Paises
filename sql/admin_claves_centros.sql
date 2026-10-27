@@ -19,7 +19,8 @@
 --   * La clave nueva de un centro se genera acá, se devuelve una sola vez y solo
 --     se guarda su hash. No pasa por la bitácora.
 --
--- Aplicado en Supabase el 2026-10-27, migración `admin_claves_centros`.
+-- Aplicado en Supabase el 2026-10-27, migraciones `admin_claves_centros` y
+-- `claves_generadas_mayusculas`.
 -- Si se modifica en Supabase, hay que actualizar este archivo en el mismo commit.
 -- La prueba `tests/test_gestion_claves.py` revisa estas reglas.
 
@@ -85,8 +86,9 @@ CREATE OR REPLACE FUNCTION public._clave_aleatoria(p_largo integer DEFAULT 10)
  SET search_path TO 'public', 'extensions'
 AS $function$
 DECLARE
-    -- Sin 0/O, 1/l/I: se dictan por teléfono sin confundirse.
-    v_alfabeto text := 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    -- Solo mayúsculas y números, sin 0/O ni 1/I: se dictan por teléfono y se
+    -- escriben en el celular sin confundirse. 32 símbolos: cada byte cae parejo.
+    v_alfabeto text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     v_bytes    bytea := gen_random_bytes(p_largo);
     v_clave    text := '';
 BEGIN

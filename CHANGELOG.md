@@ -8,6 +8,21 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Login de centro: tolera el texto pegado. Si lo escrito no es un código, busca
+  entre sus palabras el de un centro con clave activa ("SJA🇸🇻 El Sa" → SJA), y si
+  la clave falla tal cual la prueba sin los espacios del borde. Migración
+  `login_centro_texto_pegado`; ver DECISIONES.md, "El login tolera el texto
+  pegado". Ninguna clave ni código de centro cambió.
+- Claves nuevas del módulo: solo mayúsculas y números, sin 0/O ni 1/I (migración
+  `claves_generadas_mayusculas`). Las claves ya entregadas no cambian.
+- Verificado en producción: los dos cuerpos de función son idénticos al
+  repositorio y los permisos se mantienen. Simulación con la fila de ensayo
+  CENTRO_PRUEBA (país 'Test'): respaldo en `backup_centro_prueba_20261027` (RLS,
+  sin permisos), clave temporal, cinco casos (texto pegado, minúscula con espacio,
+  salto de línea: entran; clave en minúscula o incompleta: fallan) y restauración
+  exacta, con la misma huella md5 que el respaldo. Las filas 134 a 138 de
+  `centro_bitacora` son de esa prueba.
+
 - Formularios (los siete): el promedio de consumo por día no acepta negativos
   (`min="0"` y bloqueo al enviar, con el campo marcado en rojo). Sin máximo. Probado
   en un navegador simulado (jsdom) con Perú, México y Ecuador. Prueba nueva en

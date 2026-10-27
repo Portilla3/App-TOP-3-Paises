@@ -172,6 +172,12 @@ pegando texto de WhatsApp antes de dar con el formato correcto.
 **Arreglo:** parcial. La comparación del código dejó de distinguir mayúsculas
 (migración `login_centro_insensible_a_mayusculas`), lo que resuelve 4 de los 31.
 
+**Actualización 2026-10-27: arreglado.** El login busca el código de un centro
+entre las palabras de lo escrito y prueba la clave sin los espacios del borde
+(migración `login_centro_texto_pegado`, DECISIONES.md "El login tolera el texto
+pegado"). Simulado en producción con CENTRO_PRUEBA: "CENTRO_PRUEBA🇸🇻  Test"
+entra. Lo que sigue es el diagnóstico tal como quedó el 19 de octubre.
+
 **Lo que no está arreglado, y es lo más frecuente:**
 
 Los 15 intentos con texto pegado siguen fallando. `trim()` quita espacios, no

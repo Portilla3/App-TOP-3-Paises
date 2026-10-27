@@ -33,7 +33,7 @@ bitácora, y un centro realmente bloqueado no avisaría, dejaría de intentar. L
 consulta es la de INCIDENTES.md: por centro, si su último intento fue exitoso.
 Conviene correrla con alguna periodicidad o incorporarla al panel.
 
-**Quince intentos fallaron por texto pegado desde WhatsApp.** Es la causa más
+**Resuelto el 2026-10-27 · quince intentos fallaron por texto pegado desde WhatsApp.** Es la causa más
 frecuente y la que sigue sin arreglo. La solución propuesta es extraer el primer
 grupo alfanumérico de lo que escriban. Requiere su entrada en `DECISIONES.md`
 antes de implementarse, porque implica recortar la entrada del usuario.

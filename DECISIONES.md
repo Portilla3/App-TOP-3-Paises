@@ -192,6 +192,30 @@ conviene que quede explícito hasta dónde.
 
 *2026-10-18*
 
+### El login tolera el texto pegado
+**Regla.** Si lo escrito en el usuario no es un código, el login busca entre sus
+palabras el código de un centro con clave activa: `SJA🇸🇻  El Sa` entra como SJA
+y `Usuario: CJR` como CJR. Si la clave falla tal cual, se prueba una vez más sin
+los espacios del borde (espacio, salto de línea y los invisibles que agregan
+WhatsApp y el correo). Las letras de la clave no se tocan, ni los espacios del
+medio. En la bitácora del intento fallido se sigue guardando lo que la persona
+escribió, sin limpiar.
+
+**Es la decisión aparte que pedía la entrada anterior**, y fija hasta dónde se
+recorta: el usuario se reduce a una palabra que sea un código existente, y la
+clave solo pierde los espacios del borde.
+
+**Fundamento.** El 16 de septiembre SJA perdió 14 intentos pegando una línea de
+WhatsApp con la bandera incluida, y desde el 27 de octubre cada gobierno reparte
+claves, casi siempre por WhatsApp. No baja la seguridad: el código de centro no
+es un secreto y la clave se sigue exigiendo completa. Probado con 20 casos en un
+Postgres local. Decidido por Rodrigo el 2026-10-27.
+
+**Dónde vive.** `sql/validar_login_centro.sql`, migración
+`login_centro_texto_pegado`. Sus pruebas, en `tests/test_login_centro.py`.
+
+*2026-10-27*
+
 ### Las funciones de la base se versionan en el repositorio
 **Regla.** Toda función de Supabase tiene su archivo en `sql/`, y se actualiza en
 el mismo commit que la migración que la cambia.
@@ -641,6 +665,13 @@ excepción ante una clave incorrecta, porque deshacería ese registro. La clave
 nueva de un centro se genera en la base, se muestra una sola vez y solo se
 guarda su hash. Toda acción queda en la bitácora con `gobierno:<país>`. Un
 código de centro tiene una sola clave, aunque se escriba con otras mayúsculas.
+
+**Las claves que genera el módulo son solo mayúsculas y números.** Diez
+caracteres de un alfabeto de 32, sin 0/O ni 1/I, porque se dictan por teléfono y
+se escriben en el celular, y la clave distingue mayúsculas. De los 31 fallos de
+login analizados en octubre, 12 fueron claves mal escritas. El login sigue
+distinguiendo mayúsculas; las claves ya entregadas no cambian. Decidido por
+Rodrigo el 2026-10-27.
 
 **El gobierno no crea códigos de centro.** Para crear o restablecer una clave
 elige el centro de una lista que sale del formulario TOP de su país
