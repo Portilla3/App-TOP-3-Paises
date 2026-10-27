@@ -14,6 +14,8 @@ Función expuesta: render(pais, llamar=None)
 `llamar(nombre_funcion, payload) -> dict` permite probar sin Supabase.
 """
 import json
+import os
+import re
 import urllib.request
 
 import pandas as pd
@@ -27,6 +29,40 @@ MENSAJES = {
     'otro_pais': 'Ese código de centro ya tiene clave en otro país o institución.',
     'sin_clave': 'Ese centro no tiene una clave activa.',
 }
+
+# Formulario TOP de cada país. Los códigos de centro nacen en la lista de ese
+# formulario, que solo cambia Rodrigo: el gobierno no inventa códigos, elige
+# entre los que ya existen.
+FORMULARIO_POR_PAIS = {
+    'Perú':        'index.html',
+    'Ecuador':     'index_ecuador.html',
+    'El Salvador': 'index_elsalvador.html',
+    'México':      'index_mexico.html',
+    'México CIJ':  'index_mexicocij.html',
+}
+RAIZ_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def codigos_del_formulario(pais, raiz=RAIZ_REPO):
+    """Códigos de la lista de centros del formulario TOP del país, en su orden."""
+    archivo = FORMULARIO_POR_PAIS.get(pais)
+    if not archivo:
+        return []
+    try:
+        with open(os.path.join(raiz, archivo), encoding='utf-8') as fh:
+            html = fh.read()
+    except OSError:
+        return []
+    bloque = re.search(r'<select[^>]*\bid="centro"[^>]*>(.*?)</select>', html, re.S)
+    if not bloque:
+        return []
+    codigos = []
+    for valor, texto in re.findall(r'<option(?:\s+value="([^"]*)")?[^>]*>(.*?)</option>', bloque.group(1), re.S):
+        codigo = (valor or texto).strip()
+        if codigo and not codigo.startswith('—') and codigo not in codigos:
+            codigos.append(codigo)
+    return codigos
+
 
 ESTADO = {
     (True, True):   'Activa',
@@ -138,24 +174,29 @@ def render(pais, llamar=None):
         st.caption('Entréguela al responsable del centro por un canal privado. El usuario es el '
                    'código del centro.')
 
-    centros = df['Centro'].tolist()
+    # Solo los códigos del formulario TOP del país. Los centros nuevos los
+    # agrega Rodrigo al formulario; recién ahí aparecen acá.
+    codigos = codigos_del_formulario(pais)
     col1, col2 = st.columns(2, gap='large')
 
     with col1:
         st.markdown('**Crear o restablecer una clave**')
-        with st.form(f'{k}_crear', clear_on_submit=True):
-            sel = st.selectbox('Centro', ['(otro código)'] + centros)
-            otro = st.text_input('Código del centro, si no está en la lista')
-            correo = st.text_input('Correo institucional (obligatorio si el centro no tiene clave)')
-            resp = st.text_input('Nombre del responsable')
-            if st.form_submit_button('Generar clave'):
-                centro = otro.strip() if sel == '(otro código)' else sel
-                r = crear(pais, clave, centro, correo, resp, llamar)
-                if r.get('ok'):
-                    st.session_state[f'{k}_nueva'] = r
-                    st.rerun()
-                else:
-                    st.error(mensaje_error(r))
+        if not codigos:
+            st.error('No se encontró la lista de centros del formulario TOP de este país.')
+        else:
+            with st.form(f'{k}_crear', clear_on_submit=True):
+                centro = st.selectbox('Centro', codigos)
+                correo = st.text_input('Correo institucional (obligatorio si el centro no tiene clave)')
+                resp = st.text_input('Nombre del responsable')
+                if st.form_submit_button('Generar clave'):
+                    r = crear(pais, clave, centro, correo, resp, llamar)
+                    if r.get('ok'):
+                        st.session_state[f'{k}_nueva'] = r
+                        st.rerun()
+                    else:
+                        st.error(mensaje_error(r))
+            st.caption('La lista es la del formulario TOP del país. Para sumar un centro nuevo, '
+                       'hay que pedir que se agregue al formulario.')
 
     with col2:
         st.markdown('**Desactivar una clave**')

@@ -149,8 +149,12 @@ def test_la_pestania_pide_la_clave_y_muestra_la_nueva_una_sola_vez():
     assert not at.exception
     assert at.dataframe, 'no se muestra la tabla de centros'
 
+    from pipeline.panel.gestion_claves import codigos_del_formulario
+    assert list(at.selectbox[0].options) == codigos_del_formulario('Perú'), \
+        'el selector tiene que ofrecer solo los códigos del formulario TOP'
+    assert all('Código del centro' not in t.label for t in at.text_input), 'quedó un campo de código libre'
     at.selectbox[0].select('EESS13C')
-    at.text_input[1].input('c@minsa.pe')
+    at.text_input[0].input('c@minsa.pe')
     at.button[0].click().run()
     assert any('Xy7kP2mQ9a' in c.value for c in at.code), 'no se muestra la clave nueva'
     at.run()
@@ -169,3 +173,23 @@ def test_monte_fenix_y_mahanaim_no_administran_claves():
             valores[nodo.targets[0].id] = ast.literal_eval(nodo.value)
     assert valores['SIN_GESTION_DE_CLAVES'] == {'México Monte Fénix', 'México Mahanaim'}
     assert not set(valores['PAISES_CON_CLAVES']) & valores['SIN_GESTION_DE_CLAVES']
+
+
+@pytest.mark.parametrize('pais,uno_conocido', [
+    ('Perú', 'EESS02SB'), ('Ecuador', 'CET039598'), ('El Salvador', 'CJR'),
+    ('México', 'DFIMB002802'), ('México CIJ', 'BJZ9450'),
+])
+def test_los_codigos_salen_del_formulario_top(pais, uno_conocido):
+    """El gobierno no escribe códigos: elige entre los del formulario de su país."""
+    pytest.importorskip('streamlit')
+    from pipeline.panel.gestion_claves import codigos_del_formulario
+    codigos = codigos_del_formulario(pais)
+    assert uno_conocido in codigos
+    assert len(codigos) == len(set(codigos))
+    assert not any(c.startswith('—') for c in codigos), 'se coló el texto "Seleccione centro"'
+
+
+def test_un_pais_sin_formulario_no_ofrece_codigos():
+    pytest.importorskip('streamlit')
+    from pipeline.panel.gestion_claves import codigos_del_formulario
+    assert codigos_del_formulario('México Monte Fénix') == []

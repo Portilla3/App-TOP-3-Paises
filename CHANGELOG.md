@@ -8,6 +8,11 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Claves de centros: el selector para crear o restablecer muestra solo los códigos
+  de la lista de centros del formulario TOP del país; se quitó "(otro código)" y el
+  campo de texto libre. Revisado contra la base: todos los centros con TOP y todas
+  las claves existentes están en su formulario.
+
 - Claves de centros: Monte Fénix y Mahanaim no ven la pestaña ni aparecen en el
   selector de UNODC (`SIN_GESTION_DE_CLAVES` en `app.py`). Cada una es un solo
   centro y su perfil de institución ya es el del centro. Verificado con la app

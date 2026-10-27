@@ -627,6 +627,15 @@ nueva de un centro se genera en la base, se muestra una sola vez y solo se
 guarda su hash. Toda acción queda en la bitácora con `gobierno:<país>`. Un
 código de centro tiene una sola clave, aunque se escriba con otras mayúsculas.
 
+**El gobierno no crea códigos de centro.** Para crear o restablecer una clave
+elige el centro de una lista que sale del formulario TOP de su país
+(`codigos_del_formulario()` en `pipeline/panel/gestion_claves.py`); no hay campo
+de texto libre. Los códigos nacen en ese formulario y solo los agrega Rodrigo, así
+que un centro nuevo primero entra al formulario y recién entonces puede recibir
+clave. La restricción está en la app: la función de la base acepta cualquier
+código, pero solo la llama quien tiene la clave de administrador. Decidido por
+Rodrigo el 2026-10-27.
+
 **Monte Fénix y Mahanaim no tienen administrador.** Cada una es un solo centro:
 su perfil de institución ya muestra todo lo de su centro, así que no ven la
 pestaña ni tienen fila en `pais_admin`. Si alguna vez suman centros, se les crea
