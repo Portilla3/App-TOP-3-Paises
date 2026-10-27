@@ -30,12 +30,12 @@ queda vacío. Un Reboot no lo cambió.
 UTC. El problema está solo en la dirección oficial. Los datos, el código y los
 formularios no se vieron afectados; los centros siguieron pudiendo cargar TOP.
 
-**Causa.** No era Streamlit: era el navegador. Desde el celular de Rodrigo, con
-datos móviles, la dirección oficial cargó la pantalla de ingreso. En su Chrome de
-escritorio, que también usa Claude, la página quedó guardando datos de la app
-borrada. Se arregla borrando los datos de ese sitio en Chrome. Un país que
-hubiera entrado hoy desde un navegador que conservara la app vieja podría ver
-lo mismo; la solución es la misma.
+**Causa, sin confirmar.** Desde el celular de Rodrigo, con datos móviles, la
+dirección oficial cargó la pantalla de ingreso; minutos después también cargó en
+su Chrome de escritorio, sin borrar datos. Con eso no se distingue si era caché
+del navegador o si Streamlit terminó de conectar la dirección en ese rato. Si
+un país ve la página en blanco, se le pide borrar los datos del sitio en su
+navegador.
 
 **Lección.** Antes de concluir que un servicio está caído, probar desde otro
 dispositivo y otra red. Se perdió media hora suponiendo un problema de Streamlit
