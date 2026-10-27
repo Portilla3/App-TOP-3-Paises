@@ -293,6 +293,12 @@ cosa del panel, y de paso se buscan otros literales sueltos.
 verifican criterios de cálculo, no que el Word o el PPT se armen. Es la razón por
 la que los cuatro defectos del 9 de septiembre los encontró Ecuador y no la suite.
 
+**Los pushes no se despliegan solos en la app TOP.** Causa confirmada el 27 de
+octubre (ver INCIDENTES.md, 2026-09-10): la app está registrada con el nombre viejo
+del repositorio. Arreglo pendiente: volver a crear la app desde
+`App-TOP-3-Paises`, con la misma dirección y los secretos copiados antes. Mientras
+tanto, cada cambio en la app necesita Reboot manual. *2026-10-27*
+
 **Monitoreo externo de las cuatro apps.** Sin él, la caída se entera cuando la
 reporta un país. La del 8 de septiembre estuvo seis días arriba.
 

@@ -248,6 +248,18 @@ exige reautenticación por correo en GitHub.
 nuevo a las 17:05:34 del 10 de septiembre. Es un parche: despliega una vez y deja
 la causa intacta.
 
+**Actualización 2026-10-27: causa confirmada.** El pie del log de Manage app dice
+`portilla3/qalat-top-ecuador/main/app.py`, y GitHub responde que
+`Portilla3/qalat-top-ecuador` redirige a `Portilla3/App-TOP-3-Paises`: la app
+quedó registrada con el nombre viejo del repositorio. El clon funciona porque
+GitHub redirige, pero el aviso de cada push viaja con el nombre nuevo y
+Streamlit no lo asocia a la app. Prueba del mismo día: después del reboot de las
+18:01 UTC hubo cuatro pushes (18:08, 18:18, 19:27 y 19:32 UTC) y el log no
+registra ningún "Pulling code changes". El arreglo de fondo es volver a crear la
+app desde `App-TOP-3-Paises` con la misma dirección y los mismos secretos; no se
+puede cambiar el repositorio de una app ya creada. Renombrar el repositorio de
+vuelta no sirve: rompería la dirección de los formularios en GitHub Pages.
+
 **Por qué solo pasa en esta app.** De las cuatro, tres duermen por inactividad y
 una app dormida clona de cero al despertar, así que siempre sirve código fresco.
 Esta es la única en uso continuo y por eso la única donde el defecto se
