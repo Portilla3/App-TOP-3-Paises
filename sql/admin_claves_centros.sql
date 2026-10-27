@@ -244,16 +244,25 @@ GRANT EXECUTE ON FUNCTION public.admin_desactivar_clave_centro(text, text, text)
 
 
 -- ── Clave de administrador de cada país ─────────────────────────────────────
--- No va en este archivo: la elige Rodrigo y la pega en el SQL Editor, una vez
--- por país, con la clave entre las comillas:
+-- No va en este archivo. Rodrigo la crea en el SQL Editor con esta consulta, que
+-- genera una clave al azar por país, guarda solo su hash y la muestra una sola
+-- vez en el resultado. La clave no queda escrita en la consulta ni en el
+-- historial. Volver a correrla cambia las claves de los países de la lista.
 --
---   INSERT INTO pais_admin (pais, clave_hash)
---   VALUES ('Perú', extensions.crypt('CLAVE_ELEGIDA', extensions.gen_salt('bf', 10)))
---   ON CONFLICT (pais) DO UPDATE
---      SET clave_hash = excluded.clave_hash, activo = TRUE, ultima_rotacion = now();
+--   WITH nuevas AS (
+--     SELECT p AS pais, public._clave_aleatoria(12) AS clave
+--       FROM unnest(ARRAY['Perú', 'Ecuador', 'El Salvador', 'México', 'México CIJ']) AS p
+--   ), guardadas AS (
+--     INSERT INTO pais_admin (pais, clave_hash)
+--     SELECT pais, extensions.crypt(clave, extensions.gen_salt('bf', 10)) FROM nuevas
+--     ON CONFLICT (pais) DO UPDATE
+--        SET clave_hash = excluded.clave_hash, activo = TRUE, ultima_rotacion = now()
+--     RETURNING pais
+--   )
+--   SELECT n.pais, n.clave AS clave_para_entregar
+--     FROM nuevas n JOIN guardadas g USING (pais)
+--    ORDER BY n.pais;
 --
--- El nombre del país tiene que ser exactamente el de la columna `pais`:
--- 'Perú', 'Ecuador', 'El Salvador', 'México' (IMSS-Bienestar), 'México CIJ'.
--- Monte Fénix y Mahanaim no llevan administrador: cada una es un solo centro y
--- su perfil de institución ya es el del centro. Sin fila en `pais_admin`, nadie
--- puede administrar claves a su nombre.
+-- 'México' es IMSS-Bienestar. Monte Fénix y Mahanaim no llevan administrador:
+-- cada una es un solo centro y su perfil de institución ya es el del centro. Sin
+-- fila en `pais_admin`, nadie puede administrar claves a su nombre.

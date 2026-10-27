@@ -67,9 +67,9 @@ Estado al 2026-10-27. Paso 1: El Salvador 8 de 8, Ecuador 2, Perú 2; México
 IMSS-Bienestar y CIJ 0, porque los centros los elige cada gobierno y Rodrigo
 avisa cuando los tenga. Paso 3: el módulo de claves está construido (ver
 DECISIONES.md, "Cada gobierno administra las claves de sus centros"). Falta que
-Rodrigo cree la clave de administrador de cada país en el SQL Editor (el INSERT
-está comentado al final de `sql/admin_claves_centros.sql`) y se la entregue a cada
-gobierno. Pendiente menor: que el centro cambie la clave en su primer ingreso, y
+Rodrigo cree las claves de administrador en el SQL Editor (la consulta está
+comentada al final de `sql/admin_claves_centros.sql`, genera las cinco al azar y
+las muestra una vez) y se la entregue a cada gobierno. Pendiente menor: que el centro cambie la clave en su primer ingreso, y
 una función para que el gobierno cambie su propia clave de administrador. En
 `centro_credenciales` queda la fila de prueba CENTRO_PRUEBA (país 'Test',
 desactivada) del 20 de julio.
