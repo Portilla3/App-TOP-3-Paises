@@ -54,6 +54,23 @@ se sincronizaron.
   entere.
 - Lo que falta o se descartó: `PENDIENTES.md`.
 
+### La carpeta local del proyecto se revisa al empezar y se deja al día
+
+Al iniciar cada chat, conectar y revisar la carpeta
+`OneDrive\Documentos\EMCDDA final\C A L I D A D\Acreditación\ONUDD\QALAT\QALAT 2025\App TOP 3.0`
+para ver lo que ya hay:
+
+- `Operativo`: los documentos que se usan con los países y los centros. No están
+  en GitHub; si un cambio los deja viejos, se avisa qué parte y se pregunta antes
+  de editarlos.
+- `_respaldo_repositorio`: copia de estos documentos del repositorio. Al cerrar
+  un cambio se refresca entera y se anota el commit en su `LEEME.txt`.
+- `Plataforma_QALAT_caracterizacion.docx`: el informe que describe la
+  plataforma. Si un cambio lo deja viejo, se avisa qué sección.
+- `_historico` no se toca.
+
+Es regla de Rodrigo desde el 27 de octubre de 2026, para no confundirse.
+
 ### Dos accesos distintos, que no hay que confundir
 
 - **Formulario TOP:** el centro elige su código de una lista y carga pacientes.
