@@ -19,6 +19,7 @@
 --   * La clave nueva de un centro se genera acá, se devuelve una sola vez y solo
 --     se guarda su hash. No pasa por la bitácora.
 --
+-- Aplicado en Supabase el 2026-10-27, migración `admin_claves_centros`.
 -- Si se modifica en Supabase, hay que actualizar este archivo en el mismo commit.
 -- La prueba `tests/test_gestion_claves.py` revisa estas reglas.
 
@@ -247,7 +248,7 @@ GRANT EXECUTE ON FUNCTION public.admin_desactivar_clave_centro(text, text, text)
 -- por país, con la clave entre las comillas:
 --
 --   INSERT INTO pais_admin (pais, clave_hash)
---   VALUES ('Perú', extensions.crypt('CLAVE_ELEGIDA', extensions.gen_salt('bf')))
+--   VALUES ('Perú', extensions.crypt('CLAVE_ELEGIDA', extensions.gen_salt('bf', 10)))
 --   ON CONFLICT (pais) DO UPDATE
 --      SET clave_hash = excluded.clave_hash, activo = TRUE, ultima_rotacion = now();
 --

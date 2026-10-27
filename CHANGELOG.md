@@ -18,6 +18,11 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
   Probado en un Postgres local con crypt simulado: flujo completo, bloqueo a los
   5 intentos, desbloqueo a los 15 minutos y permisos de anon. 18 pruebas nuevas
   en `tests/test_gestion_claves.py`.
+  Aplicado en Supabase con autorización de Rodrigo (migración
+  `admin_claves_centros`). Verificado en producción: los cinco cuerpos de función
+  son idénticos al archivo, anon no lee `pais_admin` ni llama las internas, y el
+  camino completo con bcrypt real responde. La clave de administrador temporal
+  del país 'Test' usada para esa prueba se borró. `pais_admin` queda vacía.
 
 - Prueba de humo de los reportes: `tests/test_reportes.py`, con la base
   sintética de `tests/datos_sinteticos.py`. Arma la wide y los seis reportes en
