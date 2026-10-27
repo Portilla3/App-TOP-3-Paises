@@ -12,6 +12,29 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-10-27 · La dirección oficial de la app TOP no carga después de recrear la app · en curso
+
+**Contexto.** Para arreglar el despliegue automático (incidente del 2026-09-10),
+la app TOP se volvió a crear desde `App-TOP-3-Paises`. Se hizo con la app nueva
+al lado: dirección provisoria, secretos copiados por Rodrigo, prueba de ingreso
+como Perú y prueba de despliegue automático (push 19:52:59 UTC, "Updated app!" a
+las 19:53:02). Recién entonces se borró la app vieja y se le asignó a la nueva la
+dirección `monitoreo-tratamiento-top3`.
+
+**Síntoma.** Desde ese cambio, alrededor de las 20:03 UTC (17:03 en Chile), la
+dirección oficial muestra la página de Streamlit pero la app no carga, y su log
+queda vacío. Un Reboot no lo cambió.
+
+**Lo que se descartó.** La app funciona: con otra dirección
+(`monitoreo-tratamiento-top3-prueba`) carga la pantalla de ingreso, a las 20:35
+UTC. El problema está solo en la dirección oficial. Los datos, el código y los
+formularios no se vieron afectados; los centros siguieron pudiendo cargar TOP.
+
+**Causa probable, sin confirmar.** Streamlit no terminó de soltar la dirección
+de la app borrada. Falta descartar caché del navegador de Rodrigo probando desde
+otro dispositivo.
+
+
 ## 2026-07-01 (detectado 2026-10-26) · Los formularios dejaron de tener las mismas reglas · cerrado el 2026-10-27
 
 **Quién avisó:** nadie. Apareció al comparar los errores graves por país: México
