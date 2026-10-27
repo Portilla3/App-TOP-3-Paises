@@ -8,6 +8,13 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Datos, con autorización de Rodrigo: los 7 TOP de SLIMB000615 (Hospital
+  Psiquiátrico de Sinaloa, IMSS-Bienestar) pasan de "en_tratamiento" a "ingreso",
+  según la respuesta del centro a la consulta de Cinthia ("¿Era ingreso?": Sí en
+  los 7). Ids 1361, 1362, 1646, 1647, 1648, 2258 y 2259; cada paciente tenía un
+  solo TOP. Respaldo en `backup_sinaloa_etapa_20261027` (RLS, sin permisos),
+  conteo 7 = actualizadas 7.
+
 - Login de centro: tolera el texto pegado. Si lo escrito no es un código, busca
   entre sus palabras el de un centro con clave activa ("SJA🇸🇻 El Sa" → SJA), y si
   la clave falla tal cual la prueba sin los espacios del borde. Migración

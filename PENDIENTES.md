@@ -93,6 +93,9 @@ confirmar la etapa a 6 centros (39 pacientes: Neuman SLP 16, Sinaloa 7, Orizaba
 los centros ambulatorios, que se enviarán después. Neuman sigue registrando
 primeros TOP "en tratamiento" en octubre. *2026-10-27*
 
+Respuestas recibidas: Sinaloa (7 de 7 "Sí, era ingreso"), aplicada el 27 de
+octubre. Faltan Neuman SLP, Orizaba, Veracruzano, Sonora e Ixtlahuacan.
+
 **Solicitud de confirmación a los países.** Enviada el 27 de octubre a Perú (98
 casos en 19 centros), Ecuador (64 en 24), El Salvador (120 en 7) y México CIJ (1),
 con plazo al 11 de noviembre. IMSS-Bienestar recibe una versión aparte con solo 4
