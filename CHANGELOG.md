@@ -8,6 +8,11 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Formularios (los siete): el promedio de consumo por día no acepta negativos
+  (`min="0"` y bloqueo al enviar, con el campo marcado en rojo). Sin máximo. Probado
+  en un navegador simulado (jsdom) con Perú, México y Ecuador. Prueba nueva en
+  `tests/test_formularios.py`.
+
 - Claves de centros: el selector para crear o restablecer muestra solo los códigos
   de la lista de centros del formulario TOP del país; se quitó "(otro código)" y el
   campo de texto libre. Revisado contra la base: todos los centros con TOP y todas

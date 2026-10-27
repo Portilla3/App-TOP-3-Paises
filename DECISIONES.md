@@ -24,6 +24,21 @@ sale de un selector de fecha.
 
 *2026-10-27*
 
+### El promedio de consumo por día no acepta negativos, y no tiene máximo
+**Regla.** Los siete formularios no dejan guardar un promedio por día menor que
+cero. No hay tope superior. Los valores que ya están en la base quedan como
+están.
+
+**Fundamento.** Al 27 de octubre había 37 promedios negativos, imposibles en
+cualquier unidad, y seguían entrando por la Plataforma. El máximo no se fija
+porque la unidad cambia por sustancia y país (tragos, gramos, pitos, piedras,
+comprimidos, "medida"), y un tope común cortaría valores posibles en alguna. Los
+73 valores imposibles que ya existen (37 negativos y 36 muy altos, como 1260
+tragos) no se tocan: el promedio no entra en ningún indicador ni reporte, solo
+en la base Wide que descargan los países. Decidido por Rodrigo el 2026-10-27.
+
+*2026-10-27*
+
 ### Qué es un error grave de registro
 **Regla.** Un TOP tiene un error grave de registro cuando le pasa alguna de estas
 tres cosas:

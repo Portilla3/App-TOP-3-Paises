@@ -151,6 +151,7 @@
     box-shadow: 0 0 0 3px rgba(37,99,168,.12);
   }
   .campo input.error, .campo select.error { border-color: var(--rojo); }
+  .prom-inp.error { border-color: var(--rojo); }
 
   /* ── TABLA SUSTANCIAS ── */
   .tabla-wrap { overflow-x: auto; }
@@ -480,7 +481,7 @@
               <td><input type="number" min="0" max="7" class="num-inp s2" data-sust="alcohol"></td>
               <td><input type="number" min="0" max="7" class="num-inp s1" data-sust="alcohol"></td>
               <td class="total-cell" id="alcohol_total"></td>
-              <td><input type="number" step="any" class="prom-inp" id="alcohol_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Tragos/día</small></td>
+              <td><input type="number" step="any" min="0" class="prom-inp" id="alcohol_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Tragos/día</small></td>
             </tr>
             <!-- Marihuana -->
             <tr>
@@ -490,7 +491,7 @@
               <td><input type="number" min="0" max="7" class="num-inp s2" data-sust="marihuana"></td>
               <td><input type="number" min="0" max="7" class="num-inp s1" data-sust="marihuana"></td>
               <td class="total-cell" id="marihuana_total"></td>
-              <td><input type="number" step="any" class="prom-inp" id="marihuana_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Pitos/día</small></td>
+              <td><input type="number" step="any" min="0" class="prom-inp" id="marihuana_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Pitos/día</small></td>
             </tr>
             <!-- Pasta Base -->
             <tr>
@@ -500,7 +501,7 @@
               <td><input type="number" min="0" max="7" class="num-inp s2" data-sust="pastabase"></td>
               <td><input type="number" min="0" max="7" class="num-inp s1" data-sust="pastabase"></td>
               <td class="total-cell" id="pastabase_total"></td>
-              <td><input type="number" step="any" class="prom-inp" id="pastabase_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Papelillos/día</small></td>
+              <td><input type="number" step="any" min="0" class="prom-inp" id="pastabase_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Papelillos/día</small></td>
             </tr>
             <!-- Cocaína -->
             <tr>
@@ -510,7 +511,7 @@
               <td><input type="number" min="0" max="7" class="num-inp s2" data-sust="cocaina"></td>
               <td><input type="number" min="0" max="7" class="num-inp s1" data-sust="cocaina"></td>
               <td class="total-cell" id="cocaina_total"></td>
-              <td><input type="number" step="any" class="prom-inp" id="cocaina_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Gramos/día</small></td>
+              <td><input type="number" step="any" min="0" class="prom-inp" id="cocaina_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Gramos/día</small></td>
             </tr>
             <!-- Sedantes -->
             <tr>
@@ -520,7 +521,7 @@
               <td><input type="number" min="0" max="7" class="num-inp s2" data-sust="sedantes"></td>
               <td><input type="number" min="0" max="7" class="num-inp s1" data-sust="sedantes"></td>
               <td class="total-cell" id="sedantes_total"></td>
-              <td><input type="number" step="any" class="prom-inp" id="sedantes_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Comprimidos/día</small></td>
+              <td><input type="number" step="any" min="0" class="prom-inp" id="sedantes_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Comprimidos/día</small></td>
             </tr>
             <tr>
               <td><em style="color:var(--texto-suave)">Otra sustancia problema</em></td>
@@ -529,7 +530,7 @@
               <td><input type="number" min="0" max="7" class="num-inp s2" data-sust="otra_sust"></td>
               <td><input type="number" min="0" max="7" class="num-inp s1" data-sust="otra_sust"></td>
               <td class="total-cell" id="otra_sust_total"></td>
-              <td><input type="number" step="any" class="prom-inp" id="otra_sust_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Medida/día</small></td>
+              <td><input type="number" step="any" min="0" class="prom-inp" id="otra_sust_prom" placeholder="—"><br><small style="color:var(--texto-suave);font-size:.68rem;display:block;text-align:center">Medida/día</small></td>
             </tr>
             <!-- Otra sustancia nombre -->
             <tr class="otra-sust-fila">
@@ -1171,6 +1172,15 @@ async function enviarFormulario() {
     document.getElementById('codigo_paciente').classList.add('error');
     document.getElementById('fecha_nacimiento').classList.add('error');
     ok=false; errMsg.push('La fecha de nacimiento no coincide con el código del paciente');
+  }
+  // El promedio por día no puede ser negativo. No tiene máximo, porque la unidad
+  // cambia por sustancia y país (DECISIONES.md, 2026-10-27).
+  document.querySelectorAll('.prom-inp').forEach(el => el.classList.remove('error'));
+  const promNegativos = Array.from(document.querySelectorAll('.prom-inp'))
+    .filter(el => el.value !== '' && parseFloat(el.value) < 0);
+  if (promNegativos.length) {
+    promNegativos.forEach(el => el.classList.add('error'));
+    ok=false; errMsg.push('El promedio por día no puede ser negativo');
   }
 
   if(!ok){

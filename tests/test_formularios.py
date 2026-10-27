@@ -42,3 +42,15 @@ def test_mismas_reglas_de_fecha(nombre):
     assert 'La edad mínima del paciente es 5 años.' in html
     assert 'La edad máxima del paciente es 100 años.' in html
     assert 'La fecha de entrevista no puede ser futura.' in html
+
+
+@pytest.mark.parametrize('nombre', FORMULARIOS)
+def test_el_promedio_por_dia_no_acepta_negativos(nombre):
+    """DECISIONES.md, 2026-10-27: negativos bloqueados, sin máximo."""
+    html = _leer(nombre)
+    entradas = re.findall(r'<input[^>]*class="prom-inp"[^>]*>', html)
+    assert entradas, f'{nombre} no tiene campos de promedio'
+    assert all('min="0"' in e for e in entradas), f'{nombre}: hay un promedio sin min="0"'
+    assert not any('max=' in e for e in entradas), f'{nombre}: el promedio no lleva máximo'
+    assert "errMsg.push('El promedio por día no puede ser negativo')" in html, \
+        f'{nombre} no bloquea el envío con un promedio negativo'

@@ -145,7 +145,7 @@ psicológica, días de trabajo y educación, robo y textos "nan". Ver
 posterior al día en que se cargaron, imposible; lo más probable es día y mes
 invertidos. *2026-10-25*
 
-**Las columnas `_prom` no tienen validación de rango.** Hay valores de 1260,
+**Resuelto el 2026-10-27, en parte · las columnas `_prom` no tenían validación de rango.** Desde el 27 de octubre los formularios bloquean los negativos; no hay máximo y los 73 valores imposibles existentes quedan como están (ver DECISIONES.md). Hay valores de 1260,
 800, 700, 620 y un −2 en cantidad promedio por día. Las columnas de días sí
 están validadas, estas no. *2026-09-02*
 
