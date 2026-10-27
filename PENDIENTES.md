@@ -40,7 +40,7 @@ antes de implementarse, porque implica recortar la entrada del usuario.
 
 **Resuelto el 2026-10-19 · filas de prueba en `centro_bitacora`.** Las doce (ids 114 a 125) se borraron con autorización de Rodrigo. Respaldo en `backup_bitacora_pruebas_20261019`, con RLS activo y permisos revocados.
 
-**Falta la restricción única sobre el código de centro normalizado.** Hoy no hay
+**Resuelto con el módulo de claves (2026-10-27) · restricción única sobre el código de centro normalizado.** Hoy no hay
 colisiones, pero nada impide insertar `csp` existiendo `CSP`. Con la comparación
 insensible a mayúsculas, el `LIMIT 1` de la función elegiría una de las dos en
 silencio. Un índice único sobre `upper(trim(centro))` lo cierra.
@@ -62,6 +62,17 @@ capacitación; (4) acceso para todos los centros. El objetivo es que cada centro
 vea la lista de sus pacientes con TOP aplicado. Rodrigo lo considera urgente:
 sin acceso, los centros vuelven a cargar TOP que ya estaban y se mantienen
 errores. *2026-10-26*
+
+Estado al 2026-10-27. Paso 1: El Salvador 8 de 8, Ecuador 2, Perú 2; México
+IMSS-Bienestar y CIJ 0, porque los centros los elige cada gobierno y Rodrigo
+avisa cuando los tenga. Paso 3: el módulo de claves está construido (ver
+DECISIONES.md, "Cada gobierno administra las claves de sus centros"). Falta que
+Rodrigo cree la clave de administrador de cada país en el SQL Editor (el INSERT
+está comentado al final de `sql/admin_claves_centros.sql`) y se la entregue a cada
+gobierno. Pendiente menor: que el centro cambie la clave en su primer ingreso, y
+una función para que el gobierno cambie su propia clave de administrador. En
+`centro_credenciales` queda la fila de prueba CENTRO_PRUEBA (país 'Test',
+desactivada) del 20 de julio.
 
 ## Datos
 

@@ -604,6 +604,35 @@ historial de git; la migración de los cuatro países ya está hecha.
 
 *2026-09-10*
 
+### Cada gobierno administra las claves de sus centros, con una clave aparte
+**Regla.** Cada país, o institución en México, tiene una clave de administrador
+propia, guardada cifrada con bcrypt en `pais_admin`. Con ella, desde la pestaña
+"Claves de centros", crea, restablece y desactiva las claves de sus centros. No
+es la clave con la que entra al perfil del país. Qué centros reciben acceso, y
+cuándo, lo decide cada gobierno. Las operaciones están en
+`sql/admin_claves_centros.sql`.
+
+**Fundamento.** Abrir la plataforma a los 111 centros no se sostiene si cada
+clave pasa por Rodrigo. Las funciones que lo hacen posible se llaman con la llave
+pública de Supabase, la misma que está en los formularios, así que cada llamada
+tiene que traer un secreto que la base pueda verificar. La clave del perfil de
+país no sirve para eso: vive en texto plano en los secretos de Streamlit y la
+base no la conoce. Una clave aparte, además, separa ver los datos del país de dar
+acceso a otros. Decidido por Rodrigo el 2026-10-27.
+
+**Salvaguardas.** Con 5 intentos fallidos en 15 minutos el país queda bloqueado
+ese rato, y los intentos quedan en `centro_bitacora`. Las funciones no levantan
+excepción ante una clave incorrecta, porque deshacería ese registro. La clave
+nueva de un centro se genera en la base, se muestra una sola vez y solo se
+guarda su hash. Toda acción queda en la bitácora con `gobierno:<país>`. Un
+código de centro tiene una sola clave, aunque se escriba con otras mayúsculas.
+
+**Consecuencia asumida.** Un tercero que conozca el nombre de un país puede
+bloquear su administración 15 minutos con intentos fallidos. No toca los datos
+ni el acceso de los centros, y se prefirió eso a no tener bloqueo.
+
+*2026-10-27*
+
 ---
 
 ## Arquitectura

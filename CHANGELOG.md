@@ -8,6 +8,17 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Claves de centros: nueva pestaña "🔑 Claves de centros" en el perfil de país
+  (`pipeline/panel/gestion_claves.py`). Con la clave de administrador del país,
+  el gobierno ve sus centros, si tienen clave y cuándo entraron por última vez,
+  y crea, restablece o desactiva claves. UNODC elige el país. Al cerrar sesión se
+  borra la clave de administrador. En Supabase, `sql/admin_claves_centros.sql`:
+  tabla `pais_admin` (RLS, sin permisos, política restrictiva), tres funciones
+  públicas y dos internas, e índice único sobre el código de centro normalizado.
+  Probado en un Postgres local con crypt simulado: flujo completo, bloqueo a los
+  5 intentos, desbloqueo a los 15 minutos y permisos de anon. 18 pruebas nuevas
+  en `tests/test_gestion_claves.py`.
+
 - Prueba de humo de los reportes: `tests/test_reportes.py`, con la base
   sintética de `tests/datos_sinteticos.py`. Arma la wide y los seis reportes en
   Perú, Ecuador, El Salvador y México, el camino del centro, el filtro de periodo

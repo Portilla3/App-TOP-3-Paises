@@ -845,6 +845,9 @@ with st.sidebar:
                   'filename','result','outputs','seleccion','wide_path','work_dir','raw_path',
                   'corr_registros','corr_editando','corr_confirm_del']:
             st.session_state.pop(k, None)
+        # La clave de administrador de claves de centros no sobrevive a la sesión.
+        for k in [k for k in st.session_state if str(k).startswith('admin_')]:
+            st.session_state.pop(k, None)
         st.rerun()
     st.markdown('---')
     st.markdown(
@@ -857,13 +860,14 @@ with st.sidebar:
 # PESTAÑAS
 # ══════════════════════════════════════════════════════════════════════════════
 if es_unodc:
-    tab_panel, tab_reportes, tab_correccion, tab_respaldos = st.tabs(
+    tab_panel, tab_reportes, tab_correccion, tab_claves, tab_respaldos = st.tabs(
         ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros',
-         '💾 Respaldos']
+         '🔑 Claves de centros', '💾 Respaldos']
     )
 else:
-    tab_panel, tab_reportes, tab_correccion = st.tabs(
-        ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros']
+    tab_panel, tab_reportes, tab_correccion, tab_claves = st.tabs(
+        ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros',
+         '🔑 Claves de centros']
     )
     tab_respaldos = None
 
@@ -1567,6 +1571,22 @@ with tab_correccion:
             url_corr,
             use_container_width=True
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CLAVES DE CENTROS: cada gobierno administra las de sus centros
+# ══════════════════════════════════════════════════════════════════════════════
+with tab_claves:
+    from pipeline.panel.gestion_claves import render as _render_claves
+    if es_unodc:
+        _pais_claves = st.selectbox(
+            'Administrar claves de:',
+            ['Perú', 'Ecuador', 'El Salvador', 'México', 'México CIJ',
+             'México Monte Fénix', 'México Mahanaim'],
+            key='claves_pais_sel')
+    else:
+        _pais_claves = rol
+    _render_claves(_pais_claves)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
