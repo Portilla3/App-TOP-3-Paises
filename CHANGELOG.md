@@ -8,6 +8,15 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Datos, con autorización de Rodrigo y respaldo en `backup_limpieza_20261027` (48
+  filas, RLS activo, sin permisos): borradas las 39 copias viejas de TOP duplicados
+  ya reemplazadas por la última carga (el borrado exige que exista una copia más
+  nueva del mismo TOP); borradas las copias viejas de 2 TOP vueltos a cargar con
+  la etapa corregida (CJR ROGA05111971, EESS02SB GIPO13121982); 7 TOP de Perú con
+  etapa "seguimiento1" o "seguimiento2" y un ingreso anterior pasan a
+  "seguimiento". Quedan 9 grupos duplicados dudosos (19 registros) y 25 TOP de
+  Perú con "seguimiento1/2" sin ingreso previo, a confirmar con los centros.
+
 - Formularios de Perú (`index.html`), Ecuador y El Salvador: no dejan guardar si
   el código no coincide con la fecha de nacimiento, igual que los cuatro de México.
   Como la fecha de nacimiento viene de un selector de fecha, también impide códigos

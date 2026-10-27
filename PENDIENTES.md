@@ -90,32 +90,15 @@ algún día pasa al panel, se mueve a `validacion_top.py` con su prueba.
 con otro código.** Hay que corregirlos hacia atrás, preguntando al centro cuál
 dato es el correcto. Nada se corrige sin permiso. *2026-10-26*
 
-**Registros duplicados.** Al 2026-10-25 son 45 grupos, 94 registros y 49
-copias sobrantes (eran 34 grupos el 2 de septiembre: está creciendo). Desde el
-25 de octubre el panel y los informes usan la última carga de cada grupo.
-Revisados los 45 grupos uno por uno el mismo día:
-
-- 36 grupos (39 copias viejas): la última carga es igual o mejor. Las
-  diferencias son blancos del piloto contra ceros, la columna `salud_mental` del
-  piloto, nombres del entrevistador o correcciones plausibles. Se pueden borrar
-  las copias viejas, con permiso de Rodrigo.
-- 9 grupos (10 copias viejas): la última carga no es claramente la correcta y
-  hay que preguntar al centro antes de borrar nada.
-  - La última carga perdió datos: NWH JOCO20011985 (tabaco 28 → 0), EESS03CA
-    mago06022008 (otra sustancia 17 → 0), CET045943 NESA25051997 (días de otras
-    actividades 14 → 0, dos copias viejas), SAI000850 BRSU09082000 (heroína
-    4 → 0 y se pierde la descripción de "otra acción").
-  - Cambio de contenido sin explicación: CMM SAGO12051974 (sexo H → M y tabaco
-    0 → 28), EESS29EL GISA06012013 (alcohol, calidad de vida, hurto y salud
-    psicológica), SAI001735 CROR11061997 (alcohol 0 → 2), CET045943
-    NICH30091972 (salud física 14 → 3).
-  - La última carga trae un error: SJA GUCH29081991 tiene nacimiento 1999 y los
-    demás registros del paciente dicen 1991.
-
-Aparte: SAI001735 ANBR20062002 tiene un segundo ingreso con fecha 20/04, cargado
-el 11/07, que no es duplicado por fecha y hoy abre un episodio aparte. Lo más
-probable es que la fecha esté mal. El contador "Total de registros" del panel
-sigue inflado mientras no se borren las copias. *2026-10-25*
+**Registros duplicados.** El 27 de octubre se borraron las 39 copias viejas ya
+reemplazadas por la última carga (respaldo en `backup_limpieza_20261027`). Quedan
+9 grupos dudosos, 19 registros, a confirmar con los centros; mientras tanto vale
+la última carga. Son: SAI000850 BRSU09082000, NWH JOCO20011985, EESS03CA
+MAGO06022008, CET045943 NESA25051997, CMM SAGO12051974, EESS29EL GISA06012013,
+SAI001735 CROR11061997, CET045943 NICH30091972 y SJA GUCH29081991 (en este, la
+última carga trae nacimiento 1999 y los demás registros dicen 1991). Aparte:
+SAI001735 ANBR20062002 tiene un segundo ingreso con fecha 20/04 que no es
+duplicado por fecha. *2026-10-27*
 
 **De dónde vienen los duplicados, y la vía para corregir.** Clasificadas el
 26 de octubre, las 49 copias de más son: 28 TOP del piloto vueltos a cargar en
@@ -127,10 +110,8 @@ apareciendo (12 en septiembre y octubre). Falta decidir qué vía tiene el centr
 para corregir: avisar a Rodrigo, que corrige en Supabase, o reactivar los
 formularios de corrección. *2026-10-26*
 
-**Correcciones que no aparecen como duplicado.** CJR ROGA05111971 (7/9, de en
-tratamiento a ingreso) y EESS02SB GIPO13121982 (18/8, de seguimiento1 a ingreso)
-se volvieron a cargar con la etapa corregida y la copia vieja sigue en la base.
-Además hay 10 pacientes con dos ingresos en el mismo centro a menos de 60 días;
+**Correcciones que no aparecen como duplicado.** Resuelto el 27 de octubre: se
+borró la copia vieja de CJR ROGA05111971 y de EESS02SB GIPO13121982. Además hay 10 pacientes con dos ingresos en el mismo centro a menos de 60 días;
 algunos pueden ser la misma carga con la fecha cambiada. Confirmar con los
 centros. *2026-10-26*
 
@@ -151,8 +132,9 @@ así que quedan fuera. *2026-08-28*
 Revisado el 2026-10-26: no todos son seguimientos. Hasta el 27 de agosto el
 formulario de Perú ofrecía Admisión, Seguimiento 1, Seguimiento 2 y Egreso, sin
 "en tratamiento", así que quien aplicaba el TOP a un paciente que ya estaba en
-tratamiento marcaba Seguimiento 1. Solo 7 tienen un ingreso antes: esos pasan a
-`seguimiento`. Los otros 26 (24 son el primer TOP del paciente, EESS28CI
+tratamiento marcaba Seguimiento 1. Los 7 que tienen un ingreso antes pasaron a
+`seguimiento` el 27 de octubre, y uno más se resolvió al borrar su copia vieja.
+Los otros 25 (24 son el primer TOP del paciente, EESS28CI
 concentra 16) se le preguntan al centro; si no responde en el plazo, pasan a
 `en_tratamiento`. Propuesta presentada a la mesa el 26 de octubre.
 
