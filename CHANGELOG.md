@@ -8,6 +8,12 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Despliegue: la app TOP se volvió a crear en Streamlit Cloud desde
+  `Portilla3/App-TOP-3-Paises` (antes estaba registrada como `qalat-top-ecuador`,
+  el nombre viejo del repositorio, y por eso los pushes no se desplegaban solos).
+  Secretos copiados por Rodrigo desde la app anterior. Este commit sirve también
+  de prueba de que el despliegue automático funciona.
+
 - Datos, con autorización de Rodrigo: los 7 TOP de SLIMB000615 (Hospital
   Psiquiátrico de Sinaloa, IMSS-Bienestar) pasan de "en_tratamiento" a "ingreso",
   según la respuesta del centro a la consulta de Cinthia ("¿Era ingreso?": Sí en
