@@ -26,7 +26,7 @@ dirección oficial muestra la página de Streamlit pero la app no carga, y su lo
 queda vacío. Un Reboot no lo cambió.
 
 **Lo que se descartó.** La app funciona: con otra dirección
-(`monitoreo-tratamiento-top3-prueba`) carga la pantalla de ingreso, a las 20:35
+(`monitoreo-tratamiento-top3-prueba`) carga la pantalla de ingreso, a las 20:27
 UTC. El problema está solo en la dirección oficial. Los datos, el código y los
 formularios no se vieron afectados; los centros siguieron pudiendo cargar TOP.
 
