@@ -134,6 +134,13 @@ formulario de Perú ofrecía Admisión, Seguimiento 1, Seguimiento 2 y Egreso, s
 "en tratamiento", así que quien aplicaba el TOP a un paciente que ya estaba en
 tratamiento marcaba Seguimiento 1. Los 7 que tienen un ingreso antes pasaron a
 `seguimiento` el 27 de octubre, y uno más se resolvió al borrar su copia vieja.
+Ojo con los 7 que pasaron a `seguimiento`: según Rodrigo, lo más probable es
+que sean TOP aplicados durante el tratamiento (`en_tratamiento`), porque el
+formulario antiguo de Perú no tenía esa opción y "Seguimiento 1" se usaba para
+eso. Entre el ingreso y ese TOP pasaron de 1,5 a 4,5 meses. Se incluyen en la
+consulta a los centros: ¿seguía en tratamiento o ya había egresado? Si no
+responden, pasan a `en_tratamiento`. *2026-10-27*
+
 Los otros 25 (23 son el primer TOP del paciente, EESS28CI
 concentra 16) se le preguntan al centro; si no responde en el plazo, pasan a
 `en_tratamiento`. Propuesta presentada a la mesa el 26 de octubre.
