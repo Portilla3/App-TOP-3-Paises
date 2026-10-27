@@ -1,15 +1,15 @@
 # QALAT · Reglas de cálculo
 
-Cómo se cuenta cada cosa en este sistema, y por qué. Última revisión: 2 de
-septiembre de 2026.
+Cómo se cuenta cada cosa en este sistema, y por qué. Última revisión: 27 de
+octubre de 2026.
 
 Este documento no describe el estado del proyecto ni lo que falta hacer: eso
 vive en el documento de estado. Acá están solo los criterios, que cambian mucho
 menos y que hay que respetar al programar cualquier reporte, gráfico o consulta.
 
 **Si una regla de acá se rompe, el sistema avisa.** Cada una tiene su prueba en
-`tests/test_decisiones.py`, ciento dos en total, que se corren con
-`python -m pytest tests/ -v`. Escribir la regla no alcanzó nunca: la convención
+`tests/` (220 pruebas al 27 de octubre de 2026, incluida la que genera los seis
+reportes con datos sintéticos), que se corren con `python -m pytest tests/ -v`. Escribir la regla no alcanzó nunca: la convención
 del sexo estaba escrita desde el 28 de agosto y seis módulos la incumplían, y la
 regla de que `validacion_top.py` es la única fuente de criterios estaba escrita
 el mismo día mientras el clasificador de sustancias seguía copiado en diez
@@ -325,6 +325,13 @@ informes.
 
 `quedarse_con_ultima_version()`
 
+### El promedio de consumo por día no acepta negativos, y no tiene máximo
+
+Los siete formularios bloquean un promedio por día menor que cero. No hay tope,
+porque la unidad cambia por sustancia y país. Los 73 valores imposibles que ya
+existían quedan como están: el promedio no entra en ningún indicador, solo en la
+base Wide. Decidido el 2026-10-27.
+
 ### El residuo de trabajo y educación se asume como ausente
 
 Quedan en nulo. No se piden a los centros ni se rellenan. Lo accionable no es el
@@ -343,6 +350,29 @@ total también queda en blanco. Reemplaza la anulación del 2 de septiembre.
 ---
 
 ## 7. Análisis
+
+### El segundo TOP se identifica en un solo lugar, y hay dos indicadores
+
+El TOP2 de un paciente es el siguiente TOP con fecha distinta a la del primero,
+sin mirar la etiqueta `etapa`. Lo calcula
+`seguimiento_core.top2_por_paciente()` y todo lo demás lo usa: la tarjeta, el
+gráfico por centro, el semáforo, el tiempo entre TOP y la aplicación por centro.
+
+| | Con seguimiento (TOP2) | Aplicación del TOP de seguimiento |
+|---|---|---|
+| Denominador | Pacientes con 90 o más días desde su primer TOP | Todos los pacientes del centro |
+| Para qué | Informes y comparación entre centros | Detectar centros que no aplican el instrumento |
+| Dónde | Tarjeta del panel de país, gráfico por centro, reportes | Tarjeta del centro, Excel de avance |
+
+"% de seguimiento" a secas no se usa para ninguno. Los urgentes del semáforo son
+exactamente los elegibles sin TOP2 de la tarjeta. Como el TOP1 es el primer TOP
+y no el de ingreso, el semáforo puede contar más pacientes que la tarjeta
+"Pacientes ingresados"; su nota dice cuántos no tienen TOP de ingreso.
+
+**Por qué.** Los dos indicadores convivían con el mismo nombre y daban cifras
+distintas, y tres módulos buscaban el TOP2 por la etiqueta. Lo que distingue a
+los indicadores es el denominador, no la definición de TOP2. Decidido el
+2026-09-10 y ejecutado el 2026-10-27.
 
 ### No se implementa el índice de cambio fiable
 
@@ -382,6 +412,10 @@ después de cualquier cambio:
 ```
 python tools/verificar_coincidencia.py respaldo_top_registros_AAAA-MM-DD.xlsx
 ```
+
+Las tarjetas del panel cuentan igual que los gráficos que tienen debajo:
+"Pacientes ingresados" sale de `lineas_base()` (episodios), y el desglose de
+"Total de registros" suma el total.
 
 Compara país por país y centro por centro: pacientes contados, N válido,
 distribución de sustancia principal, porcentaje de mujeres y promedio de días.
@@ -431,6 +465,21 @@ Y envuelto en una CTE con `RETURNING`, para que devuelva el número de filas
 movidas. El SQL Editor responde "Success. No rows returned" a un UPDATE normal, y
 esa ambigüedad ya provocó una doble ejecución que revirtió una corrección de
 sexo sobre 46 mujeres.
+
+### Cada gobierno administra las claves de sus centros, con una clave aparte
+
+Con una clave de administrador propia, guardada cifrada en `pais_admin`, el
+gobierno crea, restablece y desactiva las claves de sus centros, eligiendo el
+código de la lista del formulario TOP. Cinco intentos fallidos bloquean 15
+minutos. Las claves nuevas son solo mayúsculas y números. Monte Fénix y
+Mahanaim no tienen administrador: cada una es un solo centro. Decidido el
+2026-10-27.
+
+### El login tolera el texto pegado
+
+Si lo escrito no es un código, el login busca entre sus palabras el de un centro
+con clave activa, y si la clave falla la prueba sin los espacios del borde. La
+clave sigue distinguiendo mayúsculas. Decidido el 2026-10-27.
 
 ---
 
