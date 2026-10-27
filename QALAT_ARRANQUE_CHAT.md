@@ -67,7 +67,8 @@ para ver lo que ya hay:
   un cambio se refresca entera y se anota el commit en su `LEEME.txt`.
 - `Plataforma_QALAT_caracterizacion.docx`: el informe que describe la
   plataforma. Si un cambio lo deja viejo, se avisa qué sección.
-- `_historico` no se toca.
+- `_historico` no se edita ni se consulta para trabajar. Solo recibe lo que
+  queda superado, anotado en su `LEEME.txt`.
 
 Es regla de Rodrigo desde el 27 de octubre de 2026, para no confundirse.
 
