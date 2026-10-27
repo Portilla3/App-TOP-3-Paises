@@ -134,7 +134,7 @@ formulario de Perú ofrecía Admisión, Seguimiento 1, Seguimiento 2 y Egreso, s
 "en tratamiento", así que quien aplicaba el TOP a un paciente que ya estaba en
 tratamiento marcaba Seguimiento 1. Los 7 que tienen un ingreso antes pasaron a
 `seguimiento` el 27 de octubre, y uno más se resolvió al borrar su copia vieja.
-Los otros 25 (24 son el primer TOP del paciente, EESS28CI
+Los otros 25 (23 son el primer TOP del paciente, EESS28CI
 concentra 16) se le preguntan al centro; si no responde en el plazo, pasan a
 `en_tratamiento`. Propuesta presentada a la mesa el 26 de octubre.
 
