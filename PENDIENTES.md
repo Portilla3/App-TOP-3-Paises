@@ -82,6 +82,12 @@ confirmar la etapa a 6 centros (39 pacientes: Neuman SLP 16, Sinaloa 7, Orizaba
 los centros ambulatorios, que se enviarán después. Neuman sigue registrando
 primeros TOP "en tratamiento" en octubre. *2026-10-27*
 
+**Solicitud de confirmación a los países.** El 27 de octubre quedaron listos un
+Word por país (Perú 98 casos en 19 centros, Ecuador 64 en 24, El Salvador 120 en
+7, México 74 en 15) y un Excel por centro con sus casos, la pregunta y la regla
+si no responde en 15 días desde que lo recibe. Falta enviarlos y, con las
+respuestas, aplicar las correcciones con respaldo previo. *2026-10-27*
+
 **Prueba del criterio de error grave.** Vive en `tools/errores_graves.sql`. Si
 algún día pasa al panel, se mueve a `validacion_top.py` con su prueba.
 *2026-10-26*
