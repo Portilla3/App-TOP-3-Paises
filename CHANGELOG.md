@@ -8,6 +8,11 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-10-27
 
+- Claves de centros: Monte Fénix y Mahanaim no ven la pestaña ni aparecen en el
+  selector de UNODC (`SIN_GESTION_DE_CLAVES` en `app.py`). Cada una es un solo
+  centro y su perfil de institución ya es el del centro. Verificado con la app
+  completa para Perú, México, Monte Fénix, Mahanaim y UNODC.
+
 - Claves de centros: nueva pestaña "🔑 Claves de centros" en el perfil de país
   (`pipeline/panel/gestion_claves.py`). Con la clave de administrador del país,
   el gobierno ve sus centros, si tienen clave y cuándo entraron por última vez,

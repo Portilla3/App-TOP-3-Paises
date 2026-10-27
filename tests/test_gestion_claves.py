@@ -155,3 +155,17 @@ def test_la_pestania_pide_la_clave_y_muestra_la_nueva_una_sola_vez():
     assert any('Xy7kP2mQ9a' in c.value for c in at.code), 'no se muestra la clave nueva'
     at.run()
     assert not any('Xy7kP2mQ9a' in c.value for c in at.code), 'la clave nueva se vuelve a mostrar'
+
+
+def test_monte_fenix_y_mahanaim_no_administran_claves():
+    """Cada una es un solo centro: su perfil de institución ya es el del centro."""
+    import ast
+    with open(os.path.join(RAIZ, 'app.py'), encoding='utf-8') as fh:
+        arbol = ast.parse(fh.read())
+    valores = {}
+    for nodo in arbol.body:
+        if isinstance(nodo, ast.Assign) and len(nodo.targets) == 1 and \
+                getattr(nodo.targets[0], 'id', None) in ('SIN_GESTION_DE_CLAVES', 'PAISES_CON_CLAVES'):
+            valores[nodo.targets[0].id] = ast.literal_eval(nodo.value)
+    assert valores['SIN_GESTION_DE_CLAVES'] == {'México Monte Fénix', 'México Mahanaim'}
+    assert not set(valores['PAISES_CON_CLAVES']) & valores['SIN_GESTION_DE_CLAVES']

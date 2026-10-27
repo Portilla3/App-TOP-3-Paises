@@ -859,16 +859,23 @@ with st.sidebar:
 # ══════════════════════════════════════════════════════════════════════════════
 # PESTAÑAS
 # ══════════════════════════════════════════════════════════════════════════════
+# Monte Fénix y Mahanaim son un solo centro cada una: su perfil de institución ya
+# es el del centro, así que no administran claves de centros.
+SIN_GESTION_DE_CLAVES = {'México Monte Fénix', 'México Mahanaim'}
+PAISES_CON_CLAVES = ['Perú', 'Ecuador', 'El Salvador', 'México', 'México CIJ']
+
 if es_unodc:
     tab_panel, tab_reportes, tab_correccion, tab_claves, tab_respaldos = st.tabs(
         ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros',
          '🔑 Claves de centros', '💾 Respaldos']
     )
 else:
-    tab_panel, tab_reportes, tab_correccion, tab_claves = st.tabs(
-        ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros',
-         '🔑 Claves de centros']
-    )
+    _nombres_tabs = ['🏠 Panel de gestión', '📊 Reportes', '✏️ Corrección de registros']
+    if rol not in SIN_GESTION_DE_CLAVES:
+        _nombres_tabs.append('🔑 Claves de centros')
+    _tabs = st.tabs(_nombres_tabs)
+    tab_panel, tab_reportes, tab_correccion = _tabs[:3]
+    tab_claves = _tabs[3] if len(_tabs) > 3 else None
     tab_respaldos = None
 
 
@@ -1576,17 +1583,15 @@ with tab_correccion:
 # ══════════════════════════════════════════════════════════════════════════════
 # CLAVES DE CENTROS: cada gobierno administra las de sus centros
 # ══════════════════════════════════════════════════════════════════════════════
-with tab_claves:
-    from pipeline.panel.gestion_claves import render as _render_claves
-    if es_unodc:
-        _pais_claves = st.selectbox(
-            'Administrar claves de:',
-            ['Perú', 'Ecuador', 'El Salvador', 'México', 'México CIJ',
-             'México Monte Fénix', 'México Mahanaim'],
-            key='claves_pais_sel')
-    else:
-        _pais_claves = rol
-    _render_claves(_pais_claves)
+if tab_claves is not None:
+    with tab_claves:
+        from pipeline.panel.gestion_claves import render as _render_claves
+        if es_unodc:
+            _pais_claves = st.selectbox('Administrar claves de:', PAISES_CON_CLAVES,
+                                        key='claves_pais_sel')
+        else:
+            _pais_claves = rol
+        _render_claves(_pais_claves)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

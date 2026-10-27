@@ -253,5 +253,7 @@ GRANT EXECUTE ON FUNCTION public.admin_desactivar_clave_centro(text, text, text)
 --      SET clave_hash = excluded.clave_hash, activo = TRUE, ultima_rotacion = now();
 --
 -- El nombre del país tiene que ser exactamente el de la columna `pais`:
--- 'Perú', 'Ecuador', 'El Salvador', 'México', 'México CIJ',
--- 'México Monte Fénix', 'México Mahanaim'.
+-- 'Perú', 'Ecuador', 'El Salvador', 'México' (IMSS-Bienestar), 'México CIJ'.
+-- Monte Fénix y Mahanaim no llevan administrador: cada una es un solo centro y
+-- su perfil de institución ya es el del centro. Sin fila en `pais_admin`, nadie
+-- puede administrar claves a su nombre.

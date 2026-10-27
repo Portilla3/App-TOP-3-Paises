@@ -627,6 +627,12 @@ nueva de un centro se genera en la base, se muestra una sola vez y solo se
 guarda su hash. Toda acción queda en la bitácora con `gobierno:<país>`. Un
 código de centro tiene una sola clave, aunque se escriba con otras mayúsculas.
 
+**Monte Fénix y Mahanaim no tienen administrador.** Cada una es un solo centro:
+su perfil de institución ya muestra todo lo de su centro, así que no ven la
+pestaña ni tienen fila en `pais_admin`. Si alguna vez suman centros, se les crea
+la clave de administrador y se las saca de `SIN_GESTION_DE_CLAVES` en `app.py`.
+Decidido por Rodrigo el 2026-10-27.
+
 **Consecuencia asumida.** Un tercero que conozca el nombre de un país puede
 bloquear su administración 15 minutos con intentos fallidos. No toca los datos
 ni el acceso de los centros, y se prefirió eso a no tener bloqueo.
