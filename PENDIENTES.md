@@ -69,11 +69,15 @@ avisa cuando los tenga. Paso 3: el módulo de claves está construido (ver
 DECISIONES.md, "Cada gobierno administra las claves de sus centros"). Rodrigo
 creó las cinco claves de administrador el 27 de octubre (la consulta está
 comentada al final de `sql/admin_claves_centros.sql`); falta entregarlas a cada
-gobierno, empezando por El Salvador. Los protocolos de acceso de la carpeta
-local `Operativo` (plantilla y Ecuador) se actualizaron al módulo el mismo día:
-el de Ecuador, versión 2, se revisa con ellos en la próxima reunión, que
-Rodrigo espera tener a comienzos de noviembre (el de julio nunca entró en vigor), y falta que El Salvador, cuyo protocolo es un PDF escaneado de
-julio, reciba la plantilla nueva. Pendiente menor: que el centro cambie la clave en su primer ingreso, y
+gobierno, empezando por El Salvador. El documento que acompaña esa clave es el
+"Protocolo de gestión de claves" de la carpeta local `Operativo`: una sola
+plantilla para los cinco países, sin lista de centros, que el coordinador llena,
+firma y devuelve. La clave de administrador va en un mensaje aparte. A los
+centros no se les manda ningún documento; todo pasa por su coordinador (decidido
+por Rodrigo el 2026-10-28). La versión de Ecuador se revisa con ellos en la
+próxima reunión, que Rodrigo espera tener a comienzos de noviembre; la de julio
+nunca entró en vigor. El Salvador tiene un protocolo escaneado de julio que
+queda reemplazado por la plantilla nueva. Pendiente menor: que el centro cambie la clave en su primer ingreso, y
 una función para que el gobierno cambie su propia clave de administrador. En
 `centro_credenciales` queda la fila de prueba CENTRO_PRUEBA (país 'Test',
 desactivada) del 20 de julio.
