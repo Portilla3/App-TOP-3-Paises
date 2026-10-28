@@ -303,13 +303,16 @@ la que los cuatro defectos del 9 de septiembre los encontró Ecuador y no la sui
 **Resuelto el 2026-10-27 · los pushes no se desplegaban solos en la app TOP.** La
 app se volvió a crear desde `App-TOP-3-Paises`; ver INCIDENTES.md.
 
-**Rotar la llave secreta de Supabase.** La app TOP usa una llave `sb_secret_`, con
-acceso total a la base (se salta RLS), y no la publicable como se creía. El 27 de
-octubre quedó a la vista en una captura dentro del chat. Hay que crear una llave
-secreta nueva en Supabase, pegarla en los secretos de la app y borrar la vieja.
-Evaluar además si la app puede funcionar con la llave publicable. Las claves de
-país también quedaron a la vista y varias son fáciles de adivinar; cambiarlas
-obliga a avisar a cada gobierno. *2026-10-27*
+**Resuelto el 2026-10-28 · rotar la llave secreta de Supabase.** La app TOP usa
+ahora la llave `streamlit_top_oct2026` y la vieja se borró; ver INCIDENTES.md.
+
+**Claves de país y token de GitHub, a la vista desde el 27 de octubre.** Las
+claves de país se vieron en la misma captura que la llave secreta, y varias son
+fáciles de adivinar; cambiarlas obliga a avisar a cada gobierno. El token de
+GitHub que usa Claude para subir cambios se pegó en el chat: hay que revocarlo
+en https://github.com/settings/tokens y, si se vuelve a necesitar, crear uno con
+acceso solo a este repositorio y con fecha de vencimiento. Evaluar además si la
+app puede funcionar con la llave publicable en vez de la secreta. *2026-10-28*
 
 **Monitoreo externo de las cuatro apps.** Sin él, la caída se entera cuando la
 reporta un país. La del 8 de septiembre estuvo seis días arriba.

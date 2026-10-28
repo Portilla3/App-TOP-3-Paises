@@ -12,6 +12,38 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-10-27 · La llave secreta de Supabase quedó a la vista en el chat · cerrado el 2026-10-28
+
+**Quién lo vio.** Claude, en una captura de los Secrets de la app TOP que Rodrigo
+compartió en el chat mientras se recreaba la app.
+
+**Riesgo.** La app TOP no usa la llave publicable, como se creía, sino una llave
+`sb_secret_`, que tiene acceso total a la base y se salta RLS. Con ella se puede
+leer, cambiar o borrar cualquier tabla.
+
+**Lo que se revisó.** En los registros de Supabase del 13 al 28 de octubre hay
+una sola llave secreta en uso, y solo la usa `Python-urllib/3.14`, que es la app
+TOP. No hay llamadas con la llave `service_role` antigua. Los catorce
+formularios usan la llave publicable. La tabla `irt_registros` está vacía, así
+que las apps IRT no usan esta base. Los registros guardan un hash de la llave,
+no la llave.
+
+**Arreglo.** Rodrigo creó en Supabase, en Settings > API Keys, la llave secreta
+`streamlit_top_oct2026` y la pegó en los Secrets de `app-top-3-paises`. Desde
+las 20:52 UTC del 28 de octubre todas las llamadas de la app salen con la llave
+nueva y responden 200. La llave vieja, `qalat_2026_07_04_rotacion`, se usó por
+última vez a las 19:54 UTC y Rodrigo la borró después, sin que apareciera
+ninguna respuesta 401. En Supabase queda solo la llave nueva. Claude no vio ni
+escribió ninguna llave: verificó con los registros.
+
+**Lo que queda.** Las claves de país también se vieron en esa captura, y el
+token de GitHub se pegó en el chat. Están en `PENDIENTES.md`.
+
+**Lección.** Los Secrets no se muestran en una captura. Para saber si dos apps
+usan la misma llave basta comparar los últimos cuatro caracteres, o mirar los
+registros de Supabase, que identifican la llave sin mostrarla. Cada app lleva su
+propia llave secreta con nombre, para que rotar una no tumbe a las otras.
+
 ## 2026-10-27 · La dirección oficial de la app TOP no carga después de recrear la app · cerrado el mismo día
 
 **Contexto.** Para arreglar el despliegue automático (incidente del 2026-09-10),
