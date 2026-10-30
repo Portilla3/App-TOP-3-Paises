@@ -1,6 +1,6 @@
 # QALAT · Reglas de cálculo
 
-Cómo se cuenta cada cosa en este sistema, y por qué. Última revisión: 27 de
+Cómo se cuenta cada cosa en este sistema, y por qué. Última revisión: 30 de
 octubre de 2026.
 
 Este documento no describe el estado del proyecto ni lo que falta hacer: eso
@@ -8,7 +8,7 @@ vive en el documento de estado. Acá están solo los criterios, que cambian much
 menos y que hay que respetar al programar cualquier reporte, gráfico o consulta.
 
 **Si una regla de acá se rompe, el sistema avisa.** Cada una tiene su prueba en
-`tests/` (220 pruebas al 27 de octubre de 2026, incluida la que genera los seis
+`tests/` (223 pruebas al 30 de octubre de 2026, incluida la que genera los seis
 reportes con datos sintéticos), que se corren con `python -m pytest tests/ -v`. Escribir la regla no alcanzó nunca: la convención
 del sexo estaba escrita desde el 28 de agosto y seis módulos la incumplían, y la
 regla de que `validacion_top.py` es la única fuente de criterios estaba escrita
@@ -75,6 +75,10 @@ TOP 1 contra TOP 2.
 Cuando un centro adopta el TOP, su cohorte ya está en curso, y esos pacientes son
 legítimamente `en tratamiento`. México empezó a registrar en mayo de 2026 con
 gente que ya atendía. Nunca tuvieron línea base y no la van a tener.
+
+**Dónde se ven.** Los TOP que quedan fuera se listan en la hoja "TOP sin
+ingreso" de la Base Wide, con su centro, código, fecha y etapa, para que el país
+corrija la etapa si está mal registrada. No cuentan en ninguna cifra.
 
 ### La sustancia principal se toma siempre del TOP 1
 

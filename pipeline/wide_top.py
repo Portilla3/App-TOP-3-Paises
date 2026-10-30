@@ -110,6 +110,35 @@ def auto_col(cols, keywords, nombre_col):
 # ══════════════════════════════════════════════════════════════════════════════
 # FUNCIÓN PRINCIPAL
 # ══════════════════════════════════════════════════════════════════════════════
+def _filas_sin_ingreso(fuera, col_codigo, col_centro, col_fecha, col_etapa):
+    """
+    Los TOP que quedan fuera de la Base Wide porque no hay un TOP de ingreso
+    antes, del mismo paciente en el mismo centro. Una fila por TOP, ordenadas por
+    centro y fecha, para la hoja "TOP sin ingreso". Ver DECISIONES.md, "Los TOP
+    sin ingreso se listan aparte".
+    """
+    col_id = next((c for c in fuera.columns if _norm_str(c) == 'id'), None)
+    filas = []
+    for _, r in fuera.iterrows():
+        fecha = pd.to_datetime(r[col_fecha], errors='coerce')
+        etapa = r[col_etapa]
+        etapa = '(sin etapa)' if pd.isna(etapa) or not str(etapa).strip() \
+            else str(etapa).strip().replace('_', ' ').capitalize()
+        ident = r[col_id] if col_id else None
+        filas.append({
+            'Centro': str(r[col_centro]).strip(),
+            'Código del paciente': r[col_codigo],
+            'Fecha del TOP': fecha.strftime('%d-%m-%Y') if pd.notna(fecha) else 'sin fecha',
+            'Etapa registrada': etapa,
+            'N.º de registro': int(ident) if ident is not None and pd.notna(ident) else None,
+            '_orden': fecha if pd.notna(fecha) else pd.Timestamp.max,
+        })
+    filas.sort(key=lambda f: (f['Centro'], f['_orden'], str(f['Código del paciente'])))
+    for f in filas:
+        del f['_orden']
+    return filas
+
+
 def procesar_wide(input_path: str,
                   filtro_centro: str = None,
                   fecha_desde: str = None,
@@ -274,10 +303,15 @@ def procesar_wide(input_path: str,
     # pertenecen. Los registros anteriores a cualquier ingreso quedan fuera: son
     # de pacientes que ya estaban en tratamiento cuando el centro adoptó el
     # instrumento, y no describen cómo llegó esa persona. Ver DECISIONES.md.
+    sin_ingreso = []
     if COL_ETAPA and COL_CENTRO:
         df_wide = construir_episodios(df_wide, COL_CODIGO, COL_CENTRO,
                                       COL_FECHA, COL_ETAPA)
         _n_fuera = int(df_wide['_episodio'].isna().sum())
+        # Los que quedan fuera se listan en su propia hoja, para que el país
+        # vea qué registros suyos no entran y pueda corregir la etapa.
+        sin_ingreso = _filas_sin_ingreso(df_wide[df_wide['_episodio'].isna()],
+                                         COL_CODIGO, COL_CENTRO, COL_FECHA, COL_ETAPA)
         df_wide = df_wide[df_wide['_episodio'].notna()].reset_index(drop=True)
         if _n_fuera:
             logs.append(f'✓ {_n_fuera} registros sin TOP de ingreso quedan fuera '
@@ -411,8 +445,8 @@ def procesar_wide(input_path: str,
         N_total=N_total, N_top2=N_top2, N_solo1=N_solo1,
         N_alertas=len(alertas), N_dupes=N_dupes,
         _n_rojo=_n_rojo, _n_naranja=_n_naranja, _n_verde=_n_verde,
-        periodo=periodo)
-    logs.append("✓ Excel generado con 6 hojas")
+        periodo=periodo, sin_ingreso=sin_ingreso)
+    logs.append("✓ Excel generado con 7 hojas")
 
     # ── Estadísticas sustancia ─────────────────────────────────────────────────
     col_sust_top1 = next((c for c in wide.columns
@@ -488,6 +522,7 @@ def procesar_wide(input_path: str,
             'seg_nota':  seg_nota,
             'N_alertas': len(alertas),
             'N_dupes':   N_dupes,
+            'N_sin_ingreso': len(sin_ingreso),
             'n_rojo':    _n_rojo,
             'n_naranja': _n_naranja,
             'n_verde':   _n_verde,
@@ -497,6 +532,7 @@ def procesar_wide(input_path: str,
         'centros':      centros,
         'alertas':      alertas,
         'dupes':        dupes_data,
+        'sin_ingreso':  sin_ingreso,
         'periodo':      periodo,
         'excel_bytes':  excel_bytes,
         'logs':         logs,
@@ -505,8 +541,8 @@ def procesar_wide(input_path: str,
 
 def _generar_excel(wide, alertas, dupes, COL_CODIGO, COL_CENTRO,
                    _col_fecha_top1, N_total, N_top2, N_solo1, N_alertas,
-                   N_dupes, _n_rojo, _n_naranja, _n_verde, periodo):
-    """Genera el Excel con 6 hojas y retorna BytesIO."""
+                   N_dupes, _n_rojo, _n_naranja, _n_verde, periodo, sin_ingreso=None):
+    """Genera el Excel con 7 hojas y retorna BytesIO."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     import pandas as pd
@@ -736,6 +772,51 @@ def _generar_excel(wide, alertas, dupes, COL_CODIGO, COL_CENTRO,
             wp2.column_dimensions[col_letter].width = w
     else:
         wp2['A3'].value = '✅ Sin pendientes urgentes'
+
+    # ── Hoja 7: TOP sin ingreso ───────────────────────────────────────────────
+    # Los TOP que no entran en la Base Wide ni en los reportes porque no hay un
+    # TOP de ingreso antes, del mismo paciente en el mismo centro. Sin esta hoja
+    # el país no tenía dónde verlos. No cambia ninguna cifra de las otras hojas.
+    sin_ingreso = sin_ingreso or []
+    wsi = wb.create_sheet('TOP sin ingreso')
+    wsi.sheet_view.showGridLines = False
+    wsi.merge_cells('A1:E1')
+    c = wsi['A1']
+    _n_si = len(sin_ingreso)
+    c.value = f'TOP SIN INGRESO  ·  {_n_si} registro{"" if _n_si == 1 else "s"} fuera de la Base Wide'
+    c.font = Font(bold=True, size=11, color=C_WHITE, name='Arial')
+    c.fill = PatternFill('solid', start_color='C00000' if sin_ingreso else '538135')
+    c.alignment = Alignment(horizontal='center', vertical='center')
+    wsi.row_dimensions[1].height = 24
+    wsi.merge_cells('A2:E2')
+    c = wsi['A2']
+    c.value = ('Estos TOP no entran en la Base Wide ni en los reportes porque no hay un TOP '
+               'de ingreso antes, del mismo paciente en el mismo centro. Si la etapa está mal '
+               'registrada, corríjala y el TOP entrará en la próxima descarga.')
+    c.font = Font(size=9, italic=True, color='444444', name='Arial')
+    c.alignment = Alignment(wrap_text=True, vertical='center')
+    wsi.row_dimensions[2].height = 42
+    if sin_ingreso:
+        _cols_si = ['Centro', 'Código del paciente', 'Fecha del TOP',
+                    'Etapa registrada', 'N.º de registro']
+        for ci, col in enumerate(_cols_si, 1):
+            c = wsi.cell(3, ci); c.value = col
+            c.font = Font(bold=True, size=9, color=C_WHITE, name='Arial')
+            c.fill = PatternFill('solid', start_color=C_DARK)
+            c.border = bd()
+        for ri, fila in enumerate(sin_ingreso, 4):
+            for ci, col in enumerate(_cols_si, 1):
+                c = wsi.cell(ri, ci); c.value = fila.get(col)
+                c.font = Font(size=9, name='Arial')
+                c.border = bd()
+                if ri % 2 == 0:
+                    c.fill = PatternFill('solid', start_color=C_ALT)
+        wsi.freeze_panes = 'A4'
+        wsi.auto_filter.ref = f'A3:E{3 + len(sin_ingreso)}'
+    else:
+        wsi['A4'].value = '✅ Todos los TOP tienen un TOP de ingreso antes'
+    for col_letter, w in zip('ABCDE', [22, 26, 16, 20, 16]):
+        wsi.column_dimensions[col_letter].width = w
 
     # ── Guardar a BytesIO ─────────────────────────────────────────────────────
     buf = BytesIO()

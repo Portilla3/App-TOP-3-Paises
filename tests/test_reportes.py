@@ -19,6 +19,7 @@ import os
 import sys
 import tempfile
 
+import pandas as pd
 import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -121,3 +122,57 @@ def test_sin_ningun_seguimiento_los_reportes_de_seguimiento_avisan(reporte):
     with pytest.raises(Exception) as info:
         run_script(reporte, ruta)
     assert es_falta_de_datos(info.value), f'error técnico en vez de aviso: {str(info.value)[-300:]}'
+
+
+# ── Hoja "TOP sin ingreso" de la base wide ────────────────────────────────────
+# DECISIONES.md, "Los TOP sin ingreso se listan aparte". El caso que la motivó:
+# un TOP de egreso de CIJ que figuraba en la revisión enviada al país y que el
+# país no encontraba en su descarga, porque no tenía un TOP de ingreso antes.
+
+def _base_con_egreso_sin_ingreso():
+    base = base_sintetica('México', n_pacientes=6)
+    extra = base.iloc[[0]].copy()
+    extra['id'] = 999
+    extra['codigo_paciente'] = 'ZZZZ01011990'
+    extra['fecha_nacimiento'] = '1990-01-01'
+    extra['fecha_entrevista'] = '2026-10-16'
+    extra['etapa'] = 'egreso'
+    return base, pd.concat([base, extra], ignore_index=True)
+
+
+def _procesar(df):
+    carpeta = tempfile.mkdtemp(prefix='qalat_sin_ingreso_')
+    return procesar_wide(excel_bruto(df, os.path.join(carpeta, 'bruto.xlsx')))
+
+
+def _hoja(res, nombre):
+    from openpyxl import load_workbook
+    return load_workbook(io.BytesIO(res['excel_bytes'].getvalue()))[nombre]
+
+
+def test_la_hoja_top_sin_ingreso_lista_el_top_que_queda_fuera():
+    base, con_egreso = _base_con_egreso_sin_ingreso()
+    centro = str(base.iloc[0]['centro'])
+    res = _procesar(con_egreso)
+    assert [f['N.º de registro'] for f in res['sin_ingreso']] == [999]
+    ws = _hoja(res, 'TOP sin ingreso')
+    filas = [r for r in ws.iter_rows(min_row=4, values_only=True) if any(v is not None for v in r)]
+    assert filas == [(centro, 'ZZZZ01011990', '16-10-2026', 'Egreso', 999)]
+    assert '1 registro fuera' in ws['A1'].value
+
+
+def test_la_hoja_es_la_septima_y_no_cambia_la_base_wide():
+    base, con_egreso = _base_con_egreso_sin_ingreso()
+    sin, con = _procesar(base), _procesar(con_egreso)
+    from openpyxl import load_workbook
+    hojas = load_workbook(io.BytesIO(con['excel_bytes'].getvalue())).sheetnames
+    assert hojas == ['Base Wide', 'Resumen', 'Alertas', 'Calidad de Datos',
+                     'Por Centro', 'Pendientes TOP2', 'TOP sin ingreso']
+    assert len(con['wide']) == len(sin['wide'])
+    assert con['stats']['N_total'] == sin['stats']['N_total']
+
+
+def test_sin_casos_la_hoja_lo_dice():
+    res = _procesar(base_sintetica('México', n_pacientes=6))
+    assert res['sin_ingreso'] == []
+    assert 'Todos los TOP tienen' in str(_hoja(res, 'TOP sin ingreso')['A4'].value)

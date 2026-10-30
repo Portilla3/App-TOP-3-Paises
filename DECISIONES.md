@@ -347,6 +347,27 @@ derivado.
 
 *2026-09-02*
 
+### Los TOP sin ingreso se listan aparte
+**Regla.** La Base Wide, que los países descargan como "Base de datos procesada",
+lleva una séptima hoja, "TOP sin ingreso". Lista cada TOP que queda fuera por no
+tener un TOP de ingreso antes, del mismo paciente en el mismo centro: centro,
+código, fecha, etapa registrada y número de registro. No cambia la regla de la
+línea base ni ninguna cifra de las otras hojas, del panel o de los reportes. La
+lista la arma `_filas_sin_ingreso()` en `pipeline/wide_top.py`; las pruebas
+están en `tests/test_reportes.py`.
+
+**Fundamento.** Los países no tenían dónde ver esos registros: la Base Wide arma
+una fila por episodio y los dejaba fuera sin rastro. El 30 de octubre, CIJ buscó
+en su descarga el TOP de egreso que se le pidió revisar (registro 2442) y no lo
+encontró. Según una consulta aproximada, ese día eran unos 290 de 2.173 TOP en
+todos los países. Verlos es lo que permite al país corregir una etapa mal
+registrada.
+
+**Lo que no autoriza.** Esos TOP no se suman a la caracterización ni al análisis
+de cambio. Decidido por Rodrigo el 2026-10-30.
+
+*2026-10-30*
+
 ### La unidad de análisis es el episodio, no la persona
 **Regla.** Se cuentan episodios de tratamiento: un paciente que ingresa dos veces
 al mismo centro, o a dos centros distintos, cuenta dos veces. Cada TOP con etapa

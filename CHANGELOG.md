@@ -6,6 +6,16 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-10-30
+
+- Base Wide: hoja nueva "TOP sin ingreso", la séptima, con los TOP que quedan
+  fuera por no tener un TOP de ingreso antes en ese centro: centro, código,
+  fecha, etapa registrada y número de registro. `procesar_wide()` devuelve además
+  `sin_ingreso` y `stats['N_sin_ingreso']`. Ninguna cifra cambia. Probado con los
+  45 TOP reales de CIJ: la hoja muestra solo el registro 2442 y la Base Wide
+  sigue con 40 episodios. Tres pruebas nuevas en `tests/test_reportes.py`; pasan
+  las 223. Ver DECISIONES.md, "Los TOP sin ingreso se listan aparte".
+
 ## 2026-10-27
 
 - Despliegue: la app TOP se volvió a crear en Streamlit Cloud desde
