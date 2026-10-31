@@ -71,8 +71,9 @@ creó las cinco claves de administrador el 27 de octubre (la consulta está
 comentada al final de `sql/admin_claves_centros.sql`); falta entregarlas a cada
 gobierno, empezando por El Salvador. El documento que acompaña esa clave es el
 "Protocolo de gestión de claves" de la carpeta local `Operativo`: una sola
-plantilla para los cinco países, sin lista de centros, que el coordinador llena,
-firma y devuelve. La clave de administrador va en un mensaje aparte. A los
+plantilla para los cinco países, sin lista de centros ni firmas, que el
+coordinador llena y devuelve por correo (el correo es el respaldo; decidido por
+Rodrigo el 2026-10-31). Trae al final una guía rápida de la pestaña. La clave de administrador va en un mensaje aparte. A los
 centros no se les manda ningún documento; todo pasa por su coordinador (decidido
 por Rodrigo el 2026-10-28). La versión de Ecuador se revisa con ellos en la
 próxima reunión, que Rodrigo espera tener a comienzos de noviembre; la de julio
