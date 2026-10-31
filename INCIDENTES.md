@@ -12,6 +12,30 @@ costo asumido y lección. La lección es la parte que sirve; lo demás es regist
 
 ---
 
+## 2026-10-30 · La hoja nueva de la Base Wide no llegó a la app pese al "Updated app!" · cerrado el 2026-10-31
+
+**Quién avisó.** Rodrigo, el 31 de octubre: descargó la Base Wide de CIJ y tenía
+las 6 hojas de antes, sin "TOP sin ingreso".
+
+**Síntoma.** El cambio (commit `d42b4ed`) se subió el 30 de octubre a las 17:13
+UTC y el registro de Streamlit mostró "Pulling code changes" y "Updated app!" a
+las 17:13:17. Más de un día después, la descarga seguía saliendo sin la hoja.
+
+**Causa, probable.** El servidor de la app no se reinició: venía corriendo desde
+las 15:28 UTC del 30 de octubre. Streamlit actualizó los archivos y volvió a
+correr `app.py`, pero no recargó `pipeline/wide_top.py`, que ya estaba importado.
+Se confirmó por el arreglo: después de reiniciar, la hoja apareció.
+
+**Arreglo.** Reboot de la app desde share.streamlit.io el 31 de octubre a las
+23:01 UTC. Rodrigo descargó de nuevo la Base Wide de CIJ y la hoja apareció.
+
+**Costo.** Ninguno en los datos. La hoja tardó un día en estar disponible, y el
+reinicio cortó las sesiones abiertas en ese momento, un sábado de noche.
+
+**Lección.** "Updated app!" no garantiza que corra el código nuevo. Después de
+un cambio de código se reinicia la app y se comprueba el cambio en la pantalla o
+en un archivo descargado. Quedó como regla 10 en `QALAT_ARRANQUE_CHAT.md`.
+
 ## 2026-10-27 · La llave secreta de Supabase quedó a la vista en el chat · cerrado el 2026-10-28
 
 **Quién lo vio.** Claude, en una captura de los Secrets de la app TOP que Rodrigo

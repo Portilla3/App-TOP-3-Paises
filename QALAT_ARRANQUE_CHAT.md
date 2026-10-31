@@ -110,7 +110,10 @@ cargar nada.
 9. El dominio `streamlit.app` no responde desde el contenedor de Claude. Los
    chequeos en vivo los hace Rodrigo desde su navegador.
 10. Verificar que una app arranca no es verificar que funciona. Los reportes se
-    prueban generándolos.
+    prueban generándolos. Después de subir un cambio de código, reiniciar la app
+    TOP desde share.streamlit.io (menú ⋮, Reboot) y comprobar que el cambio se
+    ve: el "Updated app!" trae los archivos pero no recarga los módulos de
+    `pipeline/`. Ver INCIDENTES.md, 2026-10-30.
 11. En el contenedor de Claude, `git push` con el token dentro de la URL falla con
     "unexpected disconnect while reading sideband packet". No es el token: el
     proxy del contenedor hace que el `POST` final salga sin credencial y GitHub
