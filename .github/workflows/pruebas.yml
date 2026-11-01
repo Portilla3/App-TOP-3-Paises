@@ -1,0 +1,25 @@
+# Corre todas las pruebas en cada cambio, con el mismo Python y las mismas
+# versiones que producción (requirements.txt). Si sale en rojo, no se reinicia
+# la app. Ver DECISIONES.md, "Las versiones se fijan exactas".
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Instalar las versiones de producción
+        run: python -m pip install -r requirements.txt pytest
+      - name: Versiones instaladas
+        run: python -c "import sys, streamlit, pandas, numpy; print(sys.version); print('streamlit', streamlit.__version__, '| pandas', pandas.__version__, '| numpy', numpy.__version__)"
+      - name: Pruebas
+        run: python -m pytest tests/ -q -p no:cacheprovider
