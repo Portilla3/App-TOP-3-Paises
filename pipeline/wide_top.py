@@ -403,7 +403,7 @@ def procesar_wide(input_path: str,
                 _col_orig = c; break
         if _col_orig is None: continue
         _col_raw = _col_orig.replace(_sfx, f'_RAW{_sfx}')
-        wide.rename(columns={_col_orig: _col_raw}, inplace=True)
+        wide = wide.rename(columns={_col_orig: _col_raw})
         wide[_col_orig] = wide[_col_raw].apply(norm_sust_v3)
         _idx = wide.columns.get_loc(_col_raw)
         _order = (list(wide.columns[:_idx+1]) + [_col_orig] +

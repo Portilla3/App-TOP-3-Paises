@@ -15,7 +15,9 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
   visible. Nuevo `.github/workflows/pruebas.yml`: corre todas las pruebas con
   Python 3.14 y esas versiones en cada cambio. Se creó desde la web de GitHub,
   porque el token no tiene permiso `workflow`. Pruebas nuevas en
-  `tests/test_despliegue.py`.
+  `tests/test_despliegue.py`. Primera corrida en GitHub: 300 pasan y 9 se saltan
+  (las de Postgres local). Avisó que pandas 4 retira `inplace`; el único uso
+  (`wide_top.py`, renombrar la columna de sustancia) pasa a asignación.
 - Corrección de registros dentro de la app, con autorización de Rodrigo.
   Migración `correccion_registros_con_bitacora` (`sql/correccion_registros.sql`):
   tablas `top_correcciones` y `top_registros_auditoria` (RLS, sin permisos para el
