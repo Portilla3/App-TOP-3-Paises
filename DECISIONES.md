@@ -631,7 +631,40 @@ anteriores hubo una sola corrección por formulario. Las políticas y permisos q
 había quedaron en `backup_permisos_top_20261031`; el SQL trae las líneas para
 volver atrás. Decidido por Rodrigo el 2026-10-31.
 
+Desde el 2026-11-01 la corrección está dentro de la app: ver la decisión
+siguiente.
+
 *2026-10-31*
+
+### Los registros se corrigen dentro de la app, con bitácora
+**Regla.** Los TOP se corrigen en la pestaña "Corrección de registros" del perfil
+de país. Cada gobierno ve y corrige solo registros de su país; UNODC elige el
+país. La corrección la aplica la función `corregir_registro()` de la base, que
+solo puede llamar la llave secreta de la app: comprueba que el registro sea del
+país, que haya un motivo y que los campos existan, y si algo falla no cambia
+nada. Cada campo corregido queda en `top_correcciones` con el valor anterior, el
+nuevo, el motivo, quién y cuándo. Además, toda modificación o borrado de
+`top_registros`, venga de donde venga, incluido el SQL Editor, queda en
+`top_registros_auditoria` con el registro antes y después. SQL en
+`sql/correccion_registros.sql`; pantalla en `pipeline/panel/correccion.py`;
+pruebas en `tests/test_correccion.py`.
+
+**Qué se puede corregir.** Los campos que envía el formulario TOP del país, con
+las mismas reglas del formulario: semanas de 0 a 7, escalas de 0 a 20, promedios
+no negativos, código de 4 letras y 8 números que coincida con la fecha de
+nacimiento, fecha de entrevista no futura ni anterior a 2020, edad de 5 a 100
+años, y las listas de centro, etapa, sexo y sustancia principal tal como están en
+el formulario. Los totales de semanas se recalculan solos. No se corrige el país.
+
+**Fundamento.** Corregir desde un formulario público exigía que la base aceptara
+modificaciones de cualquiera con la llave pública, sin control de país y sin
+rastro. Dentro de la app, el país sale del ingreso y la llave secreta nunca deja
+el servidor. La bitácora permite saber, por ejemplo, qué se cambió y por qué, lo
+que no se pudo saber del registro 2488 corregido por El Salvador el 27 de
+octubre. Decidido por Rodrigo el 2026-11-01.
+
+**Lo que no autoriza.** Borrar registros desde la app. Eso sigue reservado a
+Rodrigo, con respaldo previo, y ahora además queda en la auditoría.
 
 ### Todo respaldo se crea con RLS activo y permisos revocados
 **Regla.** Después de cada `CREATE TABLE ... AS SELECT`, se ejecuta

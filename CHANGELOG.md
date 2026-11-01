@@ -6,6 +6,22 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-11-01
+
+- Corrección de registros dentro de la app, con autorización de Rodrigo.
+  Migración `correccion_registros_con_bitacora` (`sql/correccion_registros.sql`):
+  tablas `top_correcciones` y `top_registros_auditoria` (RLS, sin permisos para el
+  rol público), disparador `trg_auditar_top_registros` (AFTER UPDATE OR DELETE) y
+  función `corregir_registro()`, ejecutable solo por `service_role`. Probada en un
+  Postgres local y en la base real dentro de una transacción revertida: corrige,
+  rechaza otro país, anota el cambio y la auditoría registra `service_role`.
+- App: la pestaña "Corrección de registros" usa el módulo nuevo
+  `pipeline/panel/correccion.py` en vez del aviso de mantenimiento. Campos y
+  listas salen del formulario TOP del país. Después de guardar se limpian las
+  cachés del panel y de Reportes.
+- Pruebas nuevas en `tests/test_correccion.py` (63, incluidas las de la función en
+  Postgres, que se saltan si `pgserver` no está instalado). Pasan las 295.
+
 ## 2026-10-31
 
 - Seguridad, con autorización de Rodrigo: el rol público de Supabase queda solo

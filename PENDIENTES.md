@@ -196,14 +196,11 @@ El clasificador actual los resuelve bien y el texto original está en
 
 ## Código
 
-**Corrección de registros dentro de la app.** Desde el 31 de octubre la base no
-acepta modificaciones con la llave pública, y los siete formularios de corrección
-publicados (`correccion_top_*.html`) ya no funcionan. Falta la opción A del
-diagnóstico técnico: una pestaña en el perfil de país que busque solo en su país,
-valide igual que el formulario, pida un motivo y guarde el valor anterior y el
-nuevo, más un disparador de auditoría en `top_registros`. Mientras tanto, las
-correcciones llegan por correo. Los formularios de corrección siguen publicados en
-GitHub Pages: ponerles un aviso o retirarlos. *2026-10-31*
+**Resuelto el 2026-11-01 · corrección de registros dentro de la app.** Ver
+DECISIONES.md, "Los registros se corrigen dentro de la app, con bitácora". Queda
+pendiente: los siete formularios de corrección (`correccion_top_*.html`) siguen
+publicados en GitHub Pages y ya no funcionan; ponerles un aviso o retirarlos.
+*2026-11-01*
 
 **Semanas en blanco en VIF y en días de trabajo y educación.** Los formularios
 las suman como cero, igual que en sustancias, pero la regla no está decidida.

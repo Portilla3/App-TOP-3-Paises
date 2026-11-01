@@ -1536,25 +1536,36 @@ with tab_reportes:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# TAB 2: CORRECCIÓN DE REGISTROS — en mantenimiento
+# TAB 2: CORRECCIÓN DE REGISTROS — dentro de la app, con bitácora
 # ──────────────────────────────────────────────────────────────────────────────
-# Desde el 2026-10-31 la base ya no acepta lecturas ni modificaciones con la llave
-# pública, así que los formularios de corrección publicados dejaron de funcionar
-# y la app ya no los enlaza. Mientras la corrección pasa al interior de la app,
-# se piden por correo. Ver DECISIONES.md, "La base de pacientes no se lee ni se
-# modifica con la llave pública".
+# Desde el 2026-11-01 la corrección se hace aquí y no en los formularios públicos:
+# la base ya no acepta modificaciones con la llave pública. Cada gobierno corrige
+# solo registros de su país, con motivo, y cada cambio queda en top_correcciones.
+# Ver DECISIONES.md, "Los registros se corrigen dentro de la app, con bitácora".
+PAISES_CORRECCION = ['Perú', 'Ecuador', 'El Salvador', 'México', 'México CIJ',
+                     'México Monte Fénix', 'México Mahanaim']
+
+
+def _tras_corregir():
+    """Después de una corrección, el panel y los reportes vuelven a leer la base."""
+    invalidar_cache_pais()
+    # Las mismas que limpia el botón "Actualizar datos" de Reportes, más la descarga rápida.
+    for _k in ('supabase_path', 'supabase_df', 'filename', 'result', 'outputs', 'wide_path',
+               'work_dir', 'dl_quick_wide'):
+        st.session_state.pop(_k, None)
 
 with tab_correccion:
-    st.markdown(
-        '''<div style="background:#FFF8E1;border-left:4px solid #F9A825;
-        padding:.7rem 1.2rem;border-radius:6px;margin-bottom:1rem;font-size:.9rem;">
-        <b>✏️ Corrección de registros en mantenimiento.</b><br><br>
-        Estamos trasladando la corrección de registros al interior de esta plataforma,
-        para que cada cambio quede registrado. Mientras tanto, envíe cada corrección por
-        correo al consultor de UNODC, indicando el centro, el código del paciente, la
-        fecha del TOP, el dato que está mal y el dato correcto.
-        </div>''', unsafe_allow_html=True
-    )
+    from pipeline.panel.correccion import render as _render_correccion
+    if es_unodc:
+        _pais_corr = st.selectbox('Corregir registros de:', PAISES_CORRECCION, key='corr_pais_sel')
+    else:
+        _pais_corr = rol
+    if _pais_corr in PAISES_CORRECCION:
+        _render_correccion(_pais_corr, etiquetas=RENAME_MAP,
+                           realizado_por='UNODC' if es_unodc else f'gobierno:{rol}',
+                           al_guardar=_tras_corregir)
+    else:
+        st.info('La corrección de registros no está disponible para este perfil.')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
