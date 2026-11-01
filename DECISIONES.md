@@ -654,7 +654,10 @@ el papel, permiso de vaciar tablas. Comprobado en la base con transacciones
 revertidas: la llave pública ya no puede iniciar sesión como centro ni leer la
 bitácora o los respaldos, y sigue pudiendo agregar TOP; la app sigue ejecutando
 el ingreso de centros y las funciones de claves. Los permisos de antes están en
-`backup_permisos_publicos_20261101`. Decidido por Rodrigo el 2026-11-01.
+`backup_permisos_publicos_20261101`. Decidido por Rodrigo el 2026-11-01. Ese mismo día se probó en vivo: un centro de Ecuador entró a la
+plataforma y un TOP de prueba enviado desde el formulario de Perú llegó a la base
+(registro 2618, respuesta 201). El registro se borró después, con respaldo en
+`backup_registro_prueba_prue_20261101`.
 
 *2026-11-01*
 
