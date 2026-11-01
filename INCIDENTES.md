@@ -36,6 +36,12 @@ reinicio cortó las sesiones abiertas en ese momento, un sábado de noche.
 un cambio de código se reinicia la app y se comprueba el cambio en la pantalla o
 en un archivo descargado. Quedó como regla 10 en `QALAT_ARRANQUE_CHAT.md`.
 
+**Se repitió el 2026-11-01, con otra cara.** Al subir a `main` el cambio que
+tocaba 17 archivos del panel (21:23 UTC), el "Updated app!" intentó recargar los
+módulos y dio `KeyError` en `pipeline.panel.*` para la sesión que estaba abierta.
+Duró hasta el reinicio de las 21:28 UTC, un domingo de noche. Refuerza la regla:
+subir y reiniciar seguidos, sin dejar pasar tiempo entre uno y otro.
+
 ## 2026-10-27 · La llave secreta de Supabase quedó a la vista en el chat · cerrado el 2026-10-28
 
 **Quién lo vio.** Claude, en una captura de los Secrets de la app TOP que Rodrigo
