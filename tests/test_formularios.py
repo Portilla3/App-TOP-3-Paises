@@ -54,3 +54,34 @@ def test_el_promedio_por_dia_no_acepta_negativos(nombre):
     assert not any('max=' in e for e in entradas), f'{nombre}: el promedio no lleva máximo'
     assert "errMsg.push('El promedio por día no puede ser negativo')" in html, \
         f'{nombre} no bloquea el envío con un promedio negativo'
+
+
+# ── La base de pacientes no se lee ni se modifica con la llave pública ────────
+# DECISIONES.md. Desde el 2026-10-31 el rol público solo puede agregar registros
+# (sql/permisos_top_registros.sql). Estas pruebas fallan si un formulario vuelve a
+# leer o modificar la base, o si la app vuelve a enlazar los formularios de
+# corrección, que ya no pueden funcionar.
+
+@pytest.mark.parametrize('nombre', FORMULARIOS)
+def test_el_formulario_de_captura_solo_agrega_registros(nombre):
+    html = _leer(nombre)
+    llamadas = [m.start() for m in re.finditer(r'rest/v1/top_registros', html)]
+    assert llamadas, f'{nombre} no envía a top_registros'
+    for i in llamadas:
+        tramo = html[i:i + 300]
+        assert re.search(r"method\s*:\s*'POST'", tramo), \
+            f'{nombre} llama a top_registros con algo distinto de POST'
+        assert 'return=minimal' in tramo, \
+            f'{nombre} pide de vuelta el registro, y eso exige permiso de lectura'
+
+
+def test_la_app_no_enlaza_los_formularios_de_correccion():
+    assert 'correccion_top_' not in _leer('app.py')
+
+
+def test_el_permiso_publico_sobre_la_base_es_solo_agregar():
+    sql = _leer(os.path.join('sql', 'permisos_top_registros.sql'))
+    activo = '\n'.join(l for l in sql.splitlines() if not l.strip().startswith('--'))
+    assert 'GRANT INSERT ON public.top_registros TO anon;' in activo
+    assert 'REVOKE ALL ON public.top_registros FROM anon, authenticated;' in activo
+    assert not re.search(r'GRANT\s+[^;]*(SELECT|UPDATE|DELETE)[^;]*top_registros\s+TO\s+anon', activo)

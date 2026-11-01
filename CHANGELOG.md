@@ -6,6 +6,23 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-10-31
+
+- Seguridad, con autorización de Rodrigo: el rol público de Supabase queda solo
+  con permiso de agregar en `top_registros`. Migración
+  `cerrar_lectura_publica_top` (`sql/permisos_top_registros.sql`): se quitan las
+  políticas `select_publico_v2` y `permitir_update_correccion`, y los permisos de
+  tabla de `anon` y `authenticated` salvo INSERT. Respaldo de lo que había en
+  `backup_permisos_top_20261031` (18 filas, RLS, sin permisos). Comprobado en la
+  base con transacciones revertidas: `anon` ya no lee ni modifica, y sí agrega.
+- App: la pestaña "Corrección de registros" ya no enlaza los formularios de
+  corrección, que dejaron de funcionar; muestra un aviso de mantenimiento con lo
+  que hay que mandar por correo. Ver DECISIONES.md, "La base de pacientes no se
+  lee ni se modifica con la llave pública".
+- Pruebas nuevas en `tests/test_formularios.py`: los siete formularios de captura
+  solo agregan con `return=minimal`, la app no enlaza los formularios de
+  corrección y el SQL de permisos deja al rol público solo agregar. Pasan las 232.
+
 ## 2026-10-30
 
 - Base Wide: hoja nueva "TOP sin ingreso", la séptima, con los TOP que quedan

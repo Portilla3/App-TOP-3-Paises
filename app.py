@@ -1536,48 +1536,25 @@ with tab_reportes:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# TAB 2: CORRECCIÓN DE REGISTROS — enlaza a los formularios publicados
+# TAB 2: CORRECCIÓN DE REGISTROS — en mantenimiento
 # ──────────────────────────────────────────────────────────────────────────────
-
-CORRECCION_URLS = {
-    'Perú':        'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_peru.html',
-    'Ecuador':     'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_ecuador.html',
-    'México':      'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mexico.html',
-    'México CIJ':         'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mexicocij.html',
-    'México Monte Fénix': 'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_montefenix.html',
-    'México Mahanaim':    'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_mahanaim.html',
-    'El Salvador':        'https://portilla3.github.io/App-TOP-3-Paises/correccion_top_elsalvador.html',
-}
-CORRECCION_FLAGS = {'Perú': '🇵🇪', 'Ecuador': '🇪🇨', 'México': '🇲🇽', 'México CIJ': '🇲🇽', 'México Monte Fénix': '🇲🇽', 'México Mahanaim': '🇲🇽', 'El Salvador': '🇸🇻'}
+# Desde el 2026-10-31 la base ya no acepta lecturas ni modificaciones con la llave
+# pública, así que los formularios de corrección publicados dejaron de funcionar
+# y la app ya no los enlaza. Mientras la corrección pasa al interior de la app,
+# se piden por correo. Ver DECISIONES.md, "La base de pacientes no se lee ni se
+# modifica con la llave pública".
 
 with tab_correccion:
-    if rol not in ('Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador', 'México Monte Fénix', 'México Mahanaim', 'UNODC'):
-        st.info(f'El formulario de corrección para {flag} {rol} estará disponible próximamente.')
-    else:
-        if es_unodc:
-            pais_corr = st.selectbox(
-                'Corregir registros de:',
-                ['Perú', 'Ecuador', 'México', 'México CIJ', 'El Salvador', 'México Monte Fénix', 'México Mahanaim'],
-                key='corr_pais_sel'
-            )
-        else:
-            pais_corr = rol
-
-        flag_corr = CORRECCION_FLAGS.get(pais_corr, '')
-        url_corr  = CORRECCION_URLS[pais_corr]
-
-        st.markdown(
-            f'''<div style="background:#FFF8E1;border-left:4px solid #F9A825;
-            padding:.7rem 1.2rem;border-radius:6px;margin-bottom:1rem;font-size:.85rem;">
-            <b>⚠ Módulo de corrección — {flag_corr} {pais_corr}.</b>
-            Los cambios se aplican directamente en la base de datos QALAT.
-            </div>''', unsafe_allow_html=True
-        )
-        st.link_button(
-            "✏️ Abrir formulario de corrección",
-            url_corr,
-            use_container_width=True
-        )
+    st.markdown(
+        '''<div style="background:#FFF8E1;border-left:4px solid #F9A825;
+        padding:.7rem 1.2rem;border-radius:6px;margin-bottom:1rem;font-size:.9rem;">
+        <b>✏️ Corrección de registros en mantenimiento.</b><br><br>
+        Estamos trasladando la corrección de registros al interior de esta plataforma,
+        para que cada cambio quede registrado. Mientras tanto, envíe cada corrección por
+        correo al consultor de UNODC, indicando el centro, el código del paciente, la
+        fecha del TOP, el dato que está mal y el dato correcto.
+        </div>''', unsafe_allow_html=True
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════

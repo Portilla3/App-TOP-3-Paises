@@ -609,6 +609,30 @@ y `INCIDENTES.md`, 2026-10-25.
 
 ## Seguridad
 
+### La base de pacientes no se lee ni se modifica con la llave pública
+**Regla.** El rol público de Supabase (`anon`), que es la llave escrita en los
+formularios, solo puede agregar registros en `top_registros`. No puede leerlos,
+modificarlos ni borrarlos. La app lee y escribe con la llave secreta, desde el
+servidor. Los permisos están en `sql/permisos_top_registros.sql` (migración
+`cerrar_lectura_publica_top`) y las pruebas en `tests/test_formularios.py`.
+
+**Fundamento.** Hasta el 31 de octubre, cualquiera que copiara la llave pública de
+un formulario podía descargar los 2.188 registros de pacientes de los siete países
+o instituciones, y modificar cualquiera sin dejar rastro. Lo encontró el
+diagnóstico técnico del 29 de octubre. Los registros de Supabase del 12 al 29 de
+octubre no muestran ninguna lectura masiva; antes del 12 no hay registros. Los
+formularios de captura no necesitan leer: solo agregan, con `return=minimal`.
+
+**Consecuencia asumida.** Los formularios de corrección publicados dejaron de
+funcionar y la app ya no los enlaza: la pestaña "Corrección de registros" muestra
+un aviso. Mientras la corrección pasa al interior de la app, con registro de cada
+cambio, las correcciones se piden por correo y las aplica Rodrigo. En los 17 días
+anteriores hubo una sola corrección por formulario. Las políticas y permisos que
+había quedaron en `backup_permisos_top_20261031`; el SQL trae las líneas para
+volver atrás. Decidido por Rodrigo el 2026-10-31.
+
+*2026-10-31*
+
 ### Todo respaldo se crea con RLS activo y permisos revocados
 **Regla.** Después de cada `CREATE TABLE ... AS SELECT`, se ejecuta
 `ENABLE ROW LEVEL SECURITY` y `REVOKE ALL ... FROM anon, authenticated`, y se
