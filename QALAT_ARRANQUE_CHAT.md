@@ -113,7 +113,9 @@ cargar nada.
     prueban generándolos. Después de subir un cambio de código, reiniciar la app
     TOP desde share.streamlit.io (menú ⋮, Reboot) y comprobar que el cambio se
     ve: el "Updated app!" trae los archivos pero no recarga los módulos de
-    `pipeline/`. Ver INCIDENTES.md, 2026-10-30.
+    `pipeline/`. Ver INCIDENTES.md, 2026-10-30. Antes de reiniciar, las pruebas
+    automáticas de GitHub (pestaña Actions) tienen que estar en verde para ese
+    commit. Ver DECISIONES.md, "Las versiones se fijan exactas".
 11. En el contenedor de Claude, `git push` con el token dentro de la URL falla con
     "unexpected disconnect while reading sideband packet". No es el token: el
     proxy del contenedor hace que el `POST` final salga sin credencial y GitHub

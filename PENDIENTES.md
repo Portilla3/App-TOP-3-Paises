@@ -202,6 +202,20 @@ DECISIONES.md, "Los registros se corrigen dentro de la app, con bitácora". Los
 siete formularios de corrección (`correccion_top_*.html`) quedaron como un aviso
 que remite a la app. *2026-11-01*
 
+**Resuelto el 2026-11-01 · versiones abiertas y pruebas con otro Python.** Ver
+DECISIONES.md, "Las versiones se fijan exactas". Quedan del punto 10 del
+diagnóstico: poner caché al panel del centro.
+
+**Postergado el 2026-11-01 · claves de país nuevas con límite de intentos**
+(punto 11 del diagnóstico). Rodrigo no lo ve crítico por ahora. Hoy la clave de
+país se compara con la de los secretos de Streamlit, sin límite de intentos ni
+registro de fallos.
+
+**Reglas en la base para lo que se carga.** El rol público solo puede agregar,
+pero la base no revisa rangos, país ni etapa; las validaciones viven solo en el
+formulario. Se pueden agregar como restricciones `NOT VALID`, que rigen para lo
+nuevo sin tocar lo cargado. Requiere permiso de Rodrigo.
+
 **Semanas en blanco en VIF y en días de trabajo y educación.** Los formularios
 las suman como cero, igual que en sustancias, pero la regla no está decidida.
 En trabajo y educación, además, convive con la casilla "No aplica". *2026-10-25*

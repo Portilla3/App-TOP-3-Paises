@@ -8,6 +8,14 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ## 2026-11-01
 
+- Despliegue: `requirements.txt` pasa de rangos a versiones exactas, las 49 que
+  instaló Streamlit Cloud el 2026-11-01 (Python 3.14.10), con `pyarrow==24.0.0`
+  en vez de la 26 que se cae. Las 39 llamadas con `use_container_width=True`
+  pasan a `width='stretch'` (16 archivos del panel y `app.py`), sin cambio
+  visible. Nuevo `.github/workflows/pruebas.yml`: corre todas las pruebas con
+  Python 3.14 y esas versiones en cada cambio. Se creó desde la web de GitHub,
+  porque el token no tiene permiso `workflow`. Pruebas nuevas en
+  `tests/test_despliegue.py`.
 - Corrección de registros dentro de la app, con autorización de Rodrigo.
   Migración `correccion_registros_con_bitacora` (`sql/correccion_registros.sql`):
   tablas `top_correcciones` y `top_registros_auditoria` (RLS, sin permisos para el

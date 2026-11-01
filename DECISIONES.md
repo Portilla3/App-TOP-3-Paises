@@ -828,6 +828,25 @@ Perú reportaban 85 % de mujeres.
 
 *2026-08-28*
 
+### Las versiones se fijan exactas
+**Regla.** `requirements.txt` lleva cada paquete con su versión exacta (`==`),
+incluidos los que llegan como dependencia, igual a lo que corre en producción.
+Una versión se cambia a propósito: se edita el archivo, se espera que las
+pruebas automáticas de GitHub (`.github/workflows/pruebas.yml`, Python 3.14)
+pasen en verde y recién entonces se reinicia la app. La app no usa
+`use_container_width`, que Streamlit anunció que retira. Pruebas en
+`tests/test_despliegue.py`.
+
+**Fundamento.** Con rangos (`streamlit>=1.63,<2`), cada reinicio instalaba la
+última versión disponible, y desde el 31 de octubre la app se reinicia después
+de cada cambio. Además las pruebas corrían con Python 3.10 y pandas 2.3,
+mientras producción usa Python 3.14 y pandas 3: un cambio de pandas que alterara
+un cálculo pasaba las pruebas y llegaba igual a los países. Los registros de
+Streamlit mostraban 68 avisos de que `use_container_width` se retira; el día que
+una versión lo quite, la app no arranca. Decidido por Rodrigo el 2026-11-01.
+
+*2026-11-01*
+
 ---
 
 ## Reglas de mantenimiento
