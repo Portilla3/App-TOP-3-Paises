@@ -100,3 +100,25 @@ def test_los_formularios_de_correccion_viejos_solo_remiten_a_la_app(nombre):
     assert 'monitoreo-tratamiento-top3.streamlit.app' in html
     for prohibido in ('sb_publishable', 'SUPABASE', 'rest/v1', 'fetch('):
         assert prohibido not in html, f'{nombre} todavía contiene {prohibido}'
+
+
+# ── El rol público solo tiene lo que usa (DECISIONES.md, 2026-11-01) ─────────
+
+def test_el_rol_publico_no_ejecuta_las_funciones_de_ingreso_ni_de_claves():
+    sql = _leer(os.path.join('sql', 'permisos_publicos.sql'))
+    for f in ('validar_login_centro(text, text)', 'admin_listar_centros(text, text)',
+              'admin_crear_clave_centro(text, text, text, text, text)',
+              'admin_desactivar_clave_centro(text, text, text)'):
+        assert f'REVOKE ALL ON FUNCTION public.{f} FROM PUBLIC, anon, authenticated;' in sql, f
+        assert f'GRANT EXECUTE ON FUNCTION public.{f} TO service_role;' in sql, f
+    assert 'ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated;' in sql
+
+
+def test_ningun_sql_vuelve_a_abrir_funciones_al_rol_publico():
+    carpeta = os.path.join(RAIZ, 'sql')
+    for nombre in os.listdir(carpeta):
+        if not nombre.endswith('.sql'):
+            continue
+        sql = _leer(os.path.join('sql', nombre))
+        activo = '\n'.join(l for l in sql.splitlines() if not l.strip().startswith('--'))
+        assert not re.search(r'GRANT\s+EXECUTE[^;]*TO\s+[^;]*\b(anon|authenticated)\b', activo), nombre

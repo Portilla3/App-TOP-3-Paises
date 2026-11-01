@@ -636,6 +636,28 @@ siguiente.
 
 *2026-10-31*
 
+### El rol público solo tiene lo que usa
+**Regla.** El rol público de Supabase (`anon`) y el rol `authenticated` solo
+pueden agregar en `top_registros` y en `inscripciones_laboratorio`. No pueden
+leer, modificar ni vaciar ninguna tabla, ni ejecutar las funciones de ingreso de
+centros (`validar_login_centro`) ni de claves (`admin_*`), que llama la app con
+su llave secreta. Lo que se cree en adelante en el esquema `public` nace cerrado
+para ellos. Excepción por ahora: `irt_registros`, que usan el formulario IRT de
+Panamá y la app IRT con una llave que no se pudo verificar; está vacía. SQL en
+`sql/permisos_publicos.sql` (migración `permisos_publicos_minimos`); pruebas en
+`tests/test_formularios.py`.
+
+**Fundamento.** Cada permiso que nadie usa es una puerta. Con la llave pública,
+que está escrita en los formularios, cualquiera podía probar claves de centros sin
+límite de intentos, ver los nombres de todas las tablas por GraphQL y tenía, sobre
+el papel, permiso de vaciar tablas. Comprobado en la base con transacciones
+revertidas: la llave pública ya no puede iniciar sesión como centro ni leer la
+bitácora o los respaldos, y sigue pudiendo agregar TOP; la app sigue ejecutando
+el ingreso de centros y las funciones de claves. Los permisos de antes están en
+`backup_permisos_publicos_20261101`. Decidido por Rodrigo el 2026-11-01.
+
+*2026-11-01*
+
 ### Los registros se corrigen dentro de la app, con bitácora
 **Regla.** Los TOP se corrigen en la pestaña "Corrección de registros" del perfil
 de país. Cada gobierno ve y corrige solo registros de su país; UNODC elige el
@@ -736,6 +758,10 @@ tiene que traer un secreto que la base pueda verificar. La clave del perfil de
 país no sirve para eso: vive en texto plano en los secretos de Streamlit y la
 base no la conoce. Una clave aparte, además, separa ver los datos del país de dar
 acceso a otros. Decidido por Rodrigo el 2026-10-27.
+
+Desde el 2026-11-01 estas funciones solo las puede llamar la llave secreta de la
+app, que es la que siempre las usó; la clave de administrador sigue siendo
+necesaria. Ver "El rol público solo tiene lo que usa".
 
 **Salvaguardas.** Con 5 intentos fallidos en 15 minutos el país queda bloqueado
 ese rato, y los intentos quedan en `centro_bitacora`. Las funciones no levantan

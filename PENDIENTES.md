@@ -93,7 +93,7 @@ países que el formulario ya no deja guardar si no coinciden.
 lo impide el bloqueo del cruce con la fecha de nacimiento en los siete
 formularios. Quedan los registros antiguos. Al 27 de octubre hay 12 registros
 reales con un código cuya fecha no existe (mes 13, 19 o 90; día 00; año 1013 o
-2200), por ejemplo EDOC12191996 o MACR08131982. Agregar esa validación junto con
+2200), por ejemplo los registros 457 (CET021097) y 851 (YMA). Agregar esa validación junto con
 el bloqueo del cruce código-fecha de nacimiento. *2026-10-27*
 
 **IMSS-Bienestar, primer TOP "en tratamiento".** El 26 de octubre Cinthia pidió
@@ -129,12 +129,13 @@ dato es el correcto. Nada se corrige sin permiso. *2026-10-26*
 **Registros duplicados.** El 27 de octubre se borraron las 39 copias viejas ya
 reemplazadas por la última carga (respaldo en `backup_limpieza_20261027`). Quedan
 9 grupos dudosos, 19 registros, a confirmar con los centros; mientras tanto vale
-la última carga. Son: SAI000850 BRSU09082000, NWH JOCO20011985, EESS03CA
-MAGO06022008, CET045943 NESA25051997, CMM SAGO12051974, EESS29EL GISA06012013,
-SAI001735 CROR11061997, CET045943 NICH30091972 y SJA GUCH29081991 (en este, la
-última carga trae nacimiento 1999 y los demás registros dicen 1991). Aparte:
-SAI001735 ANBR20062002 tiene un segundo ingreso con fecha 20/04 que no es
-duplicado por fecha. *2026-10-27*
+la última carga. Son, por centro y número de registro: SAI000850 (497 y 1712),
+NWH (1327 y 1440), EESS03CA (un paciente que ya no figura con el código de
+entonces), CET045943 (371, 502 y 1077), CMM (882 y 1184), EESS29EL (1334 y 2083),
+SAI001735 (505 y 1292), CET045943 (503 y 1059) y SJA (677 y 995; en este, la
+última carga trae otro año de nacimiento que los demás registros). Aparte:
+SAI001735 tiene un paciente con un segundo ingreso que no es duplicado por fecha
+(registros 1293 y 1207). *2026-10-27*
 
 **De dónde vienen los duplicados, y la vía para corregir.** Clasificadas el
 26 de octubre, las 49 copias de más son: 28 TOP del piloto vueltos a cargar en
@@ -147,7 +148,7 @@ para corregir: avisar a Rodrigo, que corrige en Supabase, o reactivar los
 formularios de corrección. *2026-10-26*
 
 **Correcciones que no aparecen como duplicado.** Resuelto el 27 de octubre: se
-borró la copia vieja de CJR ROGA05111971 y de EESS02SB GIPO13121982. Además hay 10 pacientes con dos ingresos en el mismo centro a menos de 60 días;
+borró la copia vieja de dos TOP vueltos a cargar, uno de CJR y otro de EESS02SB. Además hay 10 pacientes con dos ingresos en el mismo centro a menos de 60 días;
 algunos pueden ser la misma carga con la fecha cambiada. Confirmar con los
 centros. *2026-10-26*
 

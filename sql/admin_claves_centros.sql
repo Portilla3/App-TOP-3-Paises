@@ -237,12 +237,13 @@ BEGIN
 END;
 $function$;
 
-REVOKE ALL ON FUNCTION public.admin_listar_centros(text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.admin_crear_clave_centro(text, text, text, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.admin_desactivar_clave_centro(text, text, text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.admin_listar_centros(text, text) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.admin_crear_clave_centro(text, text, text, text, text) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.admin_desactivar_clave_centro(text, text, text) TO anon, authenticated;
+-- Desde el 2026-11-01 solo las llama la llave secreta de la app (sql/permisos_publicos.sql).
+REVOKE ALL ON FUNCTION public.admin_listar_centros(text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.admin_crear_clave_centro(text, text, text, text, text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.admin_desactivar_clave_centro(text, text, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_listar_centros(text, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_crear_clave_centro(text, text, text, text, text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.admin_desactivar_clave_centro(text, text, text) TO service_role;
 
 
 -- ── Clave de administrador de cada país ─────────────────────────────────────

@@ -21,6 +21,17 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
   cachés del panel y de Reportes.
 - Pruebas nuevas en `tests/test_correccion.py` (63, incluidas las de la función en
   Postgres, que se saltan si `pgserver` no está instalado). Pasan las 295.
+- Seguridad, con autorización de Rodrigo: migración `permisos_publicos_minimos`
+  (`sql/permisos_publicos.sql`). El rol público queda solo con INSERT en
+  `top_registros` e `inscripciones_laboratorio`; sin permisos en el resto de las
+  tablas (salvo `irt_registros`, pendiente) y sin EXECUTE en `validar_login_centro`,
+  `admin_*` ni `rls_auto_enable`, que pasan a `service_role`. Lo nuevo en `public`
+  nace cerrado (ALTER DEFAULT PRIVILEGES). Respaldo en
+  `backup_permisos_publicos_20261101` (139 filas). `sql/admin_claves_centros.sql`
+  ya no abre esas funciones al rol público. Comprobado con transacciones revertidas.
+- Se sacaron del repositorio los 14 códigos de pacientes que había en
+  `PENDIENTES.md` y `CHANGELOG.md`; quedan los números de registro. Siguen en el
+  historial de git, porque el repositorio es público.
 - Los siete formularios de corrección (`correccion_top_*.html`) pasan a ser un aviso
   que remite a la pestaña de la app; ya no llevan la llave pública ni el código que
   modificaba la base. Siete pruebas nuevas en `tests/test_formularios.py`; pasan
@@ -152,7 +163,7 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
   filas, RLS activo, sin permisos): borradas las 39 copias viejas de TOP duplicados
   ya reemplazadas por la última carga (el borrado exige que exista una copia más
   nueva del mismo TOP); borradas las copias viejas de 2 TOP vueltos a cargar con
-  la etapa corregida (CJR ROGA05111971, EESS02SB GIPO13121982); 7 TOP de Perú con
+  la etapa corregida (uno de CJR y uno de EESS02SB); 7 TOP de Perú con
   etapa "seguimiento1" o "seguimiento2" y un ingreso anterior pasan a
   "seguimiento". Quedan 9 grupos duplicados dudosos (19 registros) y 25 TOP de
   Perú con "seguimiento1/2" sin ingreso previo, a confirmar con los centros.
