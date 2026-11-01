@@ -162,7 +162,7 @@ def render(pais, llamar=None):
     df = tabla_centros(res.get('centros'))
     n_activas = int((df['Clave'] == 'Activa').sum())
     st.markdown(f'**{len(df)} centros** · {n_activas} con clave activa')
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width='stretch', hide_index=True)
 
     # La clave recién creada se muestra una sola vez, hasta la próxima acción.
     nueva = st.session_state.pop(f'{k}_nueva', None)

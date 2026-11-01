@@ -337,7 +337,7 @@ def render(df, pais, centro_id=None):
             paper_bgcolor='white',
         )
 
-        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig, width='stretch', config={'displayModeBar': False})
 
         # Pequeña nota debajo con el desglose de "Otras" si hay algo relevante
         if otras_desglose.get('no_informativo', 0) + otras_desglose.get('en_blanco', 0) + otras_desglose.get('multiple', 0) > 0:

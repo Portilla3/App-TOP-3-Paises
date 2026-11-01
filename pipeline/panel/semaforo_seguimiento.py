@@ -133,7 +133,7 @@ def render(df, pais, centro_id=None):
 
         fig = _figura(datos)
         if fig:
-            st.plotly_chart(fig, use_container_width=True,
+            st.plotly_chart(fig, width='stretch',
                             config={'displayModeBar': False})
 
         # Leyenda con n y %

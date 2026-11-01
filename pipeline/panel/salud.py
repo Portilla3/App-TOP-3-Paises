@@ -139,7 +139,7 @@ def render(df, pais, centro_id=None):
             st.caption('Sin datos de salud disponibles para este país.')
             return
 
-        st.plotly_chart(_figura(datos), use_container_width=True,
+        st.plotly_chart(_figura(datos), width='stretch',
                         config={'displayModeBar': False})
 
         st.markdown(

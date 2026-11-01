@@ -289,5 +289,5 @@ def boton_descarga(df, pais, centro_id=None):
         data=excel_bytes,
         file_name=nombre_archivo,
         mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        use_container_width=True,
+        width='stretch',
     )

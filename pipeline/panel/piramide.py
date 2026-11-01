@@ -144,7 +144,7 @@ def render(df, pais, centro_id=None):
             st.caption('Sin datos de sexo disponibles.')
             return
 
-        st.plotly_chart(_figura_dona(datos), use_container_width=True,
+        st.plotly_chart(_figura_dona(datos), width='stretch',
                         config={'displayModeBar': False})
 
         # Métricas debajo: n y % por grupo

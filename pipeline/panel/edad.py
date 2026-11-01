@@ -139,7 +139,7 @@ def render(df, pais, centro_id=None):
             st.caption('Sin datos de edad disponibles.')
             return
 
-        st.plotly_chart(_figura(datos), use_container_width=True,
+        st.plotly_chart(_figura(datos), width='stretch',
                         config={'displayModeBar': False})
 
         # Nota al pie con promedio

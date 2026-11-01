@@ -165,7 +165,7 @@ def render(df, pais, centro_id=None):
 
         st.plotly_chart(
             _figura(resultado, sin_top2, prom_nac),
-            use_container_width=True,
+            width='stretch',
             config={'displayModeBar': False}
         )
 

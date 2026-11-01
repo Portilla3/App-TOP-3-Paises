@@ -94,7 +94,7 @@ def render(df, centro):
                 'ultima_fecha': 'Última medición', 'dias': 'Días desde entonces',
                 'n_mediciones': 'N° mediciones totales'
             }),
-            use_container_width=True, hide_index=True,
+            width='stretch', hide_index=True,
         )
         st.caption('Ordenado por urgencia: más atrasados primero. '
                    'Umbrales: 🟢 0-44 días · 🟡 45-89 días · 🔴 90+ días.')

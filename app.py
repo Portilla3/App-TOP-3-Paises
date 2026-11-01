@@ -740,7 +740,7 @@ def _mostrar_login():
             )
             clave = st.text_input('Contraseña', type='password', key='login_clave',
                                   placeholder='Ingresa tu contraseña')
-            if st.button('Ingresar →', use_container_width=True, key='btn_login'):
+            if st.button('Ingresar →', width='stretch', key='btn_login'):
                 if pais_sel == '':
                     st.error('❌ Selecciona un país o institución.')
                 elif _verificar_login(pais_sel, clave):
@@ -755,7 +755,7 @@ def _mostrar_login():
                                           placeholder='CET039598')
             clave_centro  = st.text_input('Contraseña', type='password', key='login_clave_centro',
                                           placeholder='Ingresa tu contraseña')
-            if st.button('Ingresar →', use_container_width=True, key='btn_login_centro'):
+            if st.button('Ingresar →', width='stretch', key='btn_login_centro'):
                 if not correo_centro or not clave_centro:
                     st.error('❌ Completa el código de centro y la contraseña.')
                 else:
@@ -787,7 +787,7 @@ if st.session_state.get('rol_centro'):
     with st.sidebar:
         st.markdown(f'**Centro:** {centro_actual}')
         st.markdown(f'**País:** {pais_actual}')
-        if st.button('🚪 Cerrar sesión', use_container_width=True, key='btn_logout_centro'):
+        if st.button('🚪 Cerrar sesión', width='stretch', key='btn_logout_centro'):
             for k in ['autenticado', 'rol_centro', 'rol_pais']:
                 st.session_state.pop(k, None)
             st.rerun()
@@ -840,7 +840,7 @@ with st.sidebar:
     st.caption(f'QALAT v5.0 · {datetime.now().strftime("%d/%m/%Y")}')
     st.markdown(f'**Sesión:** {rol_lbl}')
     st.markdown('---')
-    if st.button('🚪 Cerrar sesión', use_container_width=True, key='btn_logout'):
+    if st.button('🚪 Cerrar sesión', width='stretch', key='btn_logout'):
         for k in ['autenticado','rol_pais','supabase_path','supabase_df',
                   'filename','result','outputs','seleccion','wide_path','work_dir','raw_path',
                   'corr_registros','corr_editando','corr_confirm_del']:
@@ -896,7 +896,7 @@ with tab_panel:
             )
         with col_refresh:
             st.markdown('<div style="height:1.7rem"></div>', unsafe_allow_html=True)
-            if st.button('🔄 Actualizar', use_container_width=True, key='panel_refresh_unodc'):
+            if st.button('🔄 Actualizar', width='stretch', key='panel_refresh_unodc'):
                 invalidar_cache_pais()
                 st.rerun()
     else:
@@ -911,7 +911,7 @@ with tab_panel:
             )
         with col_refresh:
             st.markdown('<div style="height:.5rem"></div>', unsafe_allow_html=True)
-            if st.button('🔄 Actualizar', use_container_width=True, key='panel_refresh_pais'):
+            if st.button('🔄 Actualizar', width='stretch', key='panel_refresh_pais'):
                 invalidar_cache_pais()
                 st.rerun()
 
@@ -1083,7 +1083,7 @@ with tab_reportes:
             unsafe_allow_html=True
         )
     with _hcol2:
-        if st.button('Actualizar datos', use_container_width=True, key='rep_refresh'):
+        if st.button('Actualizar datos', width='stretch', key='rep_refresh'):
             for _k in ['supabase_path','supabase_df','filename','result','outputs','wide_path','work_dir']:
                 st.session_state.pop(_k, None)
             st.rerun()
@@ -1108,7 +1108,7 @@ with tab_reportes:
         unsafe_allow_html=True
     )
     if supabase_data is not None:
-        if st.button('Generar y descargar Base Wide', key='q_wide', use_container_width=True):
+        if st.button('Generar y descargar Base Wide', key='q_wide', width='stretch'):
             with st.spinner('Generando Base Wide...'):
                 try:
                     _rq = procesar_wide(st.session_state['supabase_path'])
@@ -1123,7 +1123,7 @@ with tab_reportes:
                 data=st.session_state['dl_quick_wide'],
                 file_name=f'TOP_Base_Wide_{datetime.now().strftime("%Y-%m-%d")}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                use_container_width=True, key='save_wide')
+                width='stretch', key='save_wide')
 
     st.markdown('<div style="height:.8rem"></div>', unsafe_allow_html=True)
 
@@ -1234,7 +1234,7 @@ with tab_reportes:
                     f'<div class="btn-wrap-{key}">',
                     unsafe_allow_html=True
                 )
-                if st.button(f'Descargar {label}', key=f'btn_{key}', use_container_width=True):
+                if st.button(f'Descargar {label}', key=f'btn_{key}', width='stretch'):
                     with st.spinner(f'Generando {label}...'):
                         try:
                             _wr = procesar_wide(st.session_state['supabase_path'],
@@ -1258,7 +1258,7 @@ with tab_reportes:
                     _b, _f2, _m = st.session_state[f'dl_{key}']
                     st.download_button(f'Guardar {label} (.xlsx/.docx/.pptx)',
                         data=_b.getvalue(), file_name=_f2, mime=_m,
-                        use_container_width=True, key=f'save_{key}')
+                        width='stretch', key=f'save_{key}')
             else:
                 st.caption('Sin datos cargados')
 
@@ -1415,7 +1415,7 @@ with tab_reportes:
             tab = pend[cs].copy()
             tab['_o'] = tab['Alerta_TOP2'].apply(lambda x: 0 if '90' in str(x) else 1)
             tab = tab.sort_values(['_o','Dias_desde_TOP1'],ascending=[True,False]).drop(columns='_o')
-            st.dataframe(tab.head(30), use_container_width=True, height=280)
+            st.dataframe(tab.head(30), width='stretch', height=280)
 
         with st.expander('📋 Log de procesamiento'):
             for log in R['logs']: st.text(log)
@@ -1439,7 +1439,7 @@ with tab_reportes:
                 data=R['excel_bytes'].getvalue(),
                 file_name=f'TOP_Base_Wide_{fname_base}_{today_str}.xlsx',
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                use_container_width=True, key='dl_wide')
+                width='stretch', key='dl_wide')
 
         for key,col,dlkey in [('caract_excel',d2,'dl_ce'),('seg_excel',d3,'dl_se')]:
             o=outputs.get(key,{}); lbl,fmt,desc=LABELS[key]
@@ -1447,7 +1447,7 @@ with tab_reportes:
                 st.markdown(f'<div class="outcard"><h4>{lbl}</h4><p>{desc}</p></div>', unsafe_allow_html=True)
                 if not sel.get(key,False):    st.caption('No seleccionado')
                 elif o.get('ok'):             st.download_button(f'⬇️ {fmt}',data=o['buf'].getvalue(),
-                                                  file_name=o['fname'],mime=o['mime'],use_container_width=True,key=dlkey)
+                                                  file_name=o['fname'],mime=o['mime'],width='stretch',key=dlkey)
                 else:                         st.warning(f"⚠️ {o.get('error','Error')[:100]}")
 
         st.markdown('---')
@@ -1458,7 +1458,7 @@ with tab_reportes:
                 st.markdown(f'<div class="outcard"><h4>{lbl}</h4><p>{desc}</p></div>', unsafe_allow_html=True)
                 if not sel.get(key,False):    st.caption('No seleccionado')
                 elif o.get('ok'):             st.download_button(f'⬇️ {fmt}',data=o['buf'].getvalue(),
-                                                  file_name=o['fname'],mime=o['mime'],use_container_width=True,key=dlkey)
+                                                  file_name=o['fname'],mime=o['mime'],width='stretch',key=dlkey)
                 else:                         st.warning(f"⚠️ {o.get('error','Error')[:100]}")
 
         st.markdown('---')
@@ -1469,7 +1469,7 @@ with tab_reportes:
                 st.markdown(f'<div class="outcard"><h4>{lbl}</h4><p>{desc}</p></div>', unsafe_allow_html=True)
                 if not sel.get(key,False):    st.caption('No seleccionado')
                 elif o.get('ok'):             st.download_button(f'⬇️ {fmt}',data=o['buf'].getvalue(),
-                                                  file_name=o['fname'],mime=o['mime'],use_container_width=True,key=dlkey)
+                                                  file_name=o['fname'],mime=o['mime'],width='stretch',key=dlkey)
                 else:                         st.warning(f"⚠️ {o.get('error','Error')[:100]}")
 
         # ── Distribución por centros ──────────────────────────────────────────
@@ -1505,7 +1505,7 @@ with tab_reportes:
             n_centros = len(centros_disponibles)
             st.caption(f'Se generarán **{n_centros} carpetas** — una por cada centro detectado')
 
-            if st.button('📦 Generar paquetes por centro', use_container_width=True, key='btn_dist'):
+            if st.button('📦 Generar paquetes por centro', width='stretch', key='btn_dist'):
                 wide_path_dist = st.session_state['wide_path']
                 status_box = st.empty()
                 prog_dist  = st.progress(0, text='Iniciando...')
@@ -1527,7 +1527,7 @@ with tab_reportes:
                         data=zip_buf.getvalue(),
                         file_name=f'QALAT_Paquetes_Centros_{today_str}.zip',
                         mime='application/zip',
-                        use_container_width=True, key='dl_dist'
+                        width='stretch', key='dl_dist'
                     )
                 except Exception as e:
                     st.error(f'❌ Error generando paquetes: {e}')

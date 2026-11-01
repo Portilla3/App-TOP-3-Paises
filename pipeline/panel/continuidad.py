@@ -157,7 +157,7 @@ def render(df, pais, centro_id=None):
         if total <= TOP_N_VISIBLE:
             st.plotly_chart(
                 _grafico(ranking, centro_id, prom_nac),
-                use_container_width=True,
+                width='stretch',
                 config={'displayModeBar': False}
             )
         else:
@@ -165,13 +165,13 @@ def render(df, pais, centro_id=None):
             resto = ranking.iloc[TOP_N_VISIBLE:].reset_index(drop=True)
             st.plotly_chart(
                 _grafico(top, centro_id, prom_nac),
-                use_container_width=True,
+                width='stretch',
                 config={'displayModeBar': False}
             )
             with st.expander(f'▼ Ver otros {len(resto)} centros'):
                 st.plotly_chart(
                     _grafico(resto, centro_id, prom_nac),
-                    use_container_width=True,
+                    width='stretch',
                     config={'displayModeBar': False}
                 )
 

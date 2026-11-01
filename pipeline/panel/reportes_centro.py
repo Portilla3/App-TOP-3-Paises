@@ -93,7 +93,7 @@ def _boton_reporte(col, key, centro, raw_path):
             f'<div class="btn-wrap-centro-{key}">',
             unsafe_allow_html=True
         )
-        if st.button(f'Generar {fmt}', key=f'btn_gen_centro_{key}', use_container_width=True):
+        if st.button(f'Generar {fmt}', key=f'btn_gen_centro_{key}', width='stretch'):
             with st.spinner(f'Generando {lbl}...'):
                 try:
                     _wr = procesar_wide(raw_path, filtro_centro=centro)
@@ -113,7 +113,7 @@ def _boton_reporte(col, key, centro, raw_path):
         if f'dl_centro_{key}' in st.session_state:
             _b, _f2, _m = st.session_state[f'dl_centro_{key}']
             st.download_button(f'⬇️ Descargar {fmt}', data=_b.getvalue(), file_name=_f2, mime=_m,
-                                use_container_width=True, key=f'save_centro_{key}')
+                                width='stretch', key=f'save_centro_{key}')
 
 
 def render(df_pais_raw, centro, rename_map):

@@ -167,7 +167,7 @@ def _pintar_grid_y_leyenda(actividad, centro_id):
         showlegend=False,
     )
 
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig, width='stretch', config={'displayModeBar': False})
 
     # Leyenda tipo mockup: "Al día (0 a 14 días): N"
     colores_actuales = [color_semaforo(d) for d in actividad['dias']]

@@ -120,19 +120,19 @@ def _render_seccion(titulo, subtitulo, ranking_df, col_n, col_label,
     total = len(ranking_df)
     if total <= TOP_N_VISIBLE:
         st.plotly_chart(fn_grafico(ranking_df, centro_id),
-                        use_container_width=True,
+                        width='stretch',
                         config={'displayModeBar': False},
                         key=f'{key_prefix}_main')
     else:
         top   = ranking_df.head(TOP_N_VISIBLE).reset_index(drop=True)
         resto = ranking_df.iloc[TOP_N_VISIBLE:].reset_index(drop=True)
         st.plotly_chart(fn_grafico(top, centro_id),
-                        use_container_width=True,
+                        width='stretch',
                         config={'displayModeBar': False},
                         key=f'{key_prefix}_top')
         with st.expander(f'▼ Ver otros {len(resto)} centros'):
             st.plotly_chart(fn_grafico(resto, centro_id),
-                            use_container_width=True,
+                            width='stretch',
                             config={'displayModeBar': False},
                             key=f'{key_prefix}_resto')
 

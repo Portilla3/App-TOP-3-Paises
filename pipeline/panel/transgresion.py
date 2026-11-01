@@ -154,7 +154,7 @@ def render(df, pais, centro_id=None):
             return
 
         # Dona
-        st.plotly_chart(_figura_dona(datos), use_container_width=True,
+        st.plotly_chart(_figura_dona(datos), width='stretch',
                         config={'displayModeBar': False})
 
         # Desglose por tipo: solo % arriba en rojo y label abajo
