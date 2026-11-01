@@ -197,10 +197,9 @@ El clasificador actual los resuelve bien y el texto original está en
 ## Código
 
 **Resuelto el 2026-11-01 · corrección de registros dentro de la app.** Ver
-DECISIONES.md, "Los registros se corrigen dentro de la app, con bitácora". Queda
-pendiente: los siete formularios de corrección (`correccion_top_*.html`) siguen
-publicados en GitHub Pages y ya no funcionan; ponerles un aviso o retirarlos.
-*2026-11-01*
+DECISIONES.md, "Los registros se corrigen dentro de la app, con bitácora". Los
+siete formularios de corrección (`correccion_top_*.html`) quedaron como un aviso
+que remite a la app. *2026-11-01*
 
 **Semanas en blanco en VIF y en días de trabajo y educación.** Los formularios
 las suman como cero, igual que en sustancias, pero la regla no está decidida.

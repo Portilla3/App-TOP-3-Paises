@@ -85,3 +85,18 @@ def test_el_permiso_publico_sobre_la_base_es_solo_agregar():
     assert 'GRANT INSERT ON public.top_registros TO anon;' in activo
     assert 'REVOKE ALL ON public.top_registros FROM anon, authenticated;' in activo
     assert not re.search(r'GRANT\s+[^;]*(SELECT|UPDATE|DELETE)[^;]*top_registros\s+TO\s+anon', activo)
+
+
+CORRECCION = ['correccion_top_peru.html', 'correccion_top_ecuador.html',
+              'correccion_top_elsalvador.html', 'correccion_top_mexico.html',
+              'correccion_top_mexicocij.html', 'correccion_top_montefenix.html',
+              'correccion_top_mahanaim.html']
+
+
+@pytest.mark.parametrize('nombre', CORRECCION)
+def test_los_formularios_de_correccion_viejos_solo_remiten_a_la_app(nombre):
+    """Desde el 2026-11-01 son un aviso: no llevan llave ni hablan con la base."""
+    html = _leer(nombre)
+    assert 'monitoreo-tratamiento-top3.streamlit.app' in html
+    for prohibido in ('sb_publishable', 'SUPABASE', 'rest/v1', 'fetch('):
+        assert prohibido not in html, f'{nombre} todavía contiene {prohibido}'

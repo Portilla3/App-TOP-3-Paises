@@ -21,6 +21,10 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
   cachés del panel y de Reportes.
 - Pruebas nuevas en `tests/test_correccion.py` (63, incluidas las de la función en
   Postgres, que se saltan si `pgserver` no está instalado). Pasan las 295.
+- Los siete formularios de corrección (`correccion_top_*.html`) pasan a ser un aviso
+  que remite a la pestaña de la app; ya no llevan la llave pública ni el código que
+  modificaba la base. Siete pruebas nuevas en `tests/test_formularios.py`; pasan
+  las 302.
 
 ## 2026-10-31
 
