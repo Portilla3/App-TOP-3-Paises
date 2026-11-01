@@ -204,7 +204,9 @@ que remite a la app. *2026-11-01*
 
 **Resuelto el 2026-11-01 · versiones abiertas y pruebas con otro Python.** Ver
 DECISIONES.md, "Las versiones se fijan exactas". Quedan del punto 10 del
-diagnóstico: poner caché al panel del centro.
+diagnóstico: poner caché al panel del centro. La primera corrida con pandas 3.1
+avisó que `inplace` se retira en pandas 4 (`wide_top.py`, línea 406, y otros
+usos de `inplace=True` en el código); hay que cambiarlos antes de subir a pandas 4.
 
 **Postergado el 2026-11-01 · claves de país nuevas con límite de intentos**
 (punto 11 del diagnóstico). Rodrigo no lo ve crítico por ahora. Hoy la clave de
