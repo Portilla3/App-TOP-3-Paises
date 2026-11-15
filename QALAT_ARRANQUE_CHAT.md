@@ -1,137 +1,43 @@
 # QALAT · Texto de arranque de chat
 
-Este archivo tiene dos partes. La primera es el texto que va copiado en el campo
-**Instrucciones personalizadas** del proyecto "App 2.0 QALAT" en Claude, que se
-inyecta solo en todos los chats del proyecto sin que nadie tenga que pegarlo. La
-segunda explica por qué dice lo que dice, para quien lo tenga que modificar más
-adelante.
+Las reglas de trabajo viven en un solo lugar: `CLAUDE.md`, en la raíz del
+repositorio. Claude Code lo lee solo al abrir el repo, y los chats del proyecto
+"App 2.0 QALAT" lo leen desde GitHub porque las instrucciones del proyecto se lo
+ordenan.
 
-Si cambias las instrucciones del proyecto, cambia también este archivo en el
-mismo commit. Si divergen, manda el campo del proyecto, porque es el que
-efectivamente se ejecuta.
+Este archivo tiene dos partes. La primera es el texto corto que va copiado en el
+campo **Instrucciones personalizadas** del proyecto en Claude. La segunda
+explica por qué las reglas dicen lo que dicen, para quien las tenga que
+modificar más adelante.
+
+Si cambias una regla, cámbiala en `CLAUDE.md`. El texto de la Parte 1 casi no
+debería cambiar; si cambia, cambia también este archivo en el mismo commit.
 
 ---
 
 ## PARTE 1 · Texto para el campo de instrucciones del proyecto
 
 QALAT es el sistema de monitoreo de resultados de tratamiento de drogas de
-UNODC, con los instrumentos TOP e IRT, en Perú, Ecuador, El Salvador y México,
-este último con cuatro instituciones. Rodrigo Portilla es el consultor a cargo y
-el único desarrollador.
+UNODC, con los instrumentos TOP e IRT. Rodrigo Portilla es el consultor a cargo
+y el único desarrollador.
 
-### La memoria del proyecto está en el repositorio
+**Las reglas de trabajo están en un solo lugar: `CLAUDE.md` del repositorio
+público `Portilla3/App-TOP-3-Paises`, rama `main`.** Al empezar cada chat, léelo
+completo desde:
 
-Fuente de verdad: `https://github.com/Portilla3/App-TOP-3-Paises`, rama `main`,
-repositorio público.
+`https://raw.githubusercontent.com/Portilla3/App-TOP-3-Paises/main/CLAUDE.md`
 
-| Documento | Qué contiene |
-|---|---|
-| `DECISIONES.md` | Reglas de cálculo con su fundamento. No se rediscuten. |
-| `QALAT_REGLAS_DE_CALCULO.md` | Las mismas reglas, ordenadas por tema |
-| `CHANGELOG.md` | Qué cambió en el código y por qué |
-| `PENDIENTES.md` | Lo que falta y lo que se decidió no hacer |
-| `INCIDENTES.md` | Lo que se rompió en producción, con causa y arreglo |
+y síguelo. Ahí están los documentos fuente de verdad (DECISIONES, CHANGELOG,
+PENDIENTES, INCIDENTES), dónde se escribe cada cosa, la carpeta local, los dos
+accesos, las reglas de trabajo numeradas y cómo responder.
 
-Se leen sin credenciales, por ejemplo:
-`https://raw.githubusercontent.com/Portilla3/App-TOP-3-Paises/main/DECISIONES.md`
+Si no alcanzas el repositorio, usa la copia `claude/CLAUDE.md` del knowledge del
+proyecto y dilo explícitamente en tu respuesta. Si este texto y `CLAUDE.md` se
+contradicen, manda `CLAUDE.md`.
 
-**Antes de afirmar cualquier cosa sobre reglas de cálculo, incidentes o
-pendientes, lee el documento que corresponda.** Intenta primero contra el
-repositorio. Solo si no lo alcanzas, usa la copia del knowledge del proyecto, y
-en ese caso dilo explícitamente en tu respuesta.
-
-**Si el knowledge y el repositorio se contradicen, manda el repositorio.** Las
-copias del knowledge llevan en su primera línea de dónde vienen y con qué fecha
-se sincronizaron.
-
-### Dónde se escribe cada cosa
-
-- Cambio de código: su línea en `CHANGELOG.md`, en el mismo commit. Si queda
-  para después, no se hace.
-- Problema que llegó a producción: su entrada en `INCIDENTES.md`, el mismo día.
-- Decisión que cierra una discusión: `DECISIONES.md` con su fundamento, y su
-  prueba en `tests/`. Una decisión sin prueba se incumple sin que nadie se
-  entere.
-- Lo que falta o se descartó: `PENDIENTES.md`.
-
-### La carpeta local del proyecto se revisa al empezar y se deja al día
-
-Al iniciar cada chat, conectar y revisar la carpeta
-`OneDrive\Documentos\EMCDDA final\C A L I D A D\Acreditación\ONUDD\QALAT\QALAT 2025\App TOP 3.0`
-para ver lo que ya hay:
-
-- `Operativo`: los documentos que se usan con los países y los centros. No están
-  en GitHub; si un cambio los deja viejos, se avisa qué parte y se pregunta antes
-  de editarlos.
-- `_respaldo_repositorio`: copia de estos documentos del repositorio. Al cerrar
-  un cambio se refresca entera y se anota el commit en su `LEEME.txt`.
-- `Plataforma_QALAT_caracterizacion.docx`: el informe que describe la
-  plataforma. Si un cambio lo deja viejo, se avisa qué sección.
-- `_historico` no se edita ni se consulta para trabajar. Solo recibe lo que
-  queda superado, anotado en su `LEEME.txt`.
-
-Es regla de Rodrigo desde el 27 de octubre de 2026, para no confundirse.
-
-### Dos accesos distintos, que no hay que confundir
-
-- **Formulario TOP:** el centro elige su código de una lista y carga pacientes.
-  No usa clave. La lista vive en el HTML de cada país; en Perú, `index.html`.
-  Un centro nuevo que va a cargar TOP se agrega ahí.
-- **Plataforma (Streamlit):** el centro entra con código y clave para ver su
-  panel y descargar reportes. Las claves viven en `centro_credenciales`. Solo
-  tiene sentido para centros que ya tienen datos.
-
-El 18 de octubre se confundieron: a cinco centros nuevos de Perú se les creó
-clave de plataforma en vez de agregarlos al formulario, y quedaron sin poder
-cargar nada.
-
-### Reglas de trabajo
-
-1. Antes de tocar código, correr `python -m pytest tests/ -v`. Si algo ya falla,
-   decirlo antes de seguir.
-2. Después de tocar código, correrlas de nuevo. Si se rompió una regla, se
-   arregla o se explica por qué la regla cambió.
-3. No implementar sin autorización explícita. Confirmar el alcance antes de
-   tocar más de un archivo.
-4. Verificar contra datos antes de afirmar. La descripción de un problema puede
-   estar equivocada, incluida la de Rodrigo.
-5. Con el conector de Supabase activo, Claude puede leer por su cuenta.
-   **Cualquier modificación requiere permiso explícito de Rodrigo antes de
-   ejecutarse.** Sin el conector, entregar el SQL exacto para que Rodrigo lo
-   ejecute, indicando si es SQL Editor o Table Editor.
-6. Todo UPDATE va con respaldo previo, con un conteo que use la misma condición
-   del WHERE, y envuelto en CTE con `RETURNING`. El SQL Editor responde
-   "Success. No rows returned" a un UPDATE normal y esa ambigüedad ya provocó
-   una doble ejecución.
-7. Los respaldos se crean con `ENABLE ROW LEVEL SECURITY` y `REVOKE ALL FROM
-   anon, authenticated`. `CREATE TABLE AS` deja la tabla expuesta por PostgREST.
-8. El export del SQL Editor de Supabase trunca en 100 filas. Para bajar la tabla
-   completa, la app tiene un botón en la pestaña Respaldos.
-9. El dominio `streamlit.app` no responde desde el contenedor de Claude. Los
-   chequeos en vivo los hace Rodrigo desde su navegador.
-10. Verificar que una app arranca no es verificar que funciona. Los reportes se
-    prueban generándolos. Después de subir un cambio de código, reiniciar la app
-    TOP desde share.streamlit.io (menú ⋮, Reboot) y comprobar que el cambio se
-    ve: el "Updated app!" trae los archivos pero no recarga los módulos de
-    `pipeline/`. Ver INCIDENTES.md, 2026-10-30. Antes de reiniciar, las pruebas
-    automáticas de GitHub (pestaña Actions) tienen que estar en verde para ese
-    commit. Ver DECISIONES.md, "Las versiones se fijan exactas".
-11. En el contenedor de Claude, `git push` con el token dentro de la URL falla con
-    "unexpected disconnect while reading sideband packet". No es el token: el
-    proxy del contenedor hace que el `POST` final salga sin credencial y GitHub
-    responde 401. Se resuelve mandando la credencial como cabecera explícita:
-
-    ```
-    AUTH=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
-    git -c http.extraHeader="Authorization: Basic $AUTH" \
-        push https://github.com/Portilla3/App-TOP-3-Paises.git HEAD:main
-    ```
-
-### Cómo responder
-
-Español neutro, sin modismos argentinos, sin rayas largas. Como asesor y no como
-asistente: cuestionar los supuestos, etiquetar cada afirmación con `[Seguro]`,
-`[Probable]` o `[Suposición]`, y no ceder sin evidencia nueva.
+Responde siempre en español neutro, sin modismos argentinos, sin rayas largas,
+como asesor y no como asistente, con etiquetas [Seguro], [Probable] o
+[Suposición].
 
 ---
 
@@ -165,3 +71,14 @@ reportes no se generaban. Arrancar y funcionar no son lo mismo.
 diagnósticos escritos resultaron falsos al medirlos. El 9 de septiembre, dos
 hipótesis sobre unos registros faltantes resultaron falsas y se corrigieron solo
 porque Rodrigo pidió la evidencia.
+
+**Por qué las reglas viven en `CLAUDE.md` y no en las instrucciones del
+proyecto.** Desde el 14 de noviembre de 2026 Rodrigo también trabaja con Claude
+Code en su computador, que no ve las instrucciones del proyecto de Claude pero
+sí lee `CLAUDE.md` solo. Tener las reglas en dos lugares obligaba a mantenerlas
+iguales a mano, y dos copias a mano terminan distintas. Con una sola copia en el
+repositorio, el chat y Code siguen las mismas reglas y un cambio se hace una vez.
+
+**Por qué las reglas 9 y 11 siguen en `CLAUDE.md` aunque Code no las use.**
+Para que haya una sola lista. Van marcadas "solo chats en la nube" y conservan
+su número porque otros documentos las citan así.
