@@ -39,6 +39,14 @@ MENSAJES_SIN_DATOS = (
 )
 
 
+# Codificación con la que el script de reporte escribe su salida y con la que
+# el runner la lee. Se fija en los dos extremos (PYTHONIOENCODING en el hijo,
+# encoding= en subprocess.run) para que no dependa del sistema operativo: en
+# Windows la codificación local es cp1252 y los acentos de MENSAJES_SIN_DATOS
+# llegaban rotos, así que el aviso de falta de datos se mostraba como error.
+_ENCODING_SUBPROCESO = 'utf-8'
+
+
 def es_falta_de_datos(mensaje):
     """True si el mensaje describe una falta de datos y no una falla técnica."""
     texto = str(mensaje or '')
@@ -192,11 +200,13 @@ def run_script(script_key, wide_path, filtro_centro=None):
             env['QALAT_WIDE']   = wide_path
             env['QALAT_OUT']    = out_path
             env['QALAT_CENTRO'] = filtro_centro or ''
+            env['PYTHONIOENCODING'] = _ENCODING_SUBPROCESO
 
             try:
                 r = subprocess.run(
                     [sys.executable, tmp_py],
                     capture_output=True, text=True,
+                    encoding=_ENCODING_SUBPROCESO, errors='replace',
                     timeout=180, env=env
                 )
                 if r.returncode != 0:
@@ -218,11 +228,13 @@ def run_script(script_key, wide_path, filtro_centro=None):
             env['QALAT_WIDE']   = wide_path
             env['QALAT_OUT']    = out_path
             env['QALAT_CENTRO'] = filtro_centro or ''
+            env['PYTHONIOENCODING'] = _ENCODING_SUBPROCESO
 
             try:
                 r = subprocess.run(
                     [sys.executable, tmp_py],
                     capture_output=True, text=True,
+                    encoding=_ENCODING_SUBPROCESO, errors='replace',
                     timeout=180, env=env
                 )
                 if r.returncode != 0:

@@ -124,6 +124,21 @@ def test_sin_ningun_seguimiento_los_reportes_de_seguimiento_avisan(reporte):
     assert es_falta_de_datos(info.value), f'error técnico en vez de aviso: {str(info.value)[-300:]}'
 
 
+@pytest.mark.parametrize('reporte', ['pdf_seg', 'pptx_seg'])
+def test_el_aviso_llega_con_sus_acentos_aunque_el_sistema_no_use_utf8(reporte, monkeypatch):
+    """En Windows la codificación local es cp1252: el proceso del reporte y el
+    runner no coincidían, 'Todavía' llegaba como 'TodavÃ­a' y el aviso de falta
+    de datos se mostraba como error técnico. Aquí se le impone al proceso del
+    reporte una codificación que no coincide con la local de ningún sistema
+    (UTF-16), así que sin la corrección la prueba falla en Windows y en Linux,
+    donde corre GitHub."""
+    monkeypatch.setenv('PYTHONIOENCODING', 'utf-16')
+    ruta = _wide(base_sintetica('Perú', n_pacientes=8, con_seguimiento=False))
+    with pytest.raises(Exception) as info:
+        run_script(reporte, ruta)
+    assert 'Todavía no hay ningún TOP de seguimiento' in str(info.value), str(info.value)[-300:]
+
+
 # ── Hoja "TOP sin ingreso" de la base wide ────────────────────────────────────
 # DECISIONES.md, "Los TOP sin ingreso se listan aparte". El caso que la motivó:
 # un TOP de egreso de CIJ que figuraba en la revisión enviada al país y que el

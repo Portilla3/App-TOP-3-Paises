@@ -6,6 +6,19 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-11-14
+
+- Reportes: `pipeline/runner.py` fija UTF-8 en los dos extremos del proceso
+  aparte que arma el Word, el Excel de seguimiento y el PowerPoint
+  (`PYTHONIOENCODING` para el hijo y `encoding='utf-8', errors='replace'` en
+  `subprocess.run`, constante `_ENCODING_SUBPROCESO`). En Windows la salida se
+  leía como cp1252, "Todavía" llegaba como "TodavÃ­a" y el aviso de falta de
+  datos se mostraba como error técnico: fallaban 2 pruebas en una máquina
+  Windows. En Linux (GitHub y Streamlit Cloud) no fallaba porque los dos
+  extremos coincidían por defecto. Prueba nueva en `tests/test_reportes.py` que
+  impone UTF-16 al proceso del reporte, así detecta el defecto en cualquier
+  sistema. Pasan 302 y se saltan 9.
+
 ## 2026-11-01
 
 - Despliegue: `requirements.txt` pasa de rangos a versiones exactas, las 49 que
