@@ -21,6 +21,11 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
   `fecha_ingreso`; la Base Wide la arrastra sola como `fecha_ingreso_TOP1` y
   `_TOP2`. Pruebas nuevas en `tests/test_formularios.py` y
   `tests/test_correccion.py`. Ver DECISIONES.md, "TOP versión 2".
+- Corrección de registros: `fecha_ingreso` pasa a `IDENTIFICACION` en
+  `pipeline/panel/correccion.py`, así se muestra con los datos de identificación
+  y no con el consumo. `construir_cambios` rechaza una fecha de ingreso posterior
+  a la fecha de entrevista, al corregir cualquiera de las dos, igual que el
+  formulario y sin límite de días. Pruebas nuevas en `tests/test_correccion.py`.
 
 ## 2026-11-14
 

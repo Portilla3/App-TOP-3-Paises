@@ -281,3 +281,22 @@ def test_la_fecha_de_ingreso_se_corrige_como_fecha():
     assert C.normalizar('fecha_ingreso', 'ayer', {})[1]
     # No es obligatoria: fuera de la etapa Ingreso va vacía.
     assert C.normalizar('fecha_ingreso', 'vacío', {}) == (None, None)
+
+
+def test_la_fecha_de_ingreso_va_con_la_identificacion():
+    assert C.grupo_de('fecha_ingreso') == 'Identificación'
+
+
+def test_la_fecha_de_ingreso_no_puede_ser_posterior_a_la_entrevista():
+    """Igual que en el formulario (DECISIONES.md, "TOP versión 2"). Sin límite de días."""
+    ing = dict(REGISTRO, etapa='ingreso', fecha_ingreso=None)
+    _, errores = C.construir_cambios(ing, {'fecha_ingreso': '2026-10-20'}, OPC, CAMPOS, hoy=HOY)
+    assert [c for c, _ in errores] == ['fecha_ingreso']
+    # También si lo que se corrige es la entrevista y queda antes del ingreso.
+    con_fecha = dict(ing, fecha_ingreso='2026-10-10')
+    _, errores = C.construir_cambios(con_fecha, {'fecha_entrevista': '2026-10-05'}, OPC, CAMPOS, hoy=HOY)
+    assert [c for c, _ in errores] == ['fecha_ingreso']
+    # El mismo día vale, y tres meses antes también: los 30 días van en el análisis.
+    for texto in ('2026-10-16', '2026-07-16'):
+        cambios, errores = C.construir_cambios(ing, {'fecha_ingreso': texto}, OPC, CAMPOS, hoy=HOY)
+        assert errores == [] and cambios == {'fecha_ingreso': texto}, texto

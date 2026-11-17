@@ -42,7 +42,7 @@ LISTAS = ('centro', 'etapa', 'sexo', 'sustancia_principal')
 OBLIGATORIOS = {'centro', 'etapa', 'codigo_paciente', 'fecha_entrevista',
                 'fecha_nacimiento', 'sexo', 'nombre_entrevistador', 'sustancia_principal'}
 IDENTIFICACION = ['centro', 'etapa', 'codigo_paciente', 'fecha_entrevista',
-                  'fecha_nacimiento', 'sexo', 'nombre_entrevistador', 'sustancia_principal']
+                  'fecha_ingreso', 'fecha_nacimiento', 'sexo', 'nombre_entrevistador', 'sustancia_principal']
 TRANSGRESION = ['hurto', 'robo', 'venta_droga', 'rina_pelea', 'otra_accion',
                 'otra_accion_desc', 'vif_s4', 'vif_s3', 'vif_s2', 'vif_s1']
 VACIO = 'vacío'
@@ -300,6 +300,13 @@ def construir_cambios(registro, escritos, opciones, campos, hoy=None):
                 errores.append(('fecha_nacimiento', 'la edad máxima es 100 años'))
             elif fe and fn >= fe:
                 errores.append(('fecha_nacimiento', 'tiene que ser anterior a la fecha de entrevista'))
+    # TOP versión 2: la fecha de ingreso no puede ser posterior a la entrevista,
+    # igual que en el formulario. Sin límite de 30 días: eso va en el análisis.
+    if {'fecha_ingreso', 'fecha_entrevista'} & set(cambios) and final.get('fecha_ingreso'):
+        fi = _fecha(str(final['fecha_ingreso'])[:10])
+        fe = _fecha(str(final.get('fecha_entrevista') or '')[:10])
+        if fi and fe and fi > fe:
+            errores.append(('fecha_ingreso', 'no puede ser posterior a la fecha de entrevista'))
     return cambios, errores
 
 
