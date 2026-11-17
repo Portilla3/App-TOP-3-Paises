@@ -51,7 +51,13 @@ def _fila(rng, pais, centro, codigo, nacimiento, sexo, fecha, etapa, ident, prin
         'id': ident, 'created_at': f'{fecha.isoformat()}T12:00:00+00:00',
         'pais': pais, 'centro': centro, 'codigo_paciente': codigo,
         'fecha_nacimiento': nacimiento.isoformat(), 'nombre_entrevistador': 'Prueba',
-        'fecha_entrevista': fecha.isoformat(), 'sexo': sexo, 'etapa': etapa,
+        'fecha_entrevista': fecha.isoformat(),
+        # TOP versión 2: la fecha de ingreso va solo en la etapa Ingreso, entre
+        # 0 y 14 días antes de la entrevista; en las demás etapas, vacía. No usa
+        # `rng`, para que el resto de la base siga siendo la misma de antes.
+        'fecha_ingreso': ((fecha - timedelta(days=ident % 15)).isoformat()
+                          if etapa == 'ingreso' else None),
+        'sexo': sexo, 'etapa': etapa,
         'sustancia_principal': principal,
     }
     del_pais = {PREFIJO_COLUMNA[c] for c in CATEGORIAS_POR_PAIS[pais]}

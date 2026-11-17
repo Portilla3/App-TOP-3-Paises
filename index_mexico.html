@@ -199,11 +199,19 @@
           <label>Etapa <span class="req">*</span></label>
           <select id="etapa" required>
             <option value="">— Seleccione —</option>
-            <option value="ingreso">Ingreso</option>
-            <option value="en_tratamiento">En tratamiento</option>
-            <option value="egreso">Egreso</option>
-            <option value="seguimiento">Seguimiento</option>
+            <option value="ingreso">Ingreso (inicio del tratamiento)</option>
+            <option value="en_tratamiento">Revisión durante el tratamiento</option>
+            <option value="egreso">Egreso (alta o término)</option>
+            <option value="seguimiento">Después del egreso (post-tratamiento, seguimiento)</option>
           </select>
+        </div>
+        <!-- TOP versión 2 (2026-11-16): fecha de ingreso, solo en la etapa Ingreso. -->
+        <div class="campo" id="campo_fecha_ingreso" style="display:none;grid-column:1/-1">
+          <label>Fecha de ingreso al tratamiento <span class="req">*</span></label>
+          <input type="date" id="fecha_ingreso">
+          <small style="color:var(--texto-suave);font-size:.72rem;line-height:1.5">
+            TOP de ingreso: todas las preguntas se refieren a las 4 semanas previas a la fecha de ingreso. Lo ideal es aplicarlo dentro de las primeras 2 semanas.
+          </small>
         </div>
         <div class="campo">
           <label>Código de paciente <span class="req">*</span></label>
@@ -646,8 +654,41 @@ function validarFechas() {
     else if(edad>100){fnEl.classList.add('error');errores.push('La edad máxima del paciente es 100 años.');}
     else{fnEl.classList.remove('error');if(feEl.value){const fe=new Date(feEl.value);if(fn>=fe){fnEl.classList.add('error');errores.push('La fecha de nacimiento debe ser anterior a la fecha de entrevista.');}}}
   }
+  // Fecha de ingreso: solo en la etapa Ingreso, obligatoria y no posterior a la
+  // entrevista. El límite de 30 días no va aquí: se aplica en el análisis.
+  const fechaIngresoEl = document.getElementById('fecha_ingreso');
+  const fechaEntrevistaVal = document.getElementById('fecha_entrevista').value;
+  if (document.getElementById('etapa').value === 'ingreso') {
+    if (!fechaIngresoEl.value) {
+      fechaIngresoEl.classList.add('error');
+      errores.push('Ingrese la fecha de ingreso al tratamiento.');
+    } else if (fechaEntrevistaVal && fechaIngresoEl.value > fechaEntrevistaVal) {
+      fechaIngresoEl.classList.add('error');
+      errores.push('La fecha de ingreso no puede ser posterior a la fecha de entrevista.');
+    } else {
+      fechaIngresoEl.classList.remove('error');
+    }
+  } else {
+    fechaIngresoEl.classList.remove('error');
+  }
   return errores;
 }
+
+// Muestra la fecha de ingreso solo si la etapa es Ingreso. En las demás etapas
+// se oculta y se borra, para que se envíe vacía.
+function actualizarCampoFechaIngreso() {
+  const esIngreso = document.getElementById('etapa').value === 'ingreso';
+  document.getElementById('campo_fecha_ingreso').style.display = esIngreso ? '' : 'none';
+  if (!esIngreso) {
+    const el = document.getElementById('fecha_ingreso');
+    el.value = '';
+    el.classList.remove('error');
+  }
+}
+document.getElementById('etapa').addEventListener('change', actualizarCampoFechaIngreso);
+document.getElementById('fecha_ingreso').addEventListener('change', () => {
+  if (document.getElementById('fecha_ingreso').value) validarFechas();
+});
 document.getElementById('fecha_entrevista').addEventListener('change',validarFechas);
 document.getElementById('fecha_nacimiento').addEventListener('change',validarFechas);
 
@@ -683,18 +724,19 @@ function _mostrarAvisoEtapa(etapaTexto) {
         '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#1F3864;">' +
           'Marcaste la etapa <b>' + etapaTexto + '</b>.</p>' +
         '<p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#1F3864;">' +
-          'Si esta persona <b>acaba de ingresar al centro</b>, la etapa correcta es ' +
-          '<b>Ingreso</b>, aunque venga derivada de otro centro o de una desintoxicación.</p>' +
+          'Si este es el <b>primer TOP de este tratamiento</b>, la etapa correcta es ' +
+          '<b>Ingreso (inicio del tratamiento)</b>. También es Ingreso cuando la persona ' +
+          'vuelve después de varios meses o llega derivada de otro lugar.</p>' +
         '<p style="margin:0 0 18px;font-size:13px;line-height:1.6;color:#5a6b85;">' +
-          'Usa <b>' + etapaTexto + '</b> solo si la persona ya llevaba tiempo atendiéndose ' +
-          'acá antes de esta medición.</p>' +
+          'Usa <b>' + etapaTexto + '</b> solo si esta persona ya tiene su TOP de ingreso ' +
+          'en este tratamiento.</p>' +
         '<div style="display:flex;gap:10px;">' +
           '<button type="button" id="_avisoSeguir" style="flex:1;font-size:13px;padding:10px 8px;' +
             'border:1px solid #c8d0da;background:#fff;color:#1F3864;border-radius:8px;cursor:pointer;">' +
-            'Ya llevaba tiempo acá</button>' +
+            'Ya tiene TOP de ingreso</button>' +
           '<button type="button" id="_avisoCorregir" style="flex:1;font-size:13px;padding:10px 8px;' +
             'border:1px solid #c8d0da;background:#fff;color:#1F3864;border-radius:8px;cursor:pointer;">' +
-            'Recién ingresó</button>' +
+            'Es su primer TOP: cambiar a Ingreso</button>' +
         '</div>' +
       '</div>';
 
@@ -708,6 +750,9 @@ function _mostrarAvisoEtapa(etapaTexto) {
       document.body.removeChild(fondo);
       var sel = document.getElementById('etapa');
       if (sel) sel.value = 'ingreso';
+      // Al pasar a Ingreso aparece la fecha de ingreso, que es obligatoria.
+      actualizarCampoFechaIngreso();
+      document.getElementById('fecha_ingreso').focus();
       resolver(true);
     };
   });
@@ -780,7 +825,7 @@ async function enviarFormulario() {
 
   const payload={
     pais:'México', centro:s('centro'), etapa:s('etapa'),
-    codigo_paciente:s('codigo_paciente'), fecha_entrevista:s('fecha_entrevista'),
+    codigo_paciente:s('codigo_paciente'), fecha_entrevista:s('fecha_entrevista'), fecha_ingreso:(s('etapa')==='ingreso') ? s('fecha_ingreso') : null,
     fecha_nacimiento:s('fecha_nacimiento'), sexo:s('sexo')||null,
     nombre_entrevistador:s('nombre_entrevistador'),
     alcohol_s4:sv('alcohol','s4'),alcohol_s3:sv('alcohol','s3'),alcohol_s2:sv('alcohol','s2'),alcohol_s1:sv('alcohol','s1'),alcohol_total:tv('alcohol_total'),alcohol_prom:pv('alcohol_prom'),
@@ -812,7 +857,7 @@ async function enviarFormulario() {
     });
     if(resp.ok||resp.status===201){
       mostrarToast('✓ Registro enviado correctamente');
-      document.getElementById('formTop').reset();
+      document.getElementById('formTop').reset(); actualizarCampoFechaIngreso();
       ['na_trabajo','na_educacion'].forEach(id=>{const el=document.getElementById(id);if(el){el.checked=false;}});
       ['trabajo','educacion'].forEach(campo=>toggleNA(campo));
       Object.keys(toggleValues).forEach(k=>toggleValues[k]=null);

@@ -6,7 +6,7 @@ nacimiento quedó como bloqueo en los formularios de México y solo como aviso e
 Perú, Ecuador y El Salvador (INCIDENTES.md). Estas pruebas fallan si un
 formulario vuelve a quedar distinto.
 """
-import os, re
+import os, re, sys
 import pytest
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -122,3 +122,73 @@ def test_ningun_sql_vuelve_a_abrir_funciones_al_rol_publico():
         sql = _leer(os.path.join('sql', nombre))
         activo = '\n'.join(l for l in sql.splitlines() if not l.strip().startswith('--'))
         assert not re.search(r'GRANT\s+EXECUTE[^;]*TO\s+[^;]*\b(anon|authenticated)\b', activo), nombre
+
+
+# ── TOP versión 2: etapas con nombre nuevo y fecha de ingreso ─────────────────
+# DECISIONES.md, 2026-11-17, "TOP versión 2". Cambia el texto que se ve, no el
+# valor que se guarda: los reportes y la base siguen leyendo los mismos valores.
+
+ETAPAS_V2 = [
+    ('ingreso', 'Ingreso (inicio del tratamiento)'),
+    ('en_tratamiento', 'Revisión durante el tratamiento'),
+    ('egreso', 'Egreso (alta o término)'),
+    ('seguimiento', 'Después del egreso (post-tratamiento, seguimiento)'),
+]
+TEXTO_FECHA_INGRESO = ('TOP de ingreso: todas las preguntas se refieren a las 4 semanas '
+                       'previas a la fecha de ingreso. Lo ideal es aplicarlo dentro de las '
+                       'primeras 2 semanas.')
+
+
+@pytest.mark.parametrize('nombre', FORMULARIOS)
+def test_las_cuatro_etapas_con_su_nombre_nuevo_y_el_mismo_valor(nombre):
+    m = re.search(r'<select[^>]*\bid="etapa"[^>]*>(.*?)</select>', _leer(nombre), re.S)
+    assert m, f'{nombre} no tiene la lista de etapas'
+    opciones = [(v, t.strip()) for v, t in
+                re.findall(r'<option value="([^"]*)">(.*?)</option>', m.group(1)) if v]
+    assert opciones == ETAPAS_V2, f'{nombre}: {opciones}'
+
+
+@pytest.mark.parametrize('nombre', FORMULARIOS)
+def test_pide_la_fecha_de_ingreso_con_su_texto(nombre):
+    html = _leer(nombre)
+    assert re.search(r'<input type="date" id="fecha_ingreso"', html), \
+        f'{nombre} no tiene el campo fecha_ingreso'
+    assert 'Fecha de ingreso al tratamiento' in html
+    assert TEXTO_FECHA_INGRESO in re.sub(r'\s+', ' ', html)
+    # Oculto hasta que se elige Ingreso.
+    assert re.search(r'id="campo_fecha_ingreso" style="display:none', html)
+
+
+@pytest.mark.parametrize('nombre', FORMULARIOS)
+def test_la_fecha_de_ingreso_es_obligatoria_solo_en_ingreso_y_no_posterior(nombre):
+    html = _leer(nombre)
+    assert "if (document.getElementById('etapa').value === 'ingreso') {" in html
+    assert 'Ingrese la fecha de ingreso al tratamiento.' in html
+    assert 'La fecha de ingreso no puede ser posterior a la fecha de entrevista.' in html
+    # El límite de 30 días se aplica en el análisis, no en el formulario: la
+    # validación de la fecha de ingreso no calcula días entre fechas.
+    bloque = re.search(r'const fechaIngresoEl = .*?return errores;', html, re.S)
+    assert bloque, f'{nombre} no valida la fecha de ingreso'
+    assert not re.search(r'\b30\b|getTime|1000\s*\*\s*60|new Date', bloque.group(0)), \
+        f'{nombre} pone un límite de días a la fecha de ingreso'
+
+
+@pytest.mark.parametrize('nombre', FORMULARIOS)
+def test_envia_la_fecha_de_ingreso_solo_en_la_etapa_ingreso(nombre):
+    html = _leer(nombre)
+    assert re.search(r"fecha_ingreso:\s*\(s\('etapa'\)\s*===\s*'ingreso'\)\s*\?\s*"
+                     r"s\('fecha_ingreso'\)\s*:\s*null,", html), \
+        f'{nombre} no envía fecha_ingreso, o la envía también fuera de Ingreso'
+    # La pestaña Corrección de registros lee el payload para saber qué se corrige.
+    sys.path.insert(0, RAIZ)
+    from pipeline.panel import correccion as C
+    pais = {v: k for k, v in C.FORMULARIO_POR_PAIS.items()}[nombre]
+    assert 'fecha_ingreso' in C.campos_del_formulario(pais)
+
+
+@pytest.mark.parametrize('nombre', FORMULARIOS)
+def test_el_aviso_de_etapa_explica_reingresos_y_derivaciones(nombre):
+    html = _leer(nombre)
+    assert 'primer TOP de este tratamiento' in html
+    assert 'vuelve después de varios meses o llega derivada de otro lugar' in html
+    assert 'acaba de ingresar al centro' not in html

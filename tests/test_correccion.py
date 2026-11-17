@@ -271,3 +271,13 @@ def test_la_pestania_muestra_el_registro_y_su_historial():
     assert not at.exception, at.exception
     assert at.selectbox and 'N.º 2442' in at.selectbox[0].options[0]
     assert any('Correcciones anteriores' in e.label for e in at.expander)
+
+
+def test_la_fecha_de_ingreso_se_corrige_como_fecha():
+    """TOP versión 2 (DECISIONES.md, 2026-11-17): fecha_ingreso está en FECHAS."""
+    assert 'fecha_ingreso' in C.FECHAS
+    assert C.tipo_de('fecha_ingreso') == 'fecha'
+    assert C.normalizar('fecha_ingreso', '03-11-2026', {}) == ('2026-11-03', None)
+    assert C.normalizar('fecha_ingreso', 'ayer', {})[1]
+    # No es obligatoria: fuera de la etapa Ingreso va vacía.
+    assert C.normalizar('fecha_ingreso', 'vacío', {}) == (None, None)

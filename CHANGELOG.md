@@ -6,6 +6,22 @@ commit que el cambio que describe. Las decisiones y su fundamento viven en
 
 ---
 
+## 2026-11-17
+
+- Formularios TOP versión 2, en los siete (`index.html`, `index_ecuador.html`,
+  `index_elsalvador.html`, `index_mexico.html`, `index_mexicocij.html`,
+  `index_montefenix.html`, `index_mahanaim.html`): las etapas muestran los
+  nombres nuevos con los mismos valores guardados; campo nuevo "Fecha de ingreso
+  al tratamiento", visible y obligatorio solo en Ingreso, no posterior a la
+  entrevista, enviado a `top_registros.fecha_ingreso` (null en las demás etapas);
+  el aviso de etapa explica que Ingreso es el primer TOP del tratamiento, también
+  en reingresos y derivaciones. `pipeline/panel/correccion.py` agrega
+  `fecha_ingreso` a `FECHAS`. SQL de la columna en `sql/fecha_ingreso.sql`, a
+  ejecutar antes de publicar. La base sintética de las pruebas trae
+  `fecha_ingreso`; la Base Wide la arrastra sola como `fecha_ingreso_TOP1` y
+  `_TOP2`. Pruebas nuevas en `tests/test_formularios.py` y
+  `tests/test_correccion.py`. Ver DECISIONES.md, "TOP versión 2".
+
 ## 2026-11-14
 
 - Reportes: `pipeline/runner.py` fija UTF-8 en los dos extremos del proceso

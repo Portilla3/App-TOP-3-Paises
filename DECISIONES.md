@@ -392,6 +392,54 @@ personas únicas cuando haga falta es una consulta, no un recálculo.
 
 ## Instrumento
 
+### TOP versión 2: etapas con nombre nuevo y fecha de ingreso
+**Regla.** Desde el 18 de noviembre de 2026 los siete formularios reflejan la
+versión 2 del TOP en papel, enviada a los países el 16 de noviembre.
+
+- **Nombres de las etapas.** Cambia solo el texto que se ve; el valor que se
+  guarda es el mismo de antes:
+
+  | Valor guardado | Texto en el formulario |
+  |---|---|
+  | `ingreso` | Ingreso (inicio del tratamiento) |
+  | `en_tratamiento` | Revisión durante el tratamiento |
+  | `egreso` | Egreso (alta o término) |
+  | `seguimiento` | Después del egreso (post-tratamiento, seguimiento) |
+
+- **La fecha de ingreso se pide solo en el TOP de ingreso.** Es obligatoria en
+  esa etapa y no puede ser posterior a la fecha de entrevista. En las demás
+  etapas no se muestra y se guarda vacía. Va a la columna `fecha_ingreso` (date)
+  de `top_registros`.
+- **En el TOP de ingreso, el período que se pregunta son las 4 semanas previas a
+  la fecha de ingreso**, no a la fecha de la entrevista.
+- **Ingreso es el primer TOP de este tratamiento**, también cuando la persona
+  vuelve después de varios meses (reingreso) o llega derivada de otro lugar. Lo
+  ideal es aplicarlo dentro de los primeros 14 días.
+- **El límite de 30 días entre el ingreso y la entrevista se aplica solo en la
+  plataforma y en el análisis, no en el formulario.**
+
+**Fundamento.** El formulario en línea tiene que decir lo mismo que el TOP en
+papel que tienen los países. Los nombres nuevos dicen en qué momento del
+tratamiento se aplica cada TOP. Al 2026-09-02 había 182 pacientes sin TOP de
+ingreso, 111 marcados "en tratamiento" y 43 "seguimiento" (ver "La línea base es
+el TOP con etapa de ingreso"). Se mantienen los valores guardados para no tocar
+la base, los reportes ni el histórico.
+
+La fecha de ingreso ancla el período de referencia del TOP de ingreso: si la
+entrevista se hace días después del ingreso, preguntar por las 4 semanas previas
+a la entrevista mezclaría días ya en tratamiento con el consumo de llegada, que
+es lo que la línea base quiere describir. Se pide solo en ingreso porque es la
+única etapa cuyo período se ancla a esa fecha.
+
+El límite de 30 días no va en el formulario porque bloquear el envío haría
+perder el registro: el centro no tiene otra forma de cargarlo. Es mejor guardar
+el dato completo y decidir en el análisis si entra a la línea base.
+
+**Consecuencia asumida.** Los TOP cargados antes del 18 de noviembre no tienen
+fecha de ingreso. La regla de 30 días solo se puede aplicar a los nuevos.
+
+*2026-11-17*
+
 ### El campo sexo usa H/M/O en los cuatro países
 **Regla.** `H` es hombre, `M` es mujer, `O` es otro. Los quince formularios
 escriben esa convención y la base está homologada.

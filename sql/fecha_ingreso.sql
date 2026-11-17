@@ -1,0 +1,23 @@
+-- sql/fecha_ingreso.sql
+--
+-- TOP versión 2 (enviada a los países el 2026-11-16): fecha de ingreso al
+-- tratamiento. Ver DECISIONES.md, "TOP versión 2: fecha de ingreso".
+--
+-- Los formularios piden la fecha de ingreso solo en la etapa Ingreso y la envían
+-- a esta columna en formato AAAA-MM-DD. En las demás etapas va vacía (NULL).
+-- No lleva restricción de 30 días ni de orden respecto de fecha_entrevista: el
+-- formulario ya impide que sea posterior a la entrevista, y la regla de 30 días
+-- se aplica en el análisis, no en la base.
+--
+-- Hay que ejecutarlo ANTES de publicar los formularios nuevos en main: si la
+-- columna no existe, la base rechaza todo envío que la incluya.
+--
+-- Permisos: no hace falta otro GRANT. El rol anon tiene INSERT sobre la tabla
+-- entera (sql/permisos_top_registros.sql), y un permiso de tabla cubre también
+-- las columnas que se agregan después.
+--
+-- Corrección de registros: corregir_registro() busca las columnas en
+-- information_schema (sql/correccion_registros.sql), así que acepta la columna
+-- nueva sin cambios.
+
+ALTER TABLE public.top_registros ADD COLUMN IF NOT EXISTS fecha_ingreso date;

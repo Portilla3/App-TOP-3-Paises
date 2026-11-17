@@ -197,6 +197,16 @@ El clasificador actual los resuelve bien y el texto original está en
 
 ## Código
 
+**TOP versión 2: lo que falta después de los formularios.** *2026-11-17.* Los
+formularios ya piden la fecha de ingreso (DECISIONES.md, "TOP versión 2"). Queda:
+- Base Wide y reportes con la fecha de ingreso. Hoy la Base Wide la arrastra
+  como `fecha_ingreso_TOP1` y `fecha_ingreso_TOP2`, sin etiqueta en
+  `RENAME_MAP` de `app.py`.
+- Días desde el ingreso: entre la fecha de ingreso y la entrevista de cada TOP.
+- Regla de 30 días en la plataforma y el análisis.
+- Nombres nuevos de las etapas en `pipeline/panel/avance_centros.py`, que sigue
+  mostrando "En tratamiento" y "Seguimiento".
+
 **Resuelto el 2026-11-01 · corrección de registros dentro de la app.** Ver
 DECISIONES.md, "Los registros se corrigen dentro de la app, con bitácora". Los
 siete formularios de corrección (`correccion_top_*.html`) quedaron como un aviso

@@ -37,7 +37,7 @@ SI_NO = {'hurto', 'robo', 'venta_droga', 'rina_pelea', 'otra_accion',
          'vivienda_estable', 'vivienda_basica'}
 BOOLEANOS = {'trabajo_na', 'educacion_na'}
 ESCALAS = {'salud_psicologica', 'salud_fisica', 'calidad_vida'}
-FECHAS = {'fecha_entrevista', 'fecha_nacimiento'}
+FECHAS = {'fecha_entrevista', 'fecha_nacimiento', 'fecha_ingreso'}
 LISTAS = ('centro', 'etapa', 'sexo', 'sustancia_principal')
 OBLIGATORIOS = {'centro', 'etapa', 'codigo_paciente', 'fecha_entrevista',
                 'fecha_nacimiento', 'sexo', 'nombre_entrevistador', 'sustancia_principal'}
