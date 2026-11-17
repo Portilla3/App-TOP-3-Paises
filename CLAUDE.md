@@ -66,6 +66,14 @@ Es regla de Rodrigo desde el 27 de octubre de 2026, para no confundirse.
 - **Formulario TOP:** el centro elige su código de una lista y carga pacientes.
   No usa clave. La lista vive en el HTML de cada país; en Perú, `index.html`.
   Un centro nuevo que va a cargar TOP se agrega ahí.
+  **Los links de los formularios no cambian.** No se cambia el nombre ni la
+  ubicación de ningún formulario (`index.html`, `index_ecuador.html`,
+  `index_elsalvador.html`, `index_mexico.html`, `index_mexicocij.html`,
+  `index_montefenix.html`, `index_mahanaim.html`), no se renombra el
+  repositorio y no se toca la configuración de GitHub Pages. Los centros usan
+  esos links y no pueden cambiarlos. Se edita el contenido de cada archivo en
+  su lugar. Ver DECISIONES.md, "El formulario de Perú se llama `index.html` y
+  no se renombra".
 - **Plataforma (Streamlit):** el centro entra con código y clave para ver su
   panel y descargar reportes. Las claves viven en `centro_credenciales`. Solo
   tiene sentido para centros que ya tienen datos.
