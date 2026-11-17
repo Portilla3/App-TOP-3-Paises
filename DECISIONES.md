@@ -315,6 +315,10 @@ con el mismo peso que una de trescientos.
 pacientes sin ningún TOP de ingreso quedan fuera de la caracterización y del
 análisis de cambio. No se los recupera tomando su TOP más antiguo.
 
+> **Reemplazado el 2026-11-17.** El párrafo "Qué significa `ingreso`" que sigue
+> ya no rige. Ver "Ingreso es el primer TOP de este tratamiento, y la regla de
+> 30 días decide la línea base". El resto de esta entrada sigue vigente.
+
 **Qué significa `ingreso`.** El ingreso real al centro, no la primera vez que se
 le aplica el instrumento. Una persona que lleva seis meses atendiéndose y recién
 ahora recibe su primer TOP no está ingresando: esa etapa es `en tratamiento` y
@@ -437,6 +441,34 @@ el dato completo y decidir en el análisis si entra a la línea base.
 
 **Consecuencia asumida.** Los TOP cargados antes del 18 de noviembre no tienen
 fecha de ingreso. La regla de 30 días solo se puede aplicar a los nuevos.
+
+*2026-11-17*
+
+### Ingreso es el primer TOP de este tratamiento, y la regla de 30 días decide la línea base
+**Regla.** El centro marca como `ingreso` el primer TOP de este tratamiento,
+también cuando la persona vuelve después de varios meses o llega derivada de
+otro lugar, y anota la fecha de ingreso. El análisis decide con la regla de 30
+días si ese TOP sirve como línea base. Reemplaza el párrafo "Qué significa
+`ingreso`" de "La línea base es el TOP con etapa de ingreso" (2026-09-02).
+
+**Lo que no cambia.** La línea base es el TOP de ingreso, y solo ese. La fecha de
+ingreso es la del inicio de este tratamiento en el centro (en un reingreso, la
+fecha en que la persona volvió), no la fecha en que se aplica el TOP.
+
+**Por qué cambia.** Antes el formulario no pedía la fecha de ingreso, y el
+centro tenía que juzgar por su cuenta si el primer TOP llegaba a tiempo para
+servir como línea base: si la persona ya llevaba tiempo atendiéndose, debía
+marcar `en tratamiento`. Ahora el formulario pide la fecha de ingreso, así que el
+dato que permite ese juicio queda registrado. El centro ya no tiene que decidir:
+marca Ingreso en el primer TOP de este tratamiento, y el análisis compara la
+fecha de ingreso con la de la entrevista y aplica la regla de 30 días.
+
+**Consecuencia asumida.** Una persona que lleva meses atendiéndose y recibe su
+primer TOP queda marcada como `ingreso`, con su fecha de ingreso real. Si entre
+el ingreso y la entrevista pasan más de 30 días, ese TOP no servirá como línea
+base, pero queda registrado y se ve por qué quedó fuera. Mientras la regla de 30
+días no esté en el análisis (PENDIENTES.md, "TOP versión 2"), esos TOP entran a
+la línea base como cualquier otro ingreso.
 
 *2026-11-17*
 

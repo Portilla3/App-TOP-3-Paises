@@ -1,7 +1,14 @@
 -- sql/fecha_ingreso.sql
 --
 -- TOP versión 2 (enviada a los países el 2026-11-16): fecha de ingreso al
--- tratamiento. Ver DECISIONES.md, "TOP versión 2: fecha de ingreso".
+-- tratamiento. Ver DECISIONES.md, "TOP versión 2: etapas con nombre nuevo y
+-- fecha de ingreso".
+--
+-- APLICADO el 2026-11-17 como migración `agregar_fecha_ingreso_top`
+-- (versión 20261117203150), desde otro chat con el conector de Supabase, que
+-- verificó que anon puede insertar. Revisado el mismo día: la columna existe,
+-- es date y admite NULL, y anon tiene INSERT sobre la tabla y sobre la columna.
+-- Este archivo queda como registro; no hace falta volver a ejecutarlo.
 --
 -- Los formularios piden la fecha de ingreso solo en la etapa Ingreso y la envían
 -- a esta columna en formato AAAA-MM-DD. En las demás etapas va vacía (NULL).
@@ -9,7 +16,7 @@
 -- formulario ya impide que sea posterior a la entrevista, y la regla de 30 días
 -- se aplica en el análisis, no en la base.
 --
--- Hay que ejecutarlo ANTES de publicar los formularios nuevos en main: si la
+-- Tenía que ejecutarse ANTES de publicar los formularios nuevos en main: si la
 -- columna no existe, la base rechaza todo envío que la incluya.
 --
 -- Permisos: no hace falta otro GRANT. El rol anon tiene INSERT sobre la tabla
