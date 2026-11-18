@@ -1,7 +1,7 @@
 # QALAT · Reglas de cálculo
 
-Cómo se cuenta cada cosa en este sistema, y por qué. Última revisión: 30 de
-octubre de 2026.
+Cómo se cuenta cada cosa en este sistema, y por qué. Última revisión: 18 de
+noviembre de 2026.
 
 Este documento no describe el estado del proyecto ni lo que falta hacer: eso
 vive en el documento de estado. Acá están solo los criterios, que cambian mucho
@@ -51,11 +51,27 @@ personas únicas cuando haga falta es una consulta, no un recálculo.
 Los pacientes sin ningún TOP de ingreso quedan fuera de la caracterización y del
 análisis de cambio. No se los recupera tomando su TOP más antiguo.
 
-**Qué significa ingreso.** El ingreso real al centro, no la primera vez que se
-le aplica el instrumento. Una persona que lleva seis meses atendiéndose y recién
-ahora recibe su primer TOP no está ingresando: esa etapa es `en tratamiento` y
-está bien puesta. Un derivado desde otro centro o desde una desintoxicación sí
-está ingresando, porque ingresa a ese centro.
+**Qué significa ingreso.** Desde el 2026-11-18 (TOP versión 2), `ingreso` es el
+primer TOP de este tratamiento, también cuando la persona vuelve después de
+varios meses o llega derivada de otro lugar. En esa etapa el formulario pide la
+fecha de ingreso al tratamiento: la del inicio de este tratamiento en el centro
+(en un reingreso, la fecha en que la persona volvió), no la fecha en que se
+aplica el TOP. No puede ser posterior a la fecha de entrevista.
+
+**Quién decide si sirve como línea base.** El análisis, no el centro: compara la
+fecha de ingreso con la de la entrevista y aplica la regla de 30 días. Esa regla
+todavía no está programada (PENDIENTES.md, "TOP versión 2"). Mientras tanto,
+todo TOP de ingreso entra a la línea base, aunque entre el ingreso y la
+entrevista hayan pasado más de 30 días.
+
+**La definición que se reemplazó.** Hasta el 2026-11-17, `ingreso` era el
+ingreso real al centro, no la primera vez que se aplicaba el instrumento: una
+persona que llevaba seis meses atendiéndose y recién recibía su primer TOP se
+marcaba `en tratamiento`. El centro tenía que juzgar si el TOP llegaba a tiempo
+para servir como línea base, y el formulario no guardaba la fecha que permite
+ese juicio. Los registros cargados hasta el 2026-11-17 se cargaron con esa
+definición. Ver DECISIONES.md, "Ingreso es el primer TOP de este tratamiento,
+y la regla de 30 días decide la línea base".
 
 **Por qué.** La caracterización responde cómo llegan los pacientes al centro. Un
 TOP aplicado a mitad del tratamiento no describe cómo llegó esa persona, así que
@@ -72,8 +88,9 @@ una segunda medición, así que los otros 171 nunca iban a servir para comparar
 TOP 1 contra TOP 2.
 
 **Por qué es aceptable.** Buena parte de esos casos no son un error de captura.
-Cuando un centro adopta el TOP, su cohorte ya está en curso, y esos pacientes son
-legítimamente `en tratamiento`. México empezó a registrar en mayo de 2026 con
+Con la definición vigente hasta el 2026-11-17, cuando un centro adoptaba el TOP
+su cohorte ya estaba en curso, y esos pacientes eran legítimamente `en
+tratamiento`. México empezó a registrar en mayo de 2026 con
 gente que ya atendía. Nunca tuvieron línea base y no la van a tener.
 
 **Dónde se ven.** Los TOP que quedan fuera se listan en la hoja "TOP sin
